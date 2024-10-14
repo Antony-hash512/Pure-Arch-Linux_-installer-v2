@@ -1,10 +1,18 @@
 #!/bin/bash
+#данный скрипт надо приспособить для нескольких lvm-разделов и подтомов btrfs
+
+MOUNT_POINT="/mnt/btrfs_mount"
+
+
 
 # Установка переменных
-LVM_VOLUME="/dev/mainvg/mining_randomx"
+LVM_VOLUME=""
+
 BTRFS_DEVICE="/dev/nvme0n1p9"
 BTRFS_SUBVOLUME="@mining_randomx_boot"
-MOUNT_POINT="/mnt/btrfs_mount"
+
+
+EFI_NOTE_TO_DELETE=""
 
 # Удаление LVM тома
 echo "Удаление LVM тома: $LVM_VOLUME"
