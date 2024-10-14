@@ -5,11 +5,11 @@ MOUNT_POINT="/mnt/btrfs_mount"
 
 
 
-# Установка переменных
+# Установка переменных (должно автоматически заполнится после установки
 LVM_VOLUME=""
 
-BTRFS_DEVICE="/dev/nvme0n1p9"
-BTRFS_SUBVOLUME="@mining_randomx_boot"
+BTRFS_DEVICE=""
+BTRFS_SUBVOLUME=""
 
 
 EFI_NOTE_TO_DELETE=""
