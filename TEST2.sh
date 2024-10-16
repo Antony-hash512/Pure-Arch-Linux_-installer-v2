@@ -76,35 +76,46 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
     #case для различных значения ${current_row["type"]}
 
+    # Разбивка строки с разделителем "_in_" и запись значений в переменные
+    spaced_names="${current_row["name"]//_in_/ }"
+    # Преобразуем строку в массив по пробелам
+    read -r -a names <<< "$spaced_names"
+
+    echo "Обработка типа: ${current_row["type"]}"
     case "${current_row["type"]}" in
-        "format_ext4")
-            echo "Обработка типа: format_ext4"
+        "format_ext4")            
             # команды для обработки format_ext4
-            :
+            ext4_path=${current_row["name"]}
+            echo "Путь к разделу с ext4: $ext4_path"
             ;;
         "new_subvol_in_btrfs")
-            echo "Обработка типа: new_subvol_in_btrfs"
+            
             # команды для обработки new_subvol_in_btrfs
-            :
+            subvol_name="${names[0]}"
+            btrfs_path="${names[1]}"
+            echo "Имя субтома Btrfs: $subvol_name"
+            echo "Путь к разделу Btrfs: $btrfs_path"
             ;;
         "new_subvol_in_btrfs_in_lvm")
-            echo "Обработка типа: new_subvol_in_btrfs_in_lvm"
-            # Разбивка строки с разделителем "_in_" и запись значений в переменные
-            spaced_names="${current_row["name"]//_in_/ }"
-            # Преобразуем строку в массив по пробелам
-            read -r -a names <<< "$spaced_names"
+            # команды для обработки new_subvol_in_btrfs_in_lvm
             
             subvol_name="${names[0]}"
-            lvm_path="${names[1]}"
-            lv_path="${names[2]}"
+            lv_name="${names[1]}"
+            lvm_path="${names[2]}"
             echo "Имя субтома Btrfs: $subvol_name"
+            echo "Логический том LVM (btrfs): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
-            echo "Логический том LVM: $lv_path"
+
             ;;
         "new_ext4_in_lvm")
-            echo "Обработка типа: new_ext4_in_lvm"
+            
             # команды для обработки new_ext4_in_lvm
-            :
+            lv_name="${names[0]}"
+            lvm_path="${names[1]}"
+
+            echo "Логический том LVM (ext4): $lv_name"
+            echo "Путь к разделу LVM: $lvm_path"
+            
             ;;
         *)
             echo "Неизвестный тип: ${current_row["type"]}" >&2
