@@ -75,6 +75,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     echo "$i. Проводим операции, связанные с точкой монтирования \"${current_row["mount_point"]}\" "
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
     #case для различных значения ${current_row["type"]}
+
     case "${current_row["type"]}" in
         "format_ext4")
             echo "Обработка типа: format_ext4"
@@ -89,10 +90,13 @@ for row in "${ALL_NEW_POINTS[@]}"; do
         "new_subvol_in_btrfs_in_lvm")
             echo "Обработка типа: new_subvol_in_btrfs_in_lvm"
             # Разбивка строки с разделителем "_in_" и запись значений в переменные
-            IFS='_in_' read -r -a parts <<< "${current_row["name"]}"
-            subvol_name="${parts[0]}"
-            lvm_path="${parts[1]}"
-            lv_path="${parts[2]}"
+            spaced_names="${current_row["name"]//_in_/ }"
+            # Преобразуем строку в массив по пробелам
+            read -r -a names <<< "$spaced_names"
+            
+            subvol_name="${names[0]}"
+            lvm_path="${names[1]}"
+            lv_path="${names[2]}"
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Путь к разделу LVM: $lvm_path"
             echo "Логический том LVM: $lv_path"
