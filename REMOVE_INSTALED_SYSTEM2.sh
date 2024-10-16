@@ -48,38 +48,22 @@ for volume in "${LVM_VOLUMES[@]}"; do
 
 done
 
-# Монтирование Btrfs-раздела
-echo "Монтирование Btrfs-раздела: $BTRFS_DEVICE"
-sudo mkdir -p $MOUNT_POINT
-sudo mount $BTRFS_DEVICE $MOUNT_POINT
-if [ $? -ne 0 ]; then
-    echo "Ошибка при монтировании Btrfs-раздела $BTRFS_DEVICE."
-    exit 1
-fi
 
-# Удаление подтома Btrfs
-echo "Удаление подтома: $BTRFS_SUBVOLUME"
-if sudo btrfs subvolume show $MOUNT_POINT/$BTRFS_SUBVOLUME &>/dev/null; then
-    sudo btrfs subvolume delete $MOUNT_POINT/$BTRFS_SUBVOLUME
-    if [ $? -eq 0 ]; then
-        echo "Подтом $BTRFS_SUBVOLUME успешно удалён."
-    else
-        echo "Ошибка при удалении подтома $BTRFS_SUBVOLUME."
-        sudo umount $MOUNT_POINT
+
+# Удаляем подтома Btrfs
+
+echo "Удаляем подтома Btrfs..."
+for subvol in "${BTRFS_SUBVOLUMES[@]}"; do
+    echo "Удаляем подтом: $subvol"
+    btrfs subvolume delete "${BTRFS_PARTITION}/$subvol"
+    if [ $? -ne 0 ]; then
+        echo "Ошибка при удалении подтома: $subvol" >&2
         exit 1
     fi
-else
-    echo "Подтом $BTRFS_SUBVOLUME не найден."
-fi
+done
 
-# Отмонтирование Btrfs-раздела
-echo "Отмонтирование Btrfs-раздела: $BTRFS_DEVICE"
-sudo umount $MOUNT_POINT
-if [ $? -eq 0 ]; then
-    echo "Btrfs-раздел $BTRFS_DEVICE успешно отмонтирован."
-else
-    echo "Ошибка при отмонтировании Btrfs-раздела $BTRFS_DEVICE."
-    exit 1
-fi
+echo "Подтома Btrfs успешно удалены."
 
-echo "Операции завершены."
+# Завершение работы
+echo "Удаление системы завершено."
+read -p "Нажмите Enter для выхода..."
