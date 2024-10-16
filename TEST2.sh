@@ -140,9 +140,13 @@ read -p "Введите имя установки (будет использов
 NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y%m%d_%H%M%S).sh"
 cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
-# в файле $NEW_SCRIPT_4REMOVE нужно через регулярное выражение заменить
-#LVM_VOLUMES(.*) и BTRFS_SUBVOLUMES(.*) на полученное нами их наполнение
-#в .* содеражаться переносы строки
+# Заменяем LVM_VOLUMES и BTRFS_SUBVOLUMES в созданном скрипте удаления
+lvm_volumes_str=$(printf "%s\n" "${LVM_VOLUMES[@]}")
+btrfs_subvolumes_str=$(declare -p BTRFS_SUBVOLUMES | sed 's/declare -A BTRFS_SUBVOLUMES=//;s/ /\n/g')
+
+# Обновляем файл через sed, добавляем переносы строки и комментируем старые значения
+sed -i -E "/LVM_VOLUMES=/ s|.*|# &\nLVM_VOLUMES=($lvm_volumes_str)|" "$NEW_SCRIPT_4REMOVE"
+sed -i -E "/BTRFS_SUBVOLUMES=/ s|.*|# &\nBTRFS_SUBVOLUMES=$btrfs_subvolumes_str|" "$NEW_SCRIPT_4REMOVE"
 
 i=0;
 for row in "${ALL_NEW_POINTS[@]}"; do
