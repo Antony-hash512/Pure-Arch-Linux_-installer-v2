@@ -1,14 +1,5 @@
 #!/bin/bash
 
-echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
-echo ""
-if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
-    :
-else
-    echo "Требуется Bash версии 4.3 или выше" >&2
-    exit 1
-fi
-
 : <<'COMMENT'
 Примеры использования:
 declare -A new_point0=(
@@ -26,14 +17,15 @@ declare -A new_point1=(
     ["keyfile"]=/etc/home.key
 )
 
-возможные значения type: format_ext4, new_subvol_in_btrfs, new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm
-возможные значение crypt_mode: (для format_ext4, new_subvol_in_btrfs): none, file, pwd, (для new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm): none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none: (случаи двойного шифорования не рассматриваем из-за избыточности такого действия), file или pwd - какой метод расшифровки будет использован при загрузке системы файл с ключём или пароль?
-keyfile: путь к файлу ключа (где создать или откуда использовать), требуется только при использовании опции с file
-name: название(я) тома(oв) и/или раздела (для вложенной структуры нужно использовать разделение "_in_" например: @arch_system42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8)
+* возможные значения type: format_ext4, new_subvol_in_btrfs, new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm
+* возможные значение crypt_mode: (для format_ext4, new_subvol_in_btrfs): none, file, pwd, (для new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm): none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none: (случаи двойного шифорования не рассматриваем из-за избыточности такого действия), file или pwd - какой метод расшифровки будет использован при загрузке системы файл с ключём или пароль?
+* keyfile: путь к файлу ключа (где создать или откуда использовать), требуется только при использовании опции с file
+* name: название(я) тома(oв) и/или раздела (для вложенной структуры нужно использовать разделение "_in_" например: @arch_system42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8)
 COMMENT
 
 # Создаём ассоциативные массивы для каждой строки "двумерного" массива
 # C именем new_point+число
+# корневой каталог должен быть первым, а вложенные быть после родительских
 declare -A new_point0=(
     ["mount_point"]="/" 
     ["type"]="new_subvol_in_btrfs_in_lvm" 
@@ -47,12 +39,29 @@ declare -A new_point1=(
     ["crypt_mode"]="none_in_none" 
     ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
 )
+#===============конец настроек=============================================================
+
+echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+echo ""
+if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
+    :
+else
+    echo "Требуется Bash версии 4.3 или выше" >&2
+    exit 1
+fi
+
+# Получаем путь к каталогу, где находится скрипт
+script_dir=$(dirname "${BASH_SOURCE[0]}")
 
 # Определяем количество массивов вида new_pointX автоматически
 ALL_NEW_POINTS=()
 for var in $(compgen -A variable | grep -E '^new_point[0-9]+$'); do
     ALL_NEW_POINTS+=("$var")
 done
+
+lsblk
+echo "разделы должны быть созданы заранее вручную, автоматически создаются только тома на них"
+read -p "Enter - продолжить; ctrl+C - прервать"
 
 # Обходим массивы, используя их имена
 i=0;
@@ -67,7 +76,16 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     echo "Опция Шифрования: ${current_row["crypt_mode"]}"
     echo "Имя (Имена) раздела/томов: ${current_row["name"]}"
     echo ""
+    
+    #собираем данные для создания скрипта для удаления системы 
 done
+
+echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
+echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
+read -p "Enter - продолжить; ctrl+C - прервать"
+echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
+read INTALLATION_NAME -p "Введите имя установки (будет использовано в имени скрипта для удаления"
+cp $script_dir/REMOVE_INSTALED_SYSTEM.sh $script_dir/REMOVE_INSTALED_SYSTEM_${INTALLATION_NAME}_${(date +%Y%m%d_%H%M%S)}.sh
 
 i=0;
 for row in "${ALL_NEW_POINTS[@]}"; do

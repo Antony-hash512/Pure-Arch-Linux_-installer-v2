@@ -32,7 +32,6 @@ BTRFS_SUBVOLUMES=(
 
 EFI_NOTE_TO_DELETE=""
 
-
 # Создаем каталог для точки монтирования, если он не существует
 if [ ! -d "$MOUNT_POINT" ]; then
     echo "Создаем каталог точки монтирования: $MOUNT_POINT"
@@ -52,8 +51,6 @@ if mount | grep "$MOUNT_POINT" &>/dev/null; then
         exit 1
     fi
 fi
-
-
 
 # Удаляем LVM тома
 echo "Удаляем тома LVM..."
@@ -93,7 +90,6 @@ for device in "${!BTRFS_SUBVOLUMES[@]}"; do
             sudo btrfs subvolume delete "$MOUNT_POINT/$subvol"
             if [ $? -ne 0 ]; then
                 echo "Ошибка при удалении подтома: $subvol" >&2
-                exit 1
             fi
         else
             echo "Подтом $subvol не найден. Пропуск."
@@ -119,7 +115,15 @@ if [ -d "$MOUNT_POINT" ]; then
     sudo rmdir "$MOUNT_POINT"
     if [ $? -ne 0 ]; then
         echo "Ошибка при удалении каталога $MOUNT_POINT." >&2
-        exit 1
+    fi
+fi
+
+# Удаляем запись EFI, если указано
+if [ -n "$EFI_NOTE_TO_DELETE" ]; then
+    echo "Удаляем запись EFI: $EFI_NOTE_TO_DELETE"
+    sudo efibootmgr -b "$EFI_NOTE_TO_DELETE" -B
+    if [ $? -ne 0 ]; then
+        echo "Ошибка при удалении записи EFI: $EFI_NOTE_TO_DELETE." >&2
     fi
 fi
 
