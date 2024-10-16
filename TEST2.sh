@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
 echo ""
 if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
@@ -96,6 +97,11 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             subvol_name="${names[0]}"
             btrfs_path="${names[1]}"
             
+            if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
+                BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
+            else
+                BTRFS_SUBVOLUMES["$btrfs_path"]="$subvol_name"
+            fi
             ;;
         "new_subvol_in_btrfs_in_lvm")
             # команды для обработки new_subvol_in_btrfs_in_lvm
@@ -103,12 +109,21 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
             lvm_path="${names[2]}"
+
+            if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
+                BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
+            else
+                BTRFS_SUBVOLUMES["$btrfs_path"]="$subvol_name"
+            fi
             ;;
         "new_ext4_in_lvm")
             
             # команды для обработки new_ext4_in_lvm
             lv_name="${names[0]}"
             lvm_path="${names[1]}"
+            
+            # Добавляем lv_name в массив LVM_VOLUMES
+            LVM_VOLUMES+=("$lv_name")
             ;;
         *)
             echo "Неизвестный тип: ${current_row["type"]}" >&2
@@ -122,7 +137,12 @@ echo "Корневой каталог должен быть первым, а в�
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
 read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
-cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y%m%d_%H%M%S).sh"
+NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y%m%d_%H%M%S).sh"
+cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
+
+# в файле $NEW_SCRIPT_4REMOVE нужно через регулярное выражение заменить
+#LVM_VOLUMES(.*) и BTRFS_SUBVOLUMES(.*) на полученное нами их наполнение
+#в .* содеражаться переносы строки
 
 i=0;
 for row in "${ALL_NEW_POINTS[@]}"; do
