@@ -1,5 +1,14 @@
 #!/bin/bash
 
+echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+echo ""
+if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
+    :
+else
+    echo "Требуется Bash версии 4.3 или выше" >&2
+    exit 1
+fi
+
 : <<'COMMENT'
 Примеры использования:
 declare -A new_point0=(
@@ -41,15 +50,6 @@ declare -A new_point1=(
 )
 #===============конец настроек=============================================================
 
-echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
-echo ""
-if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
-    :
-else
-    echo "Требуется Bash версии 4.3 или выше" >&2
-    exit 1
-fi
-
 # Получаем путь к каталогу, где находится скрипт
 script_dir=$(dirname "${BASH_SOURCE[0]}")
 
@@ -77,15 +77,52 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     echo "Имя (Имена) раздела/томов: ${current_row["name"]}"
     echo ""
     
-    #собираем данные для создания скрипта для удаления системы 
+    #собираем данные для создания скрипта для удаления системы
+
+
+    # Задаём массив обычный LVM_VOLUMES (пока пустой, будет заполнен элементами позже)
+    LVM_VOLUMES=()
+    declare -A BTRFS_SUBVOLUMES
+
+    case "${current_row["type"]}" in
+        "format_ext4")            
+            # команды для обработки format_ext4
+            ext4_path=${current_row["name"]}
+            :
+            ;;
+        "new_subvol_in_btrfs")
+            
+            # команды для обработки new_subvol_in_btrfs
+            subvol_name="${names[0]}"
+            btrfs_path="${names[1]}"
+            
+            ;;
+        "new_subvol_in_btrfs_in_lvm")
+            # команды для обработки new_subvol_in_btrfs_in_lvm
+            
+            subvol_name="${names[0]}"
+            lv_name="${names[1]}"
+            lvm_path="${names[2]}"
+            ;;
+        "new_ext4_in_lvm")
+            
+            # команды для обработки new_ext4_in_lvm
+            lv_name="${names[0]}"
+            lvm_path="${names[1]}"
+            ;;
+        *)
+            echo "Неизвестный тип: ${current_row["type"]}" >&2
+            exit 1
+            ;;
+    esac
 done
 
 echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
-read INTALLATION_NAME -p "Введите имя установки (будет использовано в имени скрипта для удаления"
-cp $script_dir/REMOVE_INSTALED_SYSTEM.sh $script_dir/REMOVE_INSTALED_SYSTEM_${INTALLATION_NAME}_${(date +%Y%m%d_%H%M%S)}.sh
+read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
+cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y%m%d_%H%M%S).sh"
 
 i=0;
 for row in "${ALL_NEW_POINTS[@]}"; do
@@ -144,3 +181,4 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 done
 
 read -p "Нажмите Enter для выхода..."
+
