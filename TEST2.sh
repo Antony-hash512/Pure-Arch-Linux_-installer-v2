@@ -139,6 +139,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             exit 1
             ;;
     esac
+    printf "\n\n\n"
 done
 
 echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
@@ -146,16 +147,22 @@ echo "Корневой каталог должен быть первым, а в�
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
 read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
-NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y%m%d_%H%M%S).sh"
+NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
 cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
-# Заменяем LVM_VOLUMES и BTRFS_SUBVOLUMES в созданном скрипте удаления
+# Создаём массив строк для LVM_VOLUMES и BTRFS_SUBVOLUMES
 lvm_volumes_str=$(printf "%s\n" "${LVM_VOLUMES[@]}")
 btrfs_subvolumes_str=$(declare -p BTRFS_SUBVOLUMES | sed 's/declare -A BTRFS_SUBVOLUMES=//;s/ /\n/g')
 
-# Обновляем файл через sed, добавляем переносы строки и комментируем старые значения
-sed -i -E "/LVM_VOLUMES=/ s|.*|# &\nLVM_VOLUMES=($lvm_volumes_str)|" "$NEW_SCRIPT_4REMOVE"
-sed -i -E "/BTRFS_SUBVOLUMES=/ s|.*|# &\nBTRFS_SUBVOLUMES=$btrfs_subvolumes_str|" "$NEW_SCRIPT_4REMOVE"
+# Обновляем файл NEW_SCRIPT_4REMOVE, добавляя значения LVM_VOLUMES и BTRFS_SUBVOLUMES
+# Удаляем старые значения LVM_VOLUMES и добавляем новые
+sed -i '/^LVM_VOLUMES=/d' "$NEW_SCRIPT_4REMOVE"
+echo -e "# Старые значения LVM_VOLUMES\nLVM_VOLUMES=($lvm_volumes_str)" >> "$NEW_SCRIPT_4REMOVE"
+
+# Удаляем старые значения BTRFS_SUBVOLUMES и добавляем новые
+sed -i '/^BTRFS_SUBVOLUMES=/d' "$NEW_SCRIPT_4REMOVE"
+echo -e "# Старые значения BTRFS_SUBVOLUMES\nBTRFS_SUBVOLUMES=$btrfs_subvolumes_str" >> "$NEW_SCRIPT_4REMOVE"
+
 
 
 read -p "Нажмите Enter для выхода..."

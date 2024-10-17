@@ -1,0 +1,4 @@
+
+# Игнорировать все автоматически сгенерированные скрипты удаления
+REMOVE_INSTALED_SYSTEM_*.sh
+!REMOVE_INSTALED_SYSTEM.sh
