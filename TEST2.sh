@@ -152,7 +152,12 @@ cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
 # Создаём массив строк для LVM_VOLUMES и BTRFS_SUBVOLUMES
 lvm_volumes_str=$(printf "%s\n" "${LVM_VOLUMES[@]}")
-btrfs_subvolumes_str=$(declare -p BTRFS_SUBVOLUMES | sed 's/declare -A BTRFS_SUBVOLUMES=//;s/ /\n/g')
+
+# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=(значение)
+btrfs_subvolumes_str=""
+for key in "${!BTRFS_SUBVOLUMES[@]}"; do
+    btrfs_subvolumes_str+="[\"$key\"]=(${BTRFS_SUBVOLUMES[$key]})\n"
+done
 
 # Закомментируем строки, которые находятся между ^LVM_VOLUMES=( и ближайшей ^), но исключим первую строку и закрывающую скобку
 sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
@@ -166,8 +171,7 @@ sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW
 
 # Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(
 sed -i "/^BTRFS_SUBVOLUMES=(/a \\
-$(printf "%s\n" "${BTRFS_SUBVOLUMES[@]}")" "$NEW_SCRIPT_4REMOVE"
-
+$btrfs_subvolumes_str" "$NEW_SCRIPT_4REMOVE"
 
 read -p "Нажмите Enter для выхода..."
 
