@@ -154,15 +154,19 @@ cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 lvm_volumes_str=$(printf "%s\n" "${LVM_VOLUMES[@]}")
 btrfs_subvolumes_str=$(declare -p BTRFS_SUBVOLUMES | sed 's/declare -A BTRFS_SUBVOLUMES=//;s/ /\n/g')
 
-# Обновляем файл NEW_SCRIPT_4REMOVE, добавляя значения LVM_VOLUMES и BTRFS_SUBVOLUMES
-# Удаляем старые значения LVM_VOLUMES и добавляем новые
-sed -i '/^LVM_VOLUMES=/d' "$NEW_SCRIPT_4REMOVE"
-echo -e "# Старые значения LVM_VOLUMES\nLVM_VOLUMES=($lvm_volumes_str)" >> "$NEW_SCRIPT_4REMOVE"
+# Закомментируем строки, которые находятся между ^LVM_VOLUMES=( и ближайшей ^), но исключим первую строку и закрывающую скобку
+sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
 
-# Удаляем старые значения BTRFS_SUBVOLUMES и добавляем новые
-sed -i '/^BTRFS_SUBVOLUMES=/d' "$NEW_SCRIPT_4REMOVE"
-echo -e "# Старые значения BTRFS_SUBVOLUMES\nBTRFS_SUBVOLUMES=$btrfs_subvolumes_str" >> "$NEW_SCRIPT_4REMOVE"
+# Вставляем новые значения после строки ^LVM_VOLUMES=(
+sed -i "/^LVM_VOLUMES=(/a \\
+$(printf "%s\n" "${LVM_VOLUMES[@]}")" "$NEW_SCRIPT_4REMOVE"
 
+# Аналогично прошлому массиву для BTRFS_SUBVOLUMES
+sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+
+# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(
+sed -i "/^BTRFS_SUBVOLUMES=(/a \\
+$(printf "%s\n" "${BTRFS_SUBVOLUMES[@]}")" "$NEW_SCRIPT_4REMOVE"
 
 
 read -p "Нажмите Enter для выхода..."
