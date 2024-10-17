@@ -77,11 +77,13 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     echo "Опция Шифрования: ${current_row["crypt_mode"]}"
     echo "Имя (Имена) раздела/томов: ${current_row["name"]}"
     echo ""
-    
-    #собираем данные для создания скрипта для удаления системы
 
+    # Разбивка строки с разделителем "_in_" и запись значений в переменные
+    spaced_names="${current_row["name"]//_in_/ }"
+    # Преобразуем строку в массив по пробелам
+    read -r -a names <<< "$spaced_names"
 
-    # Задаём массив обычный LVM_VOLUMES (пока пустой, будет заполнен элементами позже)
+    # Задаём массивы
     LVM_VOLUMES=()
     declare -A BTRFS_SUBVOLUMES
 
@@ -89,13 +91,15 @@ for row in "${ALL_NEW_POINTS[@]}"; do
         "format_ext4")            
             # команды для обработки format_ext4
             ext4_path=${current_row["name"]}
-            :
+            echo "Путь к разделу с ext4: $ext4_path"
             ;;
         "new_subvol_in_btrfs")
             
             # команды для обработки new_subvol_in_btrfs
             subvol_name="${names[0]}"
             btrfs_path="${names[1]}"
+            echo "Имя субтома Btrfs: $subvol_name"
+            echo "Путь к разделу Btrfs: $btrfs_path"
             
             if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
                 BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
@@ -109,11 +113,14 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
             lvm_path="${names[2]}"
+            echo "Имя субтома Btrfs: $subvol_name"
+            echo "Логический том LVM (btrfs): $lv_name"
+            echo "Путь к разделу LVM: $lvm_path"
 
-            if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
-                BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
+            if [[ -v BTRFS_SUBVOLUMES["$lv_name"] ]]; then
+                BTRFS_SUBVOLUMES["$lv_name"]+=" $subvol_name"
             else
-                BTRFS_SUBVOLUMES["$btrfs_path"]="$subvol_name"
+                BTRFS_SUBVOLUMES["$lv_name"]="$subvol_name"
             fi
             ;;
         "new_ext4_in_lvm")
@@ -121,6 +128,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             # команды для обработки new_ext4_in_lvm
             lv_name="${names[0]}"
             lvm_path="${names[1]}"
+            echo "Логический том LVM (ext4): $lv_name"
+            echo "Путь к разделу LVM: $lvm_path"
             
             # Добавляем lv_name в массив LVM_VOLUMES
             LVM_VOLUMES+=("$lv_name")
@@ -148,61 +157,6 @@ btrfs_subvolumes_str=$(declare -p BTRFS_SUBVOLUMES | sed 's/declare -A BTRFS_SUB
 sed -i -E "/LVM_VOLUMES=/ s|.*|# &\nLVM_VOLUMES=($lvm_volumes_str)|" "$NEW_SCRIPT_4REMOVE"
 sed -i -E "/BTRFS_SUBVOLUMES=/ s|.*|# &\nBTRFS_SUBVOLUMES=$btrfs_subvolumes_str|" "$NEW_SCRIPT_4REMOVE"
 
-i=0;
-for row in "${ALL_NEW_POINTS[@]}"; do
-    ((i++))
-    echo "$i. Проводим операции, связанные с точкой монтирования \"${current_row["mount_point"]}\" "
-    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
-    #case для различных значения ${current_row["type"]}
-
-    # Разбивка строки с разделителем "_in_" и запись значений в переменные
-    spaced_names="${current_row["name"]//_in_/ }"
-    # Преобразуем строку в массив по пробелам
-    read -r -a names <<< "$spaced_names"
-
-    echo "Обработка типа: ${current_row["type"]}"
-    case "${current_row["type"]}" in
-        "format_ext4")            
-            # команды для обработки format_ext4
-            ext4_path=${current_row["name"]}
-            echo "Путь к разделу с ext4: $ext4_path"
-            ;;
-        "new_subvol_in_btrfs")
-            
-            # команды для обработки new_subvol_in_btrfs
-            subvol_name="${names[0]}"
-            btrfs_path="${names[1]}"
-            echo "Имя субтома Btrfs: $subvol_name"
-            echo "Путь к разделу Btrfs: $btrfs_path"
-            ;;
-        "new_subvol_in_btrfs_in_lvm")
-            # команды для обработки new_subvol_in_btrfs_in_lvm
-            
-            subvol_name="${names[0]}"
-            lv_name="${names[1]}"
-            lvm_path="${names[2]}"
-            echo "Имя субтома Btrfs: $subvol_name"
-            echo "Логический том LVM (btrfs): $lv_name"
-            echo "Путь к разделу LVM: $lvm_path"
-
-            ;;
-        "new_ext4_in_lvm")
-            
-            # команды для обработки new_ext4_in_lvm
-            lv_name="${names[0]}"
-            lvm_path="${names[1]}"
-
-            echo "Логический том LVM (ext4): $lv_name"
-            echo "Путь к разделу LVM: $lvm_path"
-            
-            ;;
-        *)
-            echo "Неизвестный тип: ${current_row["type"]}" >&2
-            exit 1
-            ;;
-    esac
-    echo ""
-done
 
 read -p "Нажмите Enter для выхода..."
 
