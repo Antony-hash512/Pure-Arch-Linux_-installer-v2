@@ -12,6 +12,12 @@ fi
 # откуда устанавливается система
 INSTALL_FROM="other_arch_system" # other_arch_system - с уже установленного Арча, iso - с LiveCD/DVD/USB
 
+# случаи для legacy будут добавлены потом
+EFI_DEV="/dev/nvme0n1p1"
+EFI_LOCATION_4INSTALL_FROM="/boot/efi" #только для случая other_arch_system
+EFI_NEW_LOCATION="/boot/efi" # точка монтирования для efi в новой системе
+
+
 : <<'COMMENT'
 Примеры использования:
 declare -A new_point0=(
@@ -33,6 +39,10 @@ declare -A new_point1=(
 * возможные значение crypt_mode: (для format_ext4, new_subvol_in_btrfs): none, file, pwd, (для new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm): none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none: (случаи двойного шифорования не рассматриваем из-за избыточности такого действия), file или pwd - какой метод расшифровки будет использован при загрузке системы файл с ключём или пароль?
 * keyfile: путь к файлу ключа (где создать или откуда использовать), требуется только при использовании опции с file
 * name: название(я) тома(oв) и/или раздела (для вложенной структуры нужно использовать разделение "_in_" например: @arch_system42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8)
+
+для уже существующих разделов значения type немного отличаются:
+in_main_gpt, subvol_in_btrfs, subvol_in_btrfs_in_lvm, volume_in_lvm
+
 COMMENT
 
 # Создаём ассоциативные массивы для каждой строки "двумерного" массива
@@ -51,7 +61,41 @@ declare -A new_point1=(
     ["crypt_mode"]="none_in_none" 
     ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
 )
+# далее задаём точки монтирования уже существующих разделов
+declare -A extra_point1=(
+    ["mount_point"]="/ntfs/c" 
+    ["type"]="in_main_gpt" 
+    ["crypt_mode"]="none" 
+    ["name"]="/dev/nvme0n1p2"
+)
+
+
 #===============конец настроек=============================================================
+
+#Обновление времени
+timedatectl set-ntp true
+
+if [[ $INSTALL_FROM =="iso" ]]
+    echo "test тест"
+    setfont cyr-sun16
+    echo "test тест"
+fi
+
+#этот шаг нужен, если установка идёт с уже установленной системы
+if [[ $INSTALL_FROM =="other_arch_system" ]]
+    umount $EFI_LOCATION_4INSTALL_FROM
+fi
+
+# Скачивание нужных для установки пакетов
+pacman -Suy
+packages=("arch-install-scripts" "sed" "grep" "util-linux")
+
+for pkg in "${packages[@]}"; do
+    if ! pacman -Qi "$pkg" &>/dev/null; then
+        sudo pacman -S "$pkg" --noconfirm
+    fi
+done
+# "lvm2" "cryptsetup" - будут установлены позже, если будут нужны
 
 # Получаем путь к каталогу, где находится скрипт
 script_dir=$(dirname "${BASH_SOURCE[0]}")
@@ -59,6 +103,11 @@ script_dir=$(dirname "${BASH_SOURCE[0]}")
 # Определяем количество массивов вида new_pointX автоматически
 ALL_NEW_POINTS=()
 for var in $(compgen -A variable | grep -E '^new_point[0-9]+$'); do
+    ALL_NEW_POINTS+=("$var")
+done
+
+ALL_EXTRA_POINTS=()
+for var in $(compgen -A variable | grep -E '^extra_point[0-9]+$'); do
     ALL_NEW_POINTS+=("$var")
 done
 
@@ -71,7 +120,7 @@ read -p "Enter - продолжить; ctrl+C - прервать"
 LVM_VOLUMES=()
 declare -A BTRFS_SUBVOLUMES
 
-#определяем как там заданы массивы в одну строчку для нет
+#определяем как там заданы массивы в одну строчку или нет
 lvm_single_line=''
 btrfs_single_line=''
 
@@ -172,7 +221,7 @@ echo "Корневой каталог должен быть первым, а в�
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
 read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
-NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
+NEW_SCRIPT_4REMOVE="$script_dir/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
 cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
 # Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
@@ -180,7 +229,6 @@ lvm_volumes_str=""
 for volume in "${LVM_VOLUMES[@]}"; do
     lvm_volumes_str+="    \"$volume\"\n"
 done
-
 
 # Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=("значения")
 btrfs_subvolumes_str=""
@@ -239,9 +287,18 @@ done <<< "$btrfs_subvolumes_str"
 
 
 #продолжаем дописывать скрипт
+: <<'TODO'
+* добавить монтирование уже существующих разделов (в процессе)
+* в отдельных кейсах добавить действия по установке
 
 
 
 
-read -p "Нажмите Enter для выхода..."
+TODO
 
+echo "ALL DONE"
+if [[ $INSTALL_FROM =="other_arch_system" ]]
+    mount $EFI_DEV $EFI_LOCATION_4INSTALL_FROM
+    echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
+    read -p "Нажмите Enter для выхода..."
+fi
