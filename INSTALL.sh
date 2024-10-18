@@ -48,25 +48,6 @@ declare -A new_point1=(
     ["crypt_mode"]="none_in_none" 
     ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
 )
-declare -A new_point2=(
-    ["mount_point"]="/mnt/1" 
-    ["type"]="new_ext4_in_lvm" 
-    ["crypt_mode"]="none_in_none" 
-    ["name"]="/dev/mainvg/disk1_in_/dev/nvme0n1p8"
-)
-
-declare -A new_point3=(
-    ["mount_point"]="/mnt/2" 
-    ["type"]="new_ext4_in_lvm" 
-    ["crypt_mode"]="none_in_none" 
-    ["name"]="/dev/mainvg/disk2_in_/dev/nvme0n1p8"
-)
-declare -A new_point4=(
-    ["mount_point"]="/mnt/3" 
-    ["type"]="new_subvol_in_btrfs_in_lvm" 
-    ["crypt_mode"]="none_in_none" 
-    ["name"]="@disk3_in_/dev/mainvg/gigabox2_in_/dev/nvme0n1p8"
-)
 #===============конец настроек=============================================================
 
 # Получаем путь к каталогу, где находится скрипт
