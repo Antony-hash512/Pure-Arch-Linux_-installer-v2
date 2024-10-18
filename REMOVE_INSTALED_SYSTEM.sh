@@ -27,7 +27,7 @@ LVM_VOLUMES=(
 # Ассоциативный массив, где ключ — это устройство, а значение — массив с именами подтомов
 declare -A BTRFS_SUBVOLUMES
 BTRFS_SUBVOLUMES=(
-    ["/dev/mainvg/gigabox"]=("@arch_system" "@home_system")
+    ["/dev/mainvg/gigabox"]=("@arch_system @home_system")
 )
 
 EFI_NOTE_TO_DELETE=""
@@ -73,7 +73,8 @@ done
 
 echo "Удаляем подтома Btrfs..."
 for device in "${!BTRFS_SUBVOLUMES[@]}"; do
-    subvolumes=(${BTRFS_SUBVOLUMES[$device]})
+    #subvolumes=(${BTRFS_SUBVOLUMES[$device]})
+    read -r -a subvolumes <<< "${BTRFS_SUBVOLUMES[$device]}"
 
     echo "Монтируем $device в $MOUNT_POINT"
     sudo mount "$device" "$MOUNT_POINT"

@@ -49,6 +49,25 @@ declare -A new_point1=(
     ["crypt_mode"]="none_in_none" 
     ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
 )
+declare -A new_point2=(
+    ["mount_point"]="/mnt/1" 
+    ["type"]="new_ext4_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="/dev/mainvg/disk1_in_/dev/nvme0n1p8"
+)
+
+declare -A new_point3=(
+    ["mount_point"]="/mnt/2" 
+    ["type"]="new_ext4_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="/dev/mainvg/disk2_in_/dev/nvme0n1p8"
+)
+declare -A new_point4=(
+    ["mount_point"]="/mnt/3" 
+    ["type"]="new_subvol_in_btrfs_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="@disk3_in_/dev/mainvg/gigabox2_in_/dev/nvme0n1p8"
+)
 #===============конец настроек=============================================================
 
 # Получаем путь к каталогу, где находится скрипт
@@ -63,6 +82,12 @@ done
 lsblk
 echo "разделы должны быть созданы заранее вручную, автоматически создаются только тома на них"
 read -p "Enter - продолжить; ctrl+C - прервать"
+
+
+# Задаём массивы
+LVM_VOLUMES=()
+declare -A BTRFS_SUBVOLUMES
+
 
 # Обходим массивы, используя их имена
 i=0;
@@ -82,10 +107,6 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     spaced_names="${current_row["name"]//_in_/ }"
     # Преобразуем строку в массив по пробелам
     read -r -a names <<< "$spaced_names"
-
-    # Задаём массивы
-    LVM_VOLUMES=()
-    declare -A BTRFS_SUBVOLUMES
 
     case "${current_row["type"]}" in
         "format_ext4")            
@@ -151,27 +172,44 @@ NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(da
 cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
 # Создаём массив строк для LVM_VOLUMES и BTRFS_SUBVOLUMES
-lvm_volumes_str=$(printf "%s\n" "${LVM_VOLUMES[@]}")
+lvm_volumes_str=""
+for volume in "${LVM_VOLUMES[@]}"; do
+    lvm_volumes_str+="    \"$volume\"\n"
+done
+
 
 # Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=(значение)
 btrfs_subvolumes_str=""
 for key in "${!BTRFS_SUBVOLUMES[@]}"; do
-    btrfs_subvolumes_str+="[\"$key\"]=(${BTRFS_SUBVOLUMES[$key]})\n"
+    btrfs_subvolumes_str+="    [\"$key\"]=(\"${BTRFS_SUBVOLUMES[$key]}\")\n"
 done
+
+# Переводим символы новой строки (\n) в литеральные символы, чтобы sed корректно обработал
+lvm_volumes_str=$(echo -e "$lvm_volumes_str")
+btrfs_subvolumes_str=$(echo -e "$btrfs_subvolumes_str")
+
+# Экранируем все слеши в переменных, чтобы корректно работать с sed
+lvm_volumes_str=$(echo "$lvm_volumes_str" | sed 's/\//\\\//g')
+btrfs_subvolumes_str=$(echo "$btrfs_subvolumes_str" | sed 's/\//\\\//g')
+
 
 # Закомментируем строки, которые находятся между ^LVM_VOLUMES=( и ближайшей ^), но исключим первую строку и закрывающую скобку
 sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
 
-# Вставляем новые значения после строки ^LVM_VOLUMES=(
-sed -i "/^LVM_VOLUMES=(/a \\
-$(printf "%s\n" "${LVM_VOLUMES[@]}")" "$NEW_SCRIPT_4REMOVE"
+# Вставляем новые значения после строки ^LVM_VOLUMES=( не меняй двойной слеш на одиночный
+while IFS= read -r line; do
+    sed -i "/^LVM_VOLUMES=(/a \\
+$line" "$NEW_SCRIPT_4REMOVE"
+done <<< "$lvm_volumes_str"
 
 # Аналогично прошлому массиву для BTRFS_SUBVOLUMES
 sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
 
-# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(
-sed -i "/^BTRFS_SUBVOLUMES=(/a \\
-$btrfs_subvolumes_str" "$NEW_SCRIPT_4REMOVE"
+# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(  не меняй двойной слеш на одиночный
+while IFS= read -r line; do
+    sed -i "/^BTRFS_SUBVOLUMES=(/a \\
+$line" "$NEW_SCRIPT_4REMOVE"
+done <<< "$btrfs_subvolumes_str"
 
 read -p "Нажмите Enter для выхода..."
 
