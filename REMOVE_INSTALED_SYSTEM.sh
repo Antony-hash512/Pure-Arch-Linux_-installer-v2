@@ -18,10 +18,7 @@ MOUNT_POINT="/mnt/btrfs_mount_$(date +%Y%m%d_%H%M%S)"
 # )
 
 # Определение томов lvm для удаления
-LVM_VOLUMES=(
-    "/dev/mainvg/arch_system"
-    "/dev/mainvg/home_system"
-)
+LVM_VOLUMES=("/dev/mainvg/arch_system" "/dev/mainvg/home_system")
 
 # Определение сабволюмов btrfs для удаления
 # Ассоциативный массив, где ключ — это устройство, а значение — массив с именами подтомов

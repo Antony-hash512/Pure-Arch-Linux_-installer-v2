@@ -88,6 +88,28 @@ read -p "Enter - продолжить; ctrl+C - прервать"
 LVM_VOLUMES=()
 declare -A BTRFS_SUBVOLUMES
 
+lvm_single_line=''
+btrfs_single_line=''
+
+# Чтение файла и определение формата LVM_VOLUMES и BTRFS_SUBVOLUMES
+# в данном случае двойные слеши перед открывающей скобкой не нужны
+while IFS= read -r line; do
+    if [[ "$line" =~ ^LVM_VOLUMES=\(.*\)$ ]]; then
+        lvm_single_line='true'
+    elif [[ "$line" =~ ^LVM_VOLUMES=\([^\)]*$ ]]; then
+        lvm_single_line='false'
+    elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\(.*\)$ ]]; then
+        btrfs_single_line='true'
+    elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\([^\)]*$ ]]; then
+        btrfs_single_line='false'
+    fi
+done < "$script_dir/REMOVE_INSTALED_SYSTEM.sh"
+
+if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
+    echo "Ошибка: не найдены LVM_VOLUMES или BTRFS_SUBVOLUMES в скрипте REMOVE_INSTALED_SYSTEM.sh" >&2
+    exit 1
+fi
+
 
 # Обходим массивы, используя их имена
 i=0;
@@ -192,18 +214,40 @@ btrfs_subvolumes_str=$(echo -e "$btrfs_subvolumes_str")
 lvm_volumes_str=$(echo "$lvm_volumes_str" | sed 's/\//\\\//g')
 btrfs_subvolumes_str=$(echo "$btrfs_subvolumes_str" | sed 's/\//\\\//g')
 
+# закоменчиваем старые значения
+case "$lvm_single_line" in
+    'false')
+        sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    'true')
+        sed -i 's/^LVM_VOLUMES=(/LVM_VOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
+        sed -i '/^LVM_VOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    *)
+        echo "Ошибка: неизвестное значение для lvm_single_line" >&2
+        exit 1
+        ;;
+esac
 
-# Закомментируем строки, которые находятся между ^LVM_VOLUMES=( и ближайшей ^), но исключим первую строку и закрывающую скобку
-sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+case "$btrfs_single_line" in
+    'false')
+        sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    'true')
+        sed -i 's/^BTRFS_SUBVOLUMES=(/BTRFS_SUBVOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
+        sed -i '/^BTRFS_SUBVOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    *)
+        echo "Ошибка: неизвестное значение для btrfs_single_line" >&2
+        exit 1
+        ;;
+esac
 
 # Вставляем новые значения после строки ^LVM_VOLUMES=( не меняй двойной слеш на одиночный
 while IFS= read -r line; do
     sed -i "/^LVM_VOLUMES=(/a \\
 $line" "$NEW_SCRIPT_4REMOVE"
 done <<< "$lvm_volumes_str"
-
-# Аналогично прошлому массиву для BTRFS_SUBVOLUMES
-sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
 
 # Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(  не меняй двойной слеш на одиночный
 while IFS= read -r line; do
