@@ -9,6 +9,9 @@ else
     exit 1
 fi
 
+# откуда устанавливается система
+INSTALL_FROM="other_arch_system" # other_arch_system - с уже установленного Арча, iso - с LiveCD/DVD/USB
+
 : <<'COMMENT'
 Примеры использования:
 declare -A new_point0=(
@@ -64,15 +67,14 @@ echo "разделы должны быть созданы заранее вру�
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 
-# Задаём массивы
+# Задаём массивы для последующей записи в дополнительно созданый скрипт для удаления системы
 LVM_VOLUMES=()
 declare -A BTRFS_SUBVOLUMES
 
+#определяем как там заданы массивы в одну строчку для нет
 lvm_single_line=''
 btrfs_single_line=''
 
-# Чтение файла и определение формата LVM_VOLUMES и BTRFS_SUBVOLUMES
-# в данном случае двойные слеши перед открывающей скобкой не нужны
 while IFS= read -r line; do
     if [[ "$line" =~ ^LVM_VOLUMES=\(.*\)$ ]]; then
         lvm_single_line='true'
@@ -173,14 +175,14 @@ read -p "Введите имя установки (будет использов
 NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
 cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
-# Создаём массив строк для LVM_VOLUMES и BTRFS_SUBVOLUMES
+# Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
 lvm_volumes_str=""
 for volume in "${LVM_VOLUMES[@]}"; do
     lvm_volumes_str+="    \"$volume\"\n"
 done
 
 
-# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=(значение)
+# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=("значения")
 btrfs_subvolumes_str=""
 for key in "${!BTRFS_SUBVOLUMES[@]}"; do
     btrfs_subvolumes_str+="    [\"$key\"]=(\"${BTRFS_SUBVOLUMES[$key]}\")\n"
@@ -223,17 +225,23 @@ case "$btrfs_single_line" in
         ;;
 esac
 
-# Вставляем новые значения после строки ^LVM_VOLUMES=( не меняй двойной слеш на одиночный
+# Вставляем новые значения после строки ^LVM_VOLUMES=( 
 while IFS= read -r line; do
     sed -i "/^LVM_VOLUMES=(/a \\
 $line" "$NEW_SCRIPT_4REMOVE"
 done <<< "$lvm_volumes_str"
 
-# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(  не меняй двойной слеш на одиночный
+# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=( 
 while IFS= read -r line; do
     sed -i "/^BTRFS_SUBVOLUMES=(/a \\
 $line" "$NEW_SCRIPT_4REMOVE"
 done <<< "$btrfs_subvolumes_str"
+
+
+#продолжаем дописывать скрипт
+
+
+
 
 read -p "Нажмите Enter для выхода..."
 
