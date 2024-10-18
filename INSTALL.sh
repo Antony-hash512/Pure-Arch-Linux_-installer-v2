@@ -1,175 +1,258 @@
 #!/bin/bash
-#!/bin/bash
 
-# Проверка версии Bash
-if [[ ${BASH_VERSINFO[0]} -lt 4 ]]; then
-    printf "Требуется Bash версии 4.0 или выше. Текущая версия: %s\n" "${BASH_VERSION}" >&2
+echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+echo ""
+if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
+    :
+else
+    echo "Требуется Bash версии 4.3 или выше" >&2
     exit 1
 fi
 
-# Если версия Bash подходит, продолжаем выполнение скрипта
-printf "Bash версии %s.\n" "${BASH_VERSION}"
+: <<'COMMENT'
+Примеры использования:
+declare -A new_point0=(
+    ["mount_point"]="/" 
+    ["type"]="new_subvol_in_btrfs_in_lvm" 
+    ["crypt_mode"]="pwd_in_none" 
+    ["name"]="@arch_system_test42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
+)
 
+declare -A new_point1=(
+    ["mount_point"]="/home" 
+    ["type"]="new_subvol_in_btrfs_in_lvm" 
+    ["crypt_mode"]="key_in_none" 
+    ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
+    ["keyfile"]=/etc/home.key
+)
 
+* возможные значения type: format_ext4, new_subvol_in_btrfs, new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm
+* возможные значение crypt_mode: (для format_ext4, new_subvol_in_btrfs): none, file, pwd, (для new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm): none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none: (случаи двойного шифорования не рассматриваем из-за избыточности такого действия), file или pwd - какой метод расшифровки будет использован при загрузке системы файл с ключём или пароль?
+* keyfile: путь к файлу ключа (где создать или откуда использовать), требуется только при использовании опции с file
+* name: название(я) тома(oв) и/или раздела (для вложенной структуры нужно использовать разделение "_in_" например: @arch_system42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8)
+COMMENT
 
-# Этот скрипт предназначен для автоматической установки Arch Linux планируется сделать его универсальным
+# Создаём ассоциативные массивы для каждой строки "двумерного" массива
+# C именем new_point+число
+# корневой каталог должен быть первым, а вложенные быть после родительских
+declare -A new_point0=(
+    ["mount_point"]="/" 
+    ["type"]="new_subvol_in_btrfs_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="@arch_system_test42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
+)
 
-# Убедитесь, что вы выполняете этот скрипт от имени суперпользователя (root)
+declare -A new_point1=(
+    ["mount_point"]="/home" 
+    ["type"]="new_subvol_in_btrfs_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
+)
+declare -A new_point2=(
+    ["mount_point"]="/mnt/1" 
+    ["type"]="new_ext4_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="/dev/mainvg/disk1_in_/dev/nvme0n1p8"
+)
 
-# установка переменых с логической смысловой нагрузкой
-#пока скрип планируется использовать только для UEFI, поддержка legacy будет добавлена потом
+declare -A new_point3=(
+    ["mount_point"]="/mnt/2" 
+    ["type"]="new_ext4_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="/dev/mainvg/disk2_in_/dev/nvme0n1p8"
+)
+declare -A new_point4=(
+    ["mount_point"]="/mnt/3" 
+    ["type"]="new_subvol_in_btrfs_in_lvm" 
+    ["crypt_mode"]="none_in_none" 
+    ["name"]="@disk3_in_/dev/mainvg/gigabox2_in_/dev/nvme0n1p8"
+)
+#===============конец настроек=============================================================
 
-# откуда устанавливается система
-INSTALL_FROM="other_arch_system" # other_arch_system - с уже установленного Арча, iso - с LiveCD/DVD/USB
-# эта опция влияет на омонтирования EFI-раздела и обратного примонтирования его
+# Получаем путь к каталогу, где находится скрипт
+script_dir=$(dirname "${BASH_SOURCE[0]}")
 
-# Для списка разделов, которые нужно будет создать будем использовать массивы
-# Своп будет настраватся отдельно: опция для него:
-# Думаю не стоит реализовывать т.к. своп можно настроить уже после установки, но если будет свободное время, то можно
-# 1) не использовать 2) прописать в fstab уже существующий  3) создать новый внутри lvm  4) создать новый в указанном разделе (осторожно) 5) создать новый ввиде файла (пока не буду реализовывать)
-# Каждый элемент массива должен обязательно включать в себя следующую инфу:
-# сначала будут перечислены ситуации, которые могут понадобится лично мне, остальные возможно будут добавлены потому
-# 0) точка монтирования
-# 1) Тип расположения точки монирования: уже созданый отдельный раздел для форматирования в ext4(зашифровать?), создать сабволюм на уже созданом btrfs(зашифрован?), создать сабволюм на уже созданом btrfs(зашифрован?) внутри уже созданного lvm(зашифрован?), создать том ext4(зашифровать?) в уже созданом lvm(зашифрован?)
-# возможные значения: format_ext4, new_subvol_in_btrfs, new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm
-# возможные значение для инфы о шифровании: (для format_ext4, new_subvol_in_btrfs): none, key, file, (для new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm): none_in_none, none_in_key, none_in_file, key_in_none, file_in_none (случаи двойного шифорования не рассматриваем из-за избыточности такого действия), key или file - какой метод расшифровки будет использован при загрузке системы?
-# если выбран ключ, то путь к нему нужно указать вручную в ходе выполнения скрипта, в данный момент будет считать так
-# 2) название тома и/или раздела (для вложенной структуры нужно использовать разделение "_in_" например: @arch_system42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8)
-# 3) указываем путь ключу, если его нужно создать или использовать уже готовый для расшифровки
+# Определяем количество массивов вида new_pointX автоматически
+ALL_NEW_POINTS=()
+for var in $(compgen -A variable | grep -E '^new_point[0-9]+$'); do
+    ALL_NEW_POINTS+=("$var")
+done
 
-# Объявление ассоциативного массива для имитации вложенного массива
-declare -A new_mount_points
-new_mount_points[0]="/ new_subvol_in_btrfs_in_lvm none_in_none @arch_system_test42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
-new_mount_points[1]="/home new_subvol_in_btrfs_in_lvm none_in_none @arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
-
-
-#Второй список содержит список уже созданых разделов, которые нужно просто смонтировать и прописать в fstab
-#вводим в таком же формате: 0) точка монтирования, 1) тип расположения 2) название раздела(+ сабволюма, тома) 3) путь ключу (если используется ключ)  
-
-
-# Часть данных устарело но пока не буду удалять пока всё не переделаю
-# Установка переменных
-VG_NAME="mainvg"  # Укажите имя существующей группы томов
-LV_ROOT="mining_randomx"  # Имя логического тома для корня
-EFI_DEV="/dev/nvme0n1p1"
-BTRFS_BOOT_DEV="/dev/nvme0n1p9"
-BTRFS_BOOT_SUBVOL="@mining_randomx_boot"
-
-ROOT_VOLUME_SIZE="10G"
-EXTRA_VOLUME_UUID="5fabedda-b832-4509-af6a-014f56e5e502" # если экстра-раздала с блокчейном монеро нет, то размер в 10G надо изменить на приемлемый
-
-SOFT_PACK2="networkmanager btrfs-progs nano vim mc man-db less htop tmux monero p2pool xmrig ntfs-3g dosfstools lvm2 cryptsetup"
-
-
-#Обновление времени
-timedatectl set-ntp true
-
-echo "test тест"
-setfont cyr-sun16
-echo "test тест"
-
-# Вывод информации о блочных устройствах
 lsblk
-echo "указано: EFI: $EFI_DEV, Btrfs-раздел для добавления в него бута: $BTRFS_BOOT_DEV, группа томов LVM: $VG_NAME (всё это должно быть уже созданно)"
-echo "то будет создано: $BTRFS_BOOT_SUBVOL - том для бута в btrfs, $LV_ROOT - том в LVM, эти имена должны быть не заняты"
-echo "если разделы правильно не подготовлены нажми cltr+C для прерывания скрипта и подготовь разделы"
-read EMPTY
+echo "разделы должны быть созданы заранее вручную, автоматически создаются только тома на них"
+read -p "Enter - продолжить; ctrl+C - прервать"
 
-#этот шаг нужен, если установка идёт с уже установленной системы
-umount /boot/efi
 
-# Скачивание нужных для установки пакетов
-pacman -Suy
-packages=("arch-install-scripts" "lvm2" "cryptsetup")
+# Задаём массивы
+LVM_VOLUMES=()
+declare -A BTRFS_SUBVOLUMES
 
-for pkg in "${packages[@]}"; do
-    if ! pacman -Qi "$pkg" &>/dev/null; then
-        sudo pacman -S "$pkg" --noconfirm
+lvm_single_line=''
+btrfs_single_line=''
+
+# Чтение файла и определение формата LVM_VOLUMES и BTRFS_SUBVOLUMES
+# в данном случае двойные слеши перед открывающей скобкой не нужны
+while IFS= read -r line; do
+    if [[ "$line" =~ ^LVM_VOLUMES=\(.*\)$ ]]; then
+        lvm_single_line='true'
+    elif [[ "$line" =~ ^LVM_VOLUMES=\([^\)]*$ ]]; then
+        lvm_single_line='false'
+    elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\(.*\)$ ]]; then
+        btrfs_single_line='true'
+    elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\([^\)]*$ ]]; then
+        btrfs_single_line='false'
     fi
+done < "$script_dir/REMOVE_INSTALED_SYSTEM.sh"
+
+if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
+    echo "Ошибка: не найдены LVM_VOLUMES или BTRFS_SUBVOLUMES в скрипте REMOVE_INSTALED_SYSTEM.sh" >&2
+    exit 1
+fi
+
+
+# Обходим массивы, используя их имена
+i=0;
+for row in "${ALL_NEW_POINTS[@]}"; do
+    ((i++))
+    number=$(echo "$row" | grep -o '[0-9]\+')
+    echo "$i. (Номер из после \"new_point\": $number)"
+    
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    echo "Точка монтирования: ${current_row["mount_point"]}"
+    echo "Тип размещения: ${current_row["type"]}"
+    echo "Опция Шифрования: ${current_row["crypt_mode"]}"
+    echo "Имя (Имена) раздела/томов: ${current_row["name"]}"
+    echo ""
+
+    # Разбивка строки с разделителем "_in_" и запись значений в переменные
+    spaced_names="${current_row["name"]//_in_/ }"
+    # Преобразуем строку в массив по пробелам
+    read -r -a names <<< "$spaced_names"
+
+    case "${current_row["type"]}" in
+        "format_ext4")            
+            # команды для обработки format_ext4
+            ext4_path=${current_row["name"]}
+            echo "Путь к разделу с ext4: $ext4_path"
+            ;;
+        "new_subvol_in_btrfs")
+            
+            # команды для обработки new_subvol_in_btrfs
+            subvol_name="${names[0]}"
+            btrfs_path="${names[1]}"
+            echo "Имя субтома Btrfs: $subvol_name"
+            echo "Путь к разделу Btrfs: $btrfs_path"
+            
+            if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
+                BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
+            else
+                BTRFS_SUBVOLUMES["$btrfs_path"]="$subvol_name"
+            fi
+            ;;
+        "new_subvol_in_btrfs_in_lvm")
+            # команды для обработки new_subvol_in_btrfs_in_lvm
+            
+            subvol_name="${names[0]}"
+            lv_name="${names[1]}"
+            lvm_path="${names[2]}"
+            echo "Имя субтома Btrfs: $subvol_name"
+            echo "Логический том LVM (btrfs): $lv_name"
+            echo "Путь к разделу LVM: $lvm_path"
+
+            if [[ -v BTRFS_SUBVOLUMES["$lv_name"] ]]; then
+                BTRFS_SUBVOLUMES["$lv_name"]+=" $subvol_name"
+            else
+                BTRFS_SUBVOLUMES["$lv_name"]="$subvol_name"
+            fi
+            ;;
+        "new_ext4_in_lvm")
+            
+            # команды для обработки new_ext4_in_lvm
+            lv_name="${names[0]}"
+            lvm_path="${names[1]}"
+            echo "Логический том LVM (ext4): $lv_name"
+            echo "Путь к разделу LVM: $lvm_path"
+            
+            # Добавляем lv_name в массив LVM_VOLUMES
+            LVM_VOLUMES+=("$lv_name")
+            ;;
+        *)
+            echo "Неизвестный тип: ${current_row["type"]}" >&2
+            exit 1
+            ;;
+    esac
+    printf "\n\n\n"
+done
+
+echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
+echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
+read -p "Enter - продолжить; ctrl+C - прервать"
+echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
+read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
+NEW_SCRIPT_4REMOVE="$script_dir/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
+cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
+
+# Создаём массив строк для LVM_VOLUMES и BTRFS_SUBVOLUMES
+lvm_volumes_str=""
+for volume in "${LVM_VOLUMES[@]}"; do
+    lvm_volumes_str+="    \"$volume\"\n"
 done
 
 
-# Создание новых логических томов
-echo "ВНИМАНИЕ! YES нужно будет написать ЗАГЛАВНЫМИ буквами"
-lvcreate -L $ROOT_VOLUME_SIZE $VG_NAME -n $LV_ROOT
+# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=(значение)
+btrfs_subvolumes_str=""
+for key in "${!BTRFS_SUBVOLUMES[@]}"; do
+    btrfs_subvolumes_str+="    [\"$key\"]=(\"${BTRFS_SUBVOLUMES[$key]}\")\n"
+done
 
-# Шифрование логических томов
-cryptsetup luksFormat /dev/$VG_NAME/$LV_ROOT
+# Переводим символы новой строки (\n) в литеральные символы, чтобы sed корректно обработал
+lvm_volumes_str=$(echo -e "$lvm_volumes_str")
+btrfs_subvolumes_str=$(echo -e "$btrfs_subvolumes_str")
 
-# Открытие зашифрованных томов
-cryptsetup open /dev/$VG_NAME/$LV_ROOT cryptroot
+# Экранируем все слеши в переменных, чтобы корректно работать с sed
+lvm_volumes_str=$(echo "$lvm_volumes_str" | sed 's/\//\\\//g')
+btrfs_subvolumes_str=$(echo "$btrfs_subvolumes_str" | sed 's/\//\\\//g')
 
-# Форматирование логических томов
-mkfs.ext4 /dev/mapper/cryptroot
+# закоменчиваем старые значения
+case "$lvm_single_line" in
+    'false')
+        sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    'true')
+        sed -i 's/^LVM_VOLUMES=(/LVM_VOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
+        sed -i '/^LVM_VOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    *)
+        echo "Ошибка: неизвестное значение для lvm_single_line" >&2
+        exit 1
+        ;;
+esac
 
-# Монтирование файловой системы в /mnt/system_installing
-mkdir -p /mnt/system_installing
-mount /dev/mapper/cryptroot /mnt/system_installing
+case "$btrfs_single_line" in
+    'false')
+        sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    'true')
+        sed -i 's/^BTRFS_SUBVOLUMES=(/BTRFS_SUBVOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
+        sed -i '/^BTRFS_SUBVOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
+        ;;
+    *)
+        echo "Ошибка: неизвестное значение для btrfs_single_line" >&2
+        exit 1
+        ;;
+esac
 
-# Создание каталогов для будущих монтирований
-mkdir -p /mnt/system_installing/boot
+# Вставляем новые значения после строки ^LVM_VOLUMES=( не меняй двойной слеш на одиночный
+while IFS= read -r line; do
+    sed -i "/^LVM_VOLUMES=(/a \\
+$line" "$NEW_SCRIPT_4REMOVE"
+done <<< "$lvm_volumes_str"
 
+# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=(  не меняй двойной слеш на одиночный
+while IFS= read -r line; do
+    sed -i "/^BTRFS_SUBVOLUMES=(/a \\
+$line" "$NEW_SCRIPT_4REMOVE"
+done <<< "$btrfs_subvolumes_str"
 
-# Монтирование Btrfs-раздела и создание подтома для /boot
-# (можно пропустить, если подтом уже создан)
-mkdir -p /mnt/btrfs
-mount $BTRFS_BOOT_DEV /mnt/btrfs
-btrfs subvolume create /mnt/btrfs/$BTRFS_BOOT_SUBVOL
-umount /mnt/btrfs
+read -p "Нажмите Enter для выхода..."
 
-# Монтирование подтома для /boot
-mount -o subvol=$BTRFS_BOOT_SUBVOL $BTRFS_BOOT_DEV /mnt/system_installing/boot
-
-
-# Монтирование EFI-раздела
-mkdir -p /mnt/system_installing/boot/efi
-mount $EFI_DEV /mnt/system_installing/boot/efi
-
-# Установка базовой системы
-pacstrap /mnt/system_installing base linux linux-firmware btrfs-progs lvm2 cryptsetup
-
-# Генерация fstab
-genfstab -U /mnt/system_installing >> /mnt/system_installing/etc/fstab
-
-mkdir /mnt/system_installing/mnt/extra1
-echo "UUID=$EXTRA_VOLUME_UUID	/mnt/extra1    	ext4      	rw,relatime	0 2" >> /mnt/system_installing/etc/fstab
-
-#Настройка зашифрованного раздела
-echo "cryptroot UUID=$(blkid -s UUID -o value /dev/$VG_NAME/$LV_ROOT) none luks" > /mnt/system_installing/etc/crypttab
-
-echo "GRUB_CMDLINE_LINUX=\"cryptdevice=/dev/$VG_NAME/$LV_ROOT:cryptroot root=/dev/mapper/cryptroot\"" >> /mnt/system_installing/etc/default/grub
-
-
-
-#получение имени каталога
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
-#копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
-cp $SCRIPT_DIR/run_inside_chroot.sh /mnt/system_installing
-#копирование файла README
-cp $SCRIPT_DIR/homefiles.tar.gz /mnt/system_installing
-
-
-#-------------------------------
-# Chroot в новую систему
-arch-chroot /mnt/system_installing /bin/bash -c "./run_inside_chroot.sh \"$SOFT_PACK2\""
-#-------------------------------
-
-
-#удаляем выполнившуюся в chroot'е копию второго скрипта
-rm /mnt/system_installing/run_inside_chroot.sh 
-
-
-# Отмонтирование 
-umount -R /mnt/system_installing
-
-#только если установка была с уже установленной системы
-mount $EFI_DEV /boot/efi
-
-cryptsetup close cryptroot
-
-echo "ALL DONE"
-
-echo "Если загрузчик установлен другим линуксом, не забудь выполнить в нём update-grub (или grub-mkconfig -o /boot/grub/grub.cfg)"
-
-# Перезагрузка
-echo "Установка завершена. Перезагрузите компьютер."
