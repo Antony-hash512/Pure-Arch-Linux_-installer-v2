@@ -176,6 +176,8 @@ for pkg in "${packages[@]}"; do
 done
 # "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
+# можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
+
 
 # Получаем путь к каталогу, где находится скрипт
 script_dir=$(dirname "${BASH_SOURCE[0]}")
@@ -373,15 +375,21 @@ TODO
 
 #начанаем выполять действия по установке
 
+INST_DIR="/mnt/system_installing"
 
-mkdir -p /mnt/system_installing
+mkdir -p $INST_DIR 
 #можно также добавить проверку, что этот каталог не смонтирован
+
+
+
 for row in "${ALL_NEW_POINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
      # Разбивка строки с разделителем "_in_" и запись значений в переменные
     spaced_names="${current_row["name"]//_in_/ }"
     # Преобразуем строку в массив по пробелам
     read -r -a names <<< "$spaced_names"
+
+    mount_point = ${current_row["mount_point"]}
 
     case "${current_row["type"]}" in
         "format_ext4")            
@@ -399,11 +407,13 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             if ! pacman -Qi "$pkg" &>/dev/null; then
                 pacman -S "$pkg" --noconfirm
             fi
+
+            mkdir -p $INST_DIR$mount_point
             
             case "${current_row["crypt_mode"]}" in
                 "none_in_none")
                     :
-                    mount -o subvol=$subvol_name $lv_name /mnt/system_installing${current_row["mount_point"]}
+                    mount -o subvol=$subvol_name $lv_name $INST_DIR$mount_point
                     ;;
                 "none_in_file")
                     :
@@ -436,6 +446,33 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     
 
 done
+
+mkdir -p $INST_DIR$EFI_NEW_LOCATION
+mount $EFI_DEV $INST_DIR$EFI_NEW_LOCATION
+
+# Установка основных пакетов
+pacstrap $INST_DIR $SOFT_PACK1
+
+# Генерация fstab
+genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
+
+#получение имени каталога
+#SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
+#копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
+cp $script_dir/run_inside_chroot.sh $INST_DIR
+
+#TODO: копирование и распоковка спец-архивов
+
+arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFT_PACK2\""
+#-------------------------------
+
+#удаляем выполнившуюся в chroot'е копию второго скрипта
+rm $INST_DIR/run_inside_chroot.sh 
+
+# Размонтирование всех разделов
+umount -R $INST_DIR
+
 
 echo "ALL DONE"
 if [[ $INSTALL_FROM =="other_arch_system" ]]
