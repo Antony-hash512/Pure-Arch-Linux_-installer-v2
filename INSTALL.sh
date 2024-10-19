@@ -76,19 +76,20 @@ declare -A extra_point1=(
     ["crypt_mode"]="none" 
     ["name"]="/dev/nvme0n1p2"
 )
-
+#здесь можно настроить какие пакеты нужно установить вместе с системой
+#софт для установки сразу (настоятельно рекомендуется оставить самый необходимый минимум т.к. наличие пакетов здесь не проверяется по отдельности как SOFT_PACK2)
 SOFT_PACK1="base base-devel linux linux-firmware"
-#софт, котороый будет установлен на новую систему
+#софт, который будет установлен на новую систему (тоже сразу, но уже pacman'ом)
 SOFT_PACK2="networkmanager btrfs-progs nano mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift"
 
-
+#дополнительные списки пакетов, которые можно включать и выключать ниже
 SOFT_PACK2E="curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo"
 SOFT_PACK2F="neofetch cowsay"
 SOFT_PACK2A="alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer"
 SOFT_PACK2B="bluez bluez-utils blueman"
 SOFT_PACK2G="openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet \
 obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal"
-# TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия)
+# TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия); gsimplecal - мини-календарь
 SOFT_PACK2D="meld geany gtksourceview5"
 SOFT_PACK2C="vimdiff, vim, emacs, diff3"
 SOFT_PACK2H="firefox chromium vlc viewnior xfce4-screenshooter engrampa"
