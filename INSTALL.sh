@@ -43,6 +43,14 @@ declare -A new_point1=(
 для уже существующих разделов значения type немного отличаются:
 in_main_gpt, subvol_in_btrfs, subvol_in_btrfs_in_lvm, volume_in_lvm
 
+пример:
+declare -A extra_point1=(
+    ["mount_point"]="/ntfs/c" 
+    ["type"]="in_main_gpt" 
+    ["crypt_mode"]="none" 
+    ["name"]="/dev/nvme0n1p2"
+)
+
 COMMENT
 
 # Создаём ассоциативные массивы для каждой строки "двумерного" массива
@@ -69,6 +77,76 @@ declare -A extra_point1=(
     ["name"]="/dev/nvme0n1p2"
 )
 
+SOFT_PACK1="base base-devel linux linux-firmware"
+#софт, котороый будет установлен на новую систему
+SOFT_PACK2="networkmanager btrfs-progs nano mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift"
+
+
+SOFT_PACK2E="curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo"
+SOFT_PACK2F="neofetch cowsay"
+SOFT_PACK2A="alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer"
+SOFT_PACK2B="bluez bluez-utils blueman"
+SOFT_PACK2G="openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet \
+obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal"
+# TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия)
+SOFT_PACK2D="meld geany gtksourceview5"
+SOFT_PACK2C="vimdiff, vim, emacs, diff3"
+SOFT_PACK2H="firefox chromium vlc viewnior xfce4-screenshooter engrampa"
+SOFT_PACK2L="midori feh scrot xarchiver xterm"
+SOFT_PACK20="tumbler menumaker conky pinta"
+SOFT_PACK21="maim menyoki"
+SOFT_PACK22="deluge deluge-gtk gimp inkscape krita timeshift-gtk obsidian"
+SOFT_PACK23="qemu-system-x86 virtmanager"
+SOFT_PACK24="i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig"
+SOFT_PACK25="libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity"
+SOFT_PACK26="stacer ananicy"
+
+: <<'TODO'
+Добавить свободные шрифты для:
+    Оформления часов на панеле
+    Отображения символов всех языков
+
+    проверить работоспособность menyoki (для записи видео, создания гифок) или maim(альтернатива scrot)
+    узнать подробнее про пакеты
+    viewnior — простой просмотрщик изображений.
+virtmanager — управление виртуальными машинами.
+stacer — мониторинг и оптимизация системы.
+ananicy — оптимизация приоритетов процессов.
+ffmpegthumbs — генерация миниатюр для видеофайлов.
+pureref (нету) — организация изображений для референсов.
+obs — запись экрана и стриминг.
+shotcut — видеоредактор с открытым исходным кодом.
+handbrake — конвертация видео.
+oceanaudio-bin — аудиоредактор.
+audacious — аудиоплеер.
+mediainfo-gui — анализ мультимедийных файлов.
+#https://www.youtube.com/watch?v=GPxzcaGErcM
+
+
+
+TODO
+
+
+#uncooment to install more soft:
+###########impotant#################
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2E"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2F"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2A"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2B"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2G"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2D"
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2C"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2H"
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2L"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK20"
+###########extra##################
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK21"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK22"
+SOFT_PACK2="$SOFT_PACK2 SOFT_PACK23"
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK24"
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK25"
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK26"
+
 
 #===============конец настроек=============================================================
 
@@ -88,14 +166,15 @@ fi
 
 # Скачивание нужных для установки пакетов
 pacman -Suy
-packages=("arch-install-scripts" "sed" "grep" "util-linux")
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
         sudo pacman -S "$pkg" --noconfirm
     fi
 done
-# "lvm2" "cryptsetup" - будут установлены позже, если будут нужны
+# "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
+# почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
 
 # Получаем путь к каталогу, где находится скрипт
 script_dir=$(dirname "${BASH_SOURCE[0]}")
@@ -145,11 +224,16 @@ fi
 # Обходим массивы, используя их имена
 i=0;
 for row in "${ALL_NEW_POINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    if [[ "$i" -eq 0 && "${current_row["mount_point"]}" != "/" ]]; then
+        echo "Ошибка: первой должна быть /" >&2
+        exit 1
+    fi
     ((i++))
     number=$(echo "$row" | grep -o '[0-9]\+')
     echo "$i. (Номер из после \"new_point\": $number)"
     
-    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    
     echo "Точка монтирования: ${current_row["mount_point"]}"
     echo "Тип размещения: ${current_row["type"]}"
     echo "Опция Шифрования: ${current_row["crypt_mode"]}"
@@ -163,13 +247,10 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
     case "${current_row["type"]}" in
         "format_ext4")            
-            # команды для обработки format_ext4
             ext4_path=${current_row["name"]}
             echo "Путь к разделу с ext4: $ext4_path"
             ;;
         "new_subvol_in_btrfs")
-            
-            # команды для обработки new_subvol_in_btrfs
             subvol_name="${names[0]}"
             btrfs_path="${names[1]}"
             echo "Имя субтома Btrfs: $subvol_name"
@@ -182,8 +263,6 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             fi
             ;;
         "new_subvol_in_btrfs_in_lvm")
-            # команды для обработки new_subvol_in_btrfs_in_lvm
-            
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
             lvm_path="${names[2]}"
@@ -198,8 +277,6 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             fi
             ;;
         "new_ext4_in_lvm")
-            
-            # команды для обработки new_ext4_in_lvm
             lv_name="${names[0]}"
             lvm_path="${names[1]}"
             echo "Логический том LVM (ext4): $lv_name"
@@ -291,10 +368,73 @@ done <<< "$btrfs_subvolumes_str"
 * добавить монтирование уже существующих разделов (в процессе)
 * в отдельных кейсах добавить действия по установке
 
-
-
-
 TODO
+
+#начанаем выполять действия по установке
+
+
+mkdir -p /mnt/system_installing
+#можно также добавить проверку, что этот каталог не смонтирован
+for row in "${ALL_NEW_POINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+     # Разбивка строки с разделителем "_in_" и запись значений в переменные
+    spaced_names="${current_row["name"]//_in_/ }"
+    # Преобразуем строку в массив по пробелам
+    read -r -a names <<< "$spaced_names"
+
+    case "${current_row["type"]}" in
+        "format_ext4")            
+            ext4_path=${current_row["name"]}
+
+        "new_subvol_in_btrfs")
+            subvol_name="${names[0]}"
+            btrfs_path="${names[1]}"
+            ;;
+        "new_subvol_in_btrfs_in_lvm")
+            subvol_name="${names[0]}"
+            lv_name="${names[1]}"
+            lvm_path="${names[2]}"
+
+            if ! pacman -Qi "$pkg" &>/dev/null; then
+                pacman -S "$pkg" --noconfirm
+            fi
+            
+            case "${current_row["crypt_mode"]}" in
+                "none_in_none")
+                    :
+                    mount -o subvol=$subvol_name $lv_name /mnt/system_installing${current_row["mount_point"]}
+                    ;;
+                "none_in_file")
+                    :
+                    ;;
+                "none_in_pwd")
+                    :
+                    ;;
+                "file_in_none")
+                    :
+                    ;;
+                "pwd_in_none")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
+            
+            ;;
+        "new_ext4_in_lvm")
+            lv_name="${names[0]}"
+            lvm_path="${names[1]}"
+            ;;
+        *)
+            echo "Неизвестный тип: ${current_row["type"]}" >&2
+            exit 1
+            ;;
+    esac
+    
+
+done
 
 echo "ALL DONE"
 if [[ $INSTALL_FROM =="other_arch_system" ]]
