@@ -1,5 +1,6 @@
 #!/bin/bash
 SOFT_PACK2=$1
+EFI_SYS_NAME=$2
 MY_UID="1000"
 #MY_TIMEZONE="Europe/Istanbul"
 MY_TIMEZONE="Asia/Dubai"
@@ -7,7 +8,6 @@ MY_LOCALE="en_US.UTF-8"
 
 
 read -p "Введите имя хоста: " HOSTNAME
-read -p "Введите имя загрузчика в EFI-разделе: " EFI_SYS_NAME
 
 
 # Установка часового пояса

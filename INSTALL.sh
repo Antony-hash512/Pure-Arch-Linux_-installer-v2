@@ -164,14 +164,11 @@ if [[ $INSTALL_FROM =="iso" ]]
     echo "test тест"
 fi
 
-#этот шаг нужен, если установка идёт с уже установленной системы
-if [[ $INSTALL_FROM =="other_arch_system" ]]
-    umount $EFI_LOCATION_4INSTALL_FROM
-fi
+
 
 # Скачивание нужных для установки пакетов
 pacman -Suy
-packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs")
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
@@ -369,6 +366,31 @@ while IFS= read -r line; do
 $line" "$NEW_SCRIPT_4REMOVE"
 done <<< "$btrfs_subvolumes_str"
 
+# Показываем пользователю список записей EFI
+efibootmgr
+
+# Запрашиваем имя нового загрузчика
+read -p "Введите имя нового загрузчика в EFI-разделе: " EFI_SYS_NAME
+
+# Проверяем уникальность имени и предлагаем варианты
+while true; do
+    if efibootmgr | grep -q "$EFI_SYS_NAME"; then
+        echo "Загрузчик с именем $EFI_SYS_NAME уже существует."
+        read -p "Хотите перезаписать существующий загрузчик? (type YES using Capital letters): " overwrite
+        if [[ $overwrite =~ ^YES$ ]]; then
+            echo "Будет выполнена перезапись существующего загрузчика."
+            break
+        else
+            read -p "Введите другое имя загрузчика в EFI-разделе: " EFI_SYS_NAME
+        fi
+    else
+        echo "Имя загрузчика $EFI_SYS_NAME уникально и будет использовано."
+        break
+    fi
+done
+
+# выполняем замену в копии файла REMOVE_INSTALED_SYSTEM.sh
+sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_SCRIPT_4REMOVE"
 
 #продолжаем дописывать скрипт
 : <<'TODO'
@@ -380,6 +402,11 @@ TODO
 #=======================================================================================
 
 #ВНИМАНИЕ! тут начинается непосредственно установка
+
+#этот шаг нужен, если установка идёт с уже установленной системы
+if [[ $INSTALL_FROM =="other_arch_system" ]]
+    umount $EFI_LOCATION_4INSTALL_FROM
+fi
 
 #добавляем к имени каталога текущую дату и время для уникальности
 INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
@@ -477,7 +504,8 @@ cp $SCRIPT_DIR/homefiles.tar.gz $INST_DIR
 
 #-------------------------------
 # Chroot в новую систему
-arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFT_PACK2\""
+# передаём в скрипт список пакетов и имя загрузчика в EFI-разделе
+arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFT_PACK2\" \"$EFI_SYS_NAME\""
 #-------------------------------
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта
@@ -496,4 +524,5 @@ if [[ $INSTALL_FROM =="other_arch_system" ]]
 else
     echo "Установка завершена. Перезагрузите компьютер."
 fi
+
 
