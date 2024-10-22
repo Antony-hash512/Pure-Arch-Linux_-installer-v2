@@ -70,6 +70,7 @@ declare -A new_point1=(
     ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
 )
 # далее задаём точки монтирования уже существующих разделов
+# будет реализовано позже
 declare -A extra_point1=(
     ["mount_point"]="/ntfs/c" 
     ["type"]="in_main_gpt" 
@@ -96,7 +97,7 @@ SOFT_PACK2H="firefox chromium vlc viewnior xfce4-screenshooter engrampa"
 SOFT_PACK2L="midori feh scrot xarchiver xterm"
 SOFT_PACK20="tumbler menumaker conky pinta"
 SOFT_PACK21="maim menyoki"
-SOFT_PACK22="deluge deluge-gtk gimp inkscape krita timeshift-gtk obsidian"
+SOFT_PACK22="deluge deluge-gtk gimp inkscape krita obsidian"
 SOFT_PACK23="qemu-system-x86 virtmanager"
 SOFT_PACK24="i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig"
 SOFT_PACK25="libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity"
@@ -124,6 +125,9 @@ mediainfo-gui — анализ мультимедийных файлов.
 #https://www.youtube.com/watch?v=GPxzcaGErcM
 
 
+   - Убедитесь, что все пакеты, 
+   перечисленные в этих переменных, доступны в репозиториях вашей системы. 
+   Вы можете проверить их наличие с помощью команды `pacman -Ss <package_name>`.
 
 TODO
 
@@ -180,7 +184,7 @@ done
 
 
 # Получаем путь к каталогу, где находится скрипт
-script_dir=$(dirname "${BASH_SOURCE[0]}")
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 # Определяем количество массивов вида new_pointX автоматически
 ALL_NEW_POINTS=()
@@ -216,7 +220,7 @@ while IFS= read -r line; do
     elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\([^\)]*$ ]]; then
         btrfs_single_line='false'
     fi
-done < "$script_dir/REMOVE_INSTALED_SYSTEM.sh"
+done < "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh"
 
 if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
     echo "Ошибка: не найдены LVM_VOLUMES или BTRFS_SUBVOLUMES в скрипте REMOVE_INSTALED_SYSTEM.sh" >&2
@@ -301,8 +305,8 @@ echo "Корневой каталог должен быть первым, а в�
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
 read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
-NEW_SCRIPT_4REMOVE="$script_dir/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
-cp "$script_dir/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
+NEW_SCRIPT_4REMOVE="$SCRIPT_DIR/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
+cp "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
 # Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
 lvm_volumes_str=""
@@ -370,15 +374,22 @@ done <<< "$btrfs_subvolumes_str"
 : <<'TODO'
 * добавить монтирование уже существующих разделов (в процессе)
 * в отдельных кейсах добавить действия по установке
+* дообавить все нужные файлы в архив homefiles.tar.gz
 
 TODO
+#=======================================================================================
 
-#начанаем выполять действия по установке
+#ВНИМАНИЕ! тут начинается непосредственно установка
 
-INST_DIR="/mnt/system_installing"
+#добавляем к имени каталога текущую дату и время для уникальности
+INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
 
 mkdir -p $INST_DIR 
-#можно также добавить проверку, что этот каталог не смонтирован
+#проверка, что этот каталог не смонтирован
+if mount | grep -q $INST_DIR; then
+    echo "Ошибка: каталог $INST_DIR уже смонтирован" >&2
+    exit 1
+fi
 
 
 
@@ -447,6 +458,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
 done
 
+#монтируем раздел EFI
 mkdir -p $INST_DIR$EFI_NEW_LOCATION
 mount $EFI_DEV $INST_DIR$EFI_NEW_LOCATION
 
@@ -456,14 +468,15 @@ pacstrap $INST_DIR $SOFT_PACK1
 # Генерация fstab
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
-#получение имени каталога
-#SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 #копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
-cp $script_dir/run_inside_chroot.sh $INST_DIR
+cp $SCRIPT_DIR/run_inside_chroot.sh $INST_DIR
 
-#TODO: копирование и распоковка спец-архивов
+#копирование и распоковка архива с файлами для домашнего каталога (будут распаковываны в chroot'е)
+cp $SCRIPT_DIR/homefiles.tar.gz $INST_DIR
 
+#-------------------------------
+# Chroot в новую систему
 arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFT_PACK2\""
 #-------------------------------
 
@@ -472,6 +485,7 @@ rm $INST_DIR/run_inside_chroot.sh
 
 # Размонтирование всех разделов
 umount -R $INST_DIR
+rm -rf $INST_DIR
 
 
 echo "ALL DONE"
@@ -479,4 +493,7 @@ if [[ $INSTALL_FROM =="other_arch_system" ]]
     mount $EFI_DEV $EFI_LOCATION_4INSTALL_FROM
     echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
     read -p "Нажмите Enter для выхода..."
+else
+    echo "Установка завершена. Перезагрузите компьютер."
 fi
+

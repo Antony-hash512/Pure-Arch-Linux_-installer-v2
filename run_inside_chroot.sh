@@ -1,13 +1,14 @@
 #!/bin/bash
 SOFT_PACK2=$1
 MY_UID="1000"
-MY_TIMEZONE="Europe/Istanbul"
+#MY_TIMEZONE="Europe/Istanbul"
+MY_TIMEZONE="Asia/Dubai"
 MY_LOCALE="en_US.UTF-8"
 
-HOSTNAME="mining_randomx"
-EFI_SYS_NAME="arch_xmr"
 
-MONERO_CHAIN_IN_EXTRA_DRIVE_PATH="/mega/data/chains/mnr/"
+read -p "Введите имя хоста: " HOSTNAME
+read -p "Введите имя загрузчика в EFI-разделе: " EFI_SYS_NAME
+
 
 # Установка часового пояса
 ln -sf /usr/share/zoneinfo/$MY_TIMEZONE /etc/localtime
@@ -53,11 +54,15 @@ useradd -m -u $MY_UID -g $MY_UID -G users,wheel,storage,power -s /bin/bash $USER
 echo "Введите пароль для пользователя $USERNAME:"
 passwd $USERNAME
 
-#установка дополнительного софта
+# устанавливаем sudo
+# такие пакеты как coreutils и sed уже входят в состав base поэтому их установка избыточна
+pacman -S sudo --noconfirm
+
+
+# Установка всего дополнительного софта
 pacman -Syu
-pacman -S sudo coreutils sed --noconfirm
 for package in $SOFT_PACK2; do
-    sudo pacman -S $package --noconfirm
+    pacman -S $package --noconfirm
 done
 
 
@@ -83,8 +88,9 @@ EDITOR="sed -i 's/^#%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL'" visudo -
 
 # Настройка mkinitcpio для поддержки LVM и шифрования
 #sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect modconf block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
-sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keymap consolefont block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
+#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keymap consolefont block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
 #sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt filesystems fsck)/' /etc/mkinitcpio.conf
+sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt resume filesystems fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -P
 
 
@@ -97,29 +103,22 @@ pacman -S grub efibootmgr  --noconfirm
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=$EFI_SYS_NAME
 grub-mkconfig -o /boot/grub/grub.cfg
 
-#don't forget about update-grub ( grub-mkconfig -o /boot/grub/grub.cfg ) in the main linux system 
+#don't forget about update-grub ( grub-mkonfig -o /boot/grub/grub.cfg ) in the main linux system 
 
 
 #---------------------------------------------------------------
-#тут будет ОПЦИОНАЛЬНЫЙ БЛОК
-echo "настройка автозапуска NetworkManager для работа интернета"
-#rc-update add networkmanager boot
-#systemctl enable NetworkManager # такую команду нужно использовать в пост установочном скрипте
-#dinitctl enable NetworkManager
 
+echo "настройка автозапуска NetworkManager для работа интернета"
 ln -s /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-user.target.wants/NetworkManager.service
 
 #------------------------------------------------------------------------------------
 
-#TODO:
-#прикручиваем каталог с блокчейном monero
-mkdir /home/$USERNAME/.bitmonero
-echo "data-dir=/mnt/extra1$MONERO_CHAIN_IN_EXTRA_DRIVE_PATH" > /home/$USERNAME/.bitmonero/bitmonero.conf
 
-#копируем tar-архив в домашнюю папку пользователя и распаковываем его
+#распаковка tar-архива в домашнюю папку пользователя
 tar -xzf /homefiles.tar.gz -C /home/$USERNAME
 rm /homefiles.tar.gz
 
 # Выход из chroot
 exit
+
 
