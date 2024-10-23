@@ -301,7 +301,6 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
             #проверяем, что нет уже такого сабтома
             if $btrfs_subvolumes_str | grep -q "$subvol_name"; then
-            if lsblk -no MOUNTPOINT "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {} | grep -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
                 exit 1
             else
@@ -326,7 +325,6 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
             #проверяем, что нет уже такого сабтома
             if $btrfs_subvolumes_str | grep -q "$subvol_name"; then
-            if lsblk -no MOUNTPOINT "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {} | grep -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
                 exit 1
             else
