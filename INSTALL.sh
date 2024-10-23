@@ -235,8 +235,8 @@ get_btrfs_mountpoint() {
     local btrfs_device="$1"
     local mount_point
     
-    # Проверяем, смонтирован ли уже раздел
-    if mount_point=$(findmnt -n -o TARGET "$btrfs_device"); then
+    # Проверяем, смонтирован ли уже раздел (без учёта подтомов)
+    if mount_point=$(findmnt -n -o TARGET -S "$btrfs_device" | grep -v '@'); then
         echo "$mount_point"
         return 0
     else
