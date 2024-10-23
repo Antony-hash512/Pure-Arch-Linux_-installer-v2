@@ -260,7 +260,15 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             btrfs_path="${names[1]}"
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Путь к разделу Btrfs: $btrfs_path"
-            
+            # выводим список сабволюмов
+            echo "Список существующих подтомов в $btrfs_path:"
+            btrfs subvolume list "$btrfs_path"
+            # Проверяем, существует ли уже подтом с именем $subvol_name
+            if btrfs subvolume list "$btrfs_path" | grep -q "$subvol_name"; then
+                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+                exit 1
+            fi
+                       
             if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
                 BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
             else
@@ -274,6 +282,14 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
+            # выводим список сабволюмов
+            echo "Список существующих подтомов в $btrfs_path:"
+            btrfs subvolume list "$btrfs_path"
+            # Проверяем, существует ли уже подтом с именем $subvol_name
+            if btrfs subvolume list "$btrfs_path" | grep -q "$subvol_name"; then
+                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+                exit 1
+            fi
 
             if [[ -v BTRFS_SUBVOLUMES["$lv_name"] ]]; then
                 BTRFS_SUBVOLUMES["$lv_name"]+=" $subvol_name"
@@ -286,6 +302,11 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             lvm_path="${names[1]}"
             echo "Логический том LVM (ext4): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
+            # Проверяем, существует ли уже логический том с именем $lv_name
+            if lvdisplay "$lvm_path/$lv_name" &> /dev/null; then
+                echo "Ошибка: Логический том с именем $lv_name уже существует в $lvm_path" >&2
+                exit 1
+            fi
             
             # Добавляем lv_name в массив LVM_VOLUMES
             LVM_VOLUMES+=("$lv_name")
