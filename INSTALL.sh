@@ -506,7 +506,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     case "${current_row["type"]}" in
         "format_ext4")            
             ext4_path=${current_row["name"]}
-
+            ;;
         "new_subvol_in_btrfs")
             subvol_name="${names[0]}"
             btrfs_path="${names[1]}"
