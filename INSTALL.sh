@@ -192,7 +192,7 @@ done
 
 ALL_EXTRA_POINTS=()
 for var in $(compgen -A variable | grep -E '^extra_point[0-9]+$'); do
-    ALL_NEW_POINTS+=("$var")
+    ALL_EXTRA_POINTS+=("$var")
 done
 
 lsblk
