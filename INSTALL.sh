@@ -496,7 +496,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     # Преобразуем строку в массив по пробелам
     read -r -a names <<< "$spaced_names"
 
-    mount_point = ${current_row["mount_point"]}
+    mount_point=${current_row["mount_point"]}
 
     case "${current_row["type"]}" in
         "format_ext4")            
