@@ -81,7 +81,7 @@ declare -A extra_point1=(
 #софт для установки сразу (настоятельно рекомендуется оставить самый необходимый минимум т.к. наличие пакетов здесь не проверяется по отдельности как SOFT_PACK2)
 SOFT_PACK1="base base-devel linux linux-firmware"
 #софт, который будет установлен на новую систему (тоже сразу, но уже pacman'ом)
-SOFT_PACK2="networkmanager btrfs-progs nano mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift"
+SOFT_PACK2="networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift"
 
 #дополнительные списки пакетов, которые можно включать и выключать ниже
 SOFT_PACK2E="curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo"
@@ -92,7 +92,7 @@ SOFT_PACK2G="openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-con
 obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal"
 # TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия); gsimplecal - мини-календарь
 SOFT_PACK2D="meld geany gtksourceview5"
-SOFT_PACK2C="vimdiff, vim, emacs, diff3"
+SOFT_PACK2C="vimdiff, emacs, diff3"
 SOFT_PACK2H="firefox chromium vlc viewnior xfce4-screenshooter engrampa"
 SOFT_PACK2L="midori feh scrot xarchiver xterm"
 SOFT_PACK20="tumbler menumaker conky pinta"
@@ -137,6 +137,7 @@ TODO
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2E"
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2F"
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2A"
+#: <<'NOUSING'
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2B"
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2G"
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2D"
@@ -146,19 +147,19 @@ SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2H"
 SOFT_PACK2="$SOFT_PACK2 SOFT_PACK20"
 ###########extra##################
 #SOFT_PACK2="$SOFT_PACK2 SOFT_PACK21"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK22"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK23"
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK22" #
+#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK23" #
 #SOFT_PACK2="$SOFT_PACK2 SOFT_PACK24"
 #SOFT_PACK2="$SOFT_PACK2 SOFT_PACK25"
 #SOFT_PACK2="$SOFT_PACK2 SOFT_PACK26"
-
+#NOUSING
 
 #===============конец настроек=============================================================
 
 #Обновление времени
 timedatectl set-ntp true
 
-if [[ $INSTALL_FROM =="iso" ]]
+if [[ $INSTALL_FROM == "iso" ]]; then
     echo "test тест"
     setfont cyr-sun16
     echo "test тест"
@@ -404,7 +405,7 @@ TODO
 #ВНИМАНИЕ! тут начинается непосредственно установка
 
 #этот шаг нужен, если установка идёт с уже установленной системы
-if [[ $INSTALL_FROM =="other_arch_system" ]]
+if [[ $INSTALL_FROM == "other_arch_system" ]]; then
     umount $EFI_LOCATION_4INSTALL_FROM
 fi
 
@@ -517,12 +518,13 @@ rm -rf $INST_DIR
 
 
 echo "ALL DONE"
-if [[ $INSTALL_FROM =="other_arch_system" ]]
+if [[ $INSTALL_FROM == "other_arch_system" ]]; then
     mount $EFI_DEV $EFI_LOCATION_4INSTALL_FROM
     echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
     read -p "Нажмите Enter для выхода..."
 else
     echo "Установка завершена. Перезагрузите компьютер."
 fi
+
 
 

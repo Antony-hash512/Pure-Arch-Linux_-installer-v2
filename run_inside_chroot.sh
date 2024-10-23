@@ -5,6 +5,8 @@ MY_UID="1000"
 #MY_TIMEZONE="Europe/Istanbul"
 MY_TIMEZONE="Asia/Dubai"
 MY_LOCALE="en_US.UTF-8"
+EXTRA_SETTINGS_4OPENBOX="true"
+ADD_FILES_TO_HOME="true"
 
 
 read -p "Введите имя хоста: " HOSTNAME
@@ -108,6 +110,41 @@ BOOT_NUM=$(efibootmgr | grep $EFI_SYS_NAME | sed 's/Boot\([0-9a-fA-F]*\).*/\1/')
 efibootmgr -o $BOOT_NUM
 
 #don't forget about update-grub ( grub-mkonfig -o /boot/grub/grub.cfg ) in the main linux system 
+if [[ $EXTRA_SETTINGS_4OPENBOX = "true" ]]; then
+    #добавление юзера в группы для работы звука
+    usermod -a -G audio,pulse-access $USERNAME
+    #также надо добавить в группу realtime, если установлен пакет realtime-privileges
+    #добавление в группу video
+    usermod -a -G video $USERNAME
+    
+    
+    #настройка возможности монитирования дисков для группы storage без прав рута
+    echo 'KERNEL=="sd[a-z][0-9]", GROUP="storage", MODE="0660"' > /etc/udev/rules.d/99-storage.rules
+    echo 'KERNEL=="nvme0n[0-9]p[0-9]", GROUP="storage", MODE="0660"' >> /etc/udev/rules.d/99-storage.rules
+    echo 'KERNEL=="sr0", GROUP="storage", MODE="0660"' > /etc/udev/rules.d/99-cdrom.rules
+    
+    # Настройка автозапуска PipeWire
+    mkdir -p /home/$USERNAME/.config/systemd/user/default.target.wants/
+    ln -sf /usr/lib/systemd/user/pipewire.service /home/$USERNAME/.config/systemd/user/default.target.wants/
+    ln -sf /usr/lib/systemd/user/pipewire-pulse.service /home/$USERNAME/.config/systemd/user/default.target.wants/
+    ln -sf /usr/lib/systemd/user/wireplumber.service /home/$USERNAME/.config/systemd/user/default.target.wants/
+    
+    # Установка правильных прав доступа
+    chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
+    
+    
+    #su $USERNAME -c "systemctl --user enable pulseaudio.socket"
+    #Or add it to your ~/.xinitrc, if you use it:
+    
+    # ~/.xinitrc
+    # ...
+    # /usr/bin/pipewire &
+    # /usr/bin/pipewire-pulse &
+    # /usr/bin/wireplumber &
+    # exec openbox-session
+    #------------------------------------------------------------------------------------
+    
+fi
 
 
 #---------------------------------------------------------------
@@ -118,12 +155,15 @@ ln -s /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-u
 #------------------------------------------------------------------------------------
 
 
-#распаковка tar-архива в домашнюю папку пользователя
-tar -xzf /homefiles.tar.gz -C /home/$USERNAME
-rm /homefiles.tar.gz
+if [[ $ADD_FILES_TO_HOME = "true" ]]; then
+    #распаковка tar-архива в домашнюю папку пользователя
+    tar -xzf /homefiles.tar.gz -C /home/$USERNAME
+    rm /homefiles.tar.gz
+fi
 
 # Выход из chroot
 exit
+
 
 
 
