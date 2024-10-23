@@ -236,7 +236,7 @@ get_btrfs_mountpoint() {
     local mount_point_btrfs
     
     # Проверяем, смонтирован ли уже раздел (без учёта подтомов)
-    if mount_point_btrfs=$(findmnt -n -o TARGET -S "$btrfs_device" | grep -v '@'); then
+    if mount_point_btrfs=$(lsblk -no MOUNTPOINT "$btrfs_device") && [[ -n "$mount_point_btrfs" ]]; then
         echo "$mount_point_btrfs"
         return 0
     else
@@ -295,21 +295,19 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Путь к разделу Btrfs: $btrfs_path"
             # выводим список сабволюмов
+            btrfs_subvolumes_str=$(get_btrfs_mountpoint "$btrfs_path" | xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_path:"
-            #используем функцию get_btrfs_mountpoint
-            if mount_point_btrfs=$(get_btrfs_mountpoint "$btrfs_path"); then
-                btrfs subvolume list "$mount_point_btrfs"
-            else
-                echo "Ошибка при монтировании $btrfs_path" >&2
-                exit 1
-            fi
+            echo "$btrfs_subvolumes_str"
+
             #проверяем, что нет уже такого сабтома
-            if btrfs subvolume list "$mount_point_btrfs" | grep -q "$subvol_name"; then
+            if $btrfs_subvolumes_str | grep -q "$subvol_name"; then
+            if lsblk -no MOUNTPOINT "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {} | grep -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
                 exit 1
             else
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
+           
 
             
             ;;
@@ -321,15 +319,14 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
-             #используем функцию get_btrfs_mountpoint
-            if mount_point_btrfs=$(get_btrfs_mountpoint "$btrfs_path"); then
-                btrfs subvolume list "$mount_point_btrfs"
-            else
-                echo "Ошибка при монтировании $btrfs_path" >&2
-                exit 1
-            fi
+
+            btrfs_subvolumes_str=$(get_btrfs_mountpoint "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {})           
+            echo "Список существующих подтомов в $btrfs_path:"
+            echo "$btrfs_subvolumes_str"
+
             #проверяем, что нет уже такого сабтома
-            if btrfs subvolume list "$mount_point_btrfs" | grep -q "$subvol_name"; then
+            if $btrfs_subvolumes_str | grep -q "$subvol_name"; then
+            if lsblk -no MOUNTPOINT "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {} | grep -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
                 exit 1
             else
