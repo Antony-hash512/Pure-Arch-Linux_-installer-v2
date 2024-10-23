@@ -225,6 +225,40 @@ if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
     exit 1
 fi
 
+#задаём массив для временных точек монтирования
+declare -A TEMP_BTRFS_MOUNTPOINTS
+
+# Функция для получения точки монтирования BTRFS устройства
+# Аргумент: путь к BTRFS устройству
+# Возвращает: путь к точке монтирования
+get_btrfs_mountpoint() {
+    local btrfs_device="$1"
+    local mount_point
+    
+    # Проверяем, смонтирован ли уже раздел
+    if mount_point=$(findmnt -n -o TARGET "$btrfs_device"); then
+        echo "$mount_point"
+        return 0
+    else
+        # Создаём временную точку монтирования и монтируем раздел
+        #добавляем случайное число и количество секунд по времени unix для уникальности
+        local temp_mount="/tmp/temp_btrfs_mount_$(date +%s)_$RANDOM"
+        
+        mkdir -p "$temp_mount"
+        
+        if ! mount "$btrfs_device" "$temp_mount"; then
+            echo "Ошибка: Не удалось смонтировать $btrfs_device" >&2
+            rmdir "$temp_mount"
+            return 1
+        fi
+
+        #добавляем в массив
+        TEMP_BTRFS_MOUNTPOINTS["$btrfs_device"]="$temp_mount"
+        
+        echo "$temp_mount"
+        return 0
+    fi
+}
 
 # Обходим массивы, используя их имена
 i=0;
@@ -262,36 +296,22 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Путь к разделу Btrfs: $btrfs_path"
             # выводим список сабволюмов
             echo "Список существующих подтомов в $btrfs_path:"
-            #btrfs subvolume list "$btrfs_path"
-            # Проверяем, смонтирован ли уже раздел
-            if mountpoint=$(findmnt -n -o TARGET "$btrfs_path"); then
-                # Используем существующую точку монтирования
-                if btrfs subvolume list "$mountpoint" | grep -q "$subvol_name"; then
-                    echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
-                    exit 1
-                fi
+            #используем функцию get_btrfs_mountpoint
+            if mount_point=$(get_btrfs_mountpoint "$btrfs_path"); then
+                btrfs subvolume list "$mount_point"
             else
-                # Создаём временную точку монтирования и монтируем раздел
-                temp_mount="/tmp/temp_btrfs_mount_$$"
-                mkdir -p "$temp_mount"
-                if ! mount "$btrfs_path" "$temp_mount"; then
-                    echo "Ошибка: Не удалось смонтировать $btrfs_path" >&2
-                    rmdir "$temp_mount"
-                    exit 1
-                fi
-
-                # Проверяем наличие подтома
-                if btrfs subvolume list "$temp_mount" | grep -q "$subvol_name"; then
-                    umount "$temp_mount"
-                    rmdir "$temp_mount"
-                    echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
-                    exit 1
-                fi
-
-                # Размонтируем временную точку
-                umount "$temp_mount"
-                rmdir "$temp_mount"
+                echo "Ошибка при монтировании $btrfs_path" >&2
+                exit 1
             fi
+            #проверяем, что нет уже такого сабтома
+            if btrfs subvolume list "$mount_point" | grep -q "$subvol_name"; then
+                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+                exit 1
+            else
+                echo "имя подтома $subvol_name уникально и будет использовано"
+            fi
+
+            
             ;;
         "new_subvol_in_btrfs_in_lvm")
             subvol_name="${names[0]}"
@@ -301,14 +321,21 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
-            # выводим список сабволюмов
-            echo "Список существующих подтомов в $btrfs_path:"
-            btrfs subvolume list "$btrfs_path"
-            # Проверяем, существует ли уже подтом с именем $subvol_name
-            if btrfs subvolume list "$btrfs_path" | grep -q "$subvol_name"; then
-                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+             #используем функцию get_btrfs_mountpoint
+            if mount_point=$(get_btrfs_mountpoint "$btrfs_path"); then
+                btrfs subvolume list "$mount_point"
+            else
+                echo "Ошибка при монтировании $btrfs_path" >&2
                 exit 1
             fi
+            #проверяем, что нет уже такого сабтома
+            if btrfs subvolume list "$mount_point" | grep -q "$subvol_name"; then
+                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+                exit 1
+            else
+                echo "имя подтома $subvol_name уникально и будет использовано"
+            fi
+           
 
             if [[ -v BTRFS_SUBVOLUMES["$lv_name"] ]]; then
                 BTRFS_SUBVOLUMES["$lv_name"]+=" $subvol_name"
@@ -336,6 +363,12 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             ;;
     esac
     printf "\n\n\n"
+done
+
+#размонтирование содержимого массива TEMP_BTRFS_MOUNTPOINTS
+for mount_point in "${TEMP_BTRFS_MOUNTPOINTS[@]}"; do
+    umount "$mount_point"
+    rmdir "$mount_point"
 done
 
 echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
@@ -565,6 +598,7 @@ if [[ $INSTALL_FROM == "other_arch_system" ]]; then
 else
     echo "Установка завершена. Перезагрузите компьютер."
 fi
+
 
 
 
