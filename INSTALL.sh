@@ -262,17 +262,35 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Путь к разделу Btrfs: $btrfs_path"
             # выводим список сабволюмов
             echo "Список существующих подтомов в $btrfs_path:"
-            btrfs subvolume list "$btrfs_path"
-            # Проверяем, существует ли уже подтом с именем $subvol_name
-            if btrfs subvolume list "$btrfs_path" | grep -q "$subvol_name"; then
-                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
-                exit 1
-            fi
-                       
-            if [[ -v BTRFS_SUBVOLUMES["$btrfs_path"] ]]; then
-                BTRFS_SUBVOLUMES["$btrfs_path"]+=" $subvol_name"
+            #btrfs subvolume list "$btrfs_path"
+            # Проверяем, смонтирован ли уже раздел
+            if mountpoint=$(findmnt -n -o TARGET "$btrfs_path"); then
+                # Используем существующую точку монтирования
+                if btrfs subvolume list "$mountpoint" | grep -q "$subvol_name"; then
+                    echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+                    exit 1
+                fi
             else
-                BTRFS_SUBVOLUMES["$btrfs_path"]="$subvol_name"
+                # Создаём временную точку монтирования и монтируем раздел
+                temp_mount="/tmp/temp_btrfs_mount_$$"
+                mkdir -p "$temp_mount"
+                if ! mount "$btrfs_path" "$temp_mount"; then
+                    echo "Ошибка: Не удалось смонтировать $btrfs_path" >&2
+                    rmdir "$temp_mount"
+                    exit 1
+                fi
+
+                # Проверяем наличие подтома
+                if btrfs subvolume list "$temp_mount" | grep -q "$subvol_name"; then
+                    umount "$temp_mount"
+                    rmdir "$temp_mount"
+                    echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
+                    exit 1
+                fi
+
+                # Размонтируем временную точку
+                umount "$temp_mount"
+                rmdir "$temp_mount"
             fi
             ;;
         "new_subvol_in_btrfs_in_lvm")
