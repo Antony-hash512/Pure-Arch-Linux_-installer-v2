@@ -279,6 +279,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
             lvm_path="${names[2]}"
+            btrfs_path=$lv_name #аллиас т.к. по смыслу это одно тоже
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
