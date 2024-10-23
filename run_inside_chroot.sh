@@ -103,6 +103,10 @@ pacman -S grub efibootmgr  --noconfirm
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=$EFI_SYS_NAME
 grub-mkconfig -o /boot/grub/grub.cfg
 
+# Делаем новую запись EFI загрузчиком по умолчанию
+BOOT_NUM=$(efibootmgr | grep $EFI_SYS_NAME | sed 's/Boot\([0-9a-fA-F]*\).*/\1/')
+efibootmgr -o $BOOT_NUM
+
 #don't forget about update-grub ( grub-mkonfig -o /boot/grub/grub.cfg ) in the main linux system 
 
 
@@ -120,5 +124,6 @@ rm /homefiles.tar.gz
 
 # Выход из chroot
 exit
+
 
 
