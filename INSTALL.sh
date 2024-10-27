@@ -134,24 +134,24 @@ TODO
 
 #uncooment to install more soft:
 ###########impotant#################
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2E"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2F"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2A"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2E"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2F"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2A"
 #: <<'NOUSING'
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2B"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2G"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2D"
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2C"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2H"
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK2L"
-SOFT_PACK2="$SOFT_PACK2 SOFT_PACK20"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2B"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2G"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2D"
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2C"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2H"
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2L"
+SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK20"
 ###########extra##################
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK21"
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK22" #
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK23" #
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK24"
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK25"
-#SOFT_PACK2="$SOFT_PACK2 SOFT_PACK26"
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK21"
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK22" #
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK23" #
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK24"
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK25"
+#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK26"
 #NOUSING
 
 #===============конец настроек=============================================================
@@ -228,6 +228,9 @@ fi
 #задаём массив для временных точек монтирования
 declare -A TEMP_BTRFS_MOUNTPOINTS
 
+#ассоциативный массив для хранения точек монтирования корневых разделов всех btrfs
+declare -A ALL_ROOT_BTRFS_MOUNTPOINTS
+
 # Функция для получения точки монтирования BTRFS устройства
 # Аргумент: путь к BTRFS устройству
 # Возвращает: путь к точке монтирования
@@ -294,6 +297,17 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             btrfs_path="${names[1]}"
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Путь к разделу Btrfs: $btrfs_path"
+            #проверяем что этого раздела нет в массиве
+            if [[ ! -v ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"] ]]; then
+                #получаем имя точки монтирования используя время unix и случайное число
+                CURRENT_BTRFS_MOUNTPOINT="/mnt/btrfs_root_$(date +%s)_$RANDOM"
+                ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]="$CURRENT_BTRFS_MOUNTPOINT"
+                #монтируем раздел
+                mount "$btrfs_path" "$CURRENT_BTRFS_MOUNTPOINT"
+            fi
+
+
+
             # выводим список сабволюмов
             btrfs_subvolumes_str=$(get_btrfs_mountpoint "$btrfs_path" | xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_path:"
@@ -318,6 +332,15 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
             echo "Путь к разделу LVM: $lvm_path"
+
+            #проверяем что этого раздела нет в массиве
+            if [[ ! -v ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"] ]]; then
+                #получаем имя точки монтирования используя время unix и случайное число
+                CURRENT_BTRFS_MOUNTPOINT="/mnt/btrfs_root_$(date +%s)_$RANDOM"
+                ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]="$CURRENT_BTRFS_MOUNTPOINT"
+                #монтируем раздел
+                mount "$btrfs_path" "$CURRENT_BTRFS_MOUNTPOINT"
+            fi
 
             btrfs_subvolumes_str=$(get_btrfs_mountpoint "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_path:"
@@ -510,6 +533,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
             lvm_path="${names[2]}"
+            btrfs_path=$lv_name #аллиас т.к. по смыслу это одно тоже
 
             if ! pacman -Qi "$pkg" &>/dev/null; then
                 pacman -S "$pkg" --noconfirm
@@ -519,7 +543,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             
             case "${current_row["crypt_mode"]}" in
                 "none_in_none")
-                    :
+                    #создаём подтом
+                    btrfs subvolume create $ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]/$subvol_name
+                    #монтируем подтом в каталог установки (внутри chroot'а)
                     mount -o subvol=$subvol_name $lv_name $INST_DIR$mount_point
                     ;;
                 "none_in_file")
@@ -582,7 +608,20 @@ rm $INST_DIR/run_inside_chroot.sh
 
 # Размонтирование всех разделов
 umount -R $INST_DIR
-rm -rf $INST_DIR
+if [ -z "$(ls -A $INST_DIR)" ]; then
+    rmdir $INST_DIR
+else
+    echo "Каталог $INST_DIR не пустой. Удаление не выполнено."
+fi
+
+#размонтирование всех разделов btrfs
+for btrfs_path in "${!ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
+    umount "$btrfs_path"
+done
+#удаление пустых каталогов точек монтирования
+for btrfs_path in "${!ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
+    rmdir "$btrfs_path"
+done
 
 
 echo "ALL DONE"
@@ -593,7 +632,4 @@ if [[ $INSTALL_FROM == "other_arch_system" ]]; then
 else
     echo "Установка завершена. Перезагрузите компьютер."
 fi
-
-
-
 
