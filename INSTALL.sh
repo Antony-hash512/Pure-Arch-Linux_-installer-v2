@@ -302,6 +302,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 #получаем имя точки монтирования используя время unix и случайное число
                 CURRENT_BTRFS_MOUNTPOINT="/mnt/btrfs_root_$(date +%s)_$RANDOM"
                 ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]="$CURRENT_BTRFS_MOUNTPOINT"
+                #создаём каталог для точки монтирования
+                mkdir -p "$CURRENT_BTRFS_MOUNTPOINT"
                 #монтируем раздел
                 mount "$btrfs_path" "$CURRENT_BTRFS_MOUNTPOINT"
             fi
@@ -337,6 +339,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 #получаем имя точки монтирования используя время unix и случайное число
                 CURRENT_BTRFS_MOUNTPOINT="/mnt/btrfs_root_$(date +%s)_$RANDOM"
                 ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]="$CURRENT_BTRFS_MOUNTPOINT"
+                #создаём каталог для точки монтирования
+                mkdir -p "$CURRENT_BTRFS_MOUNTPOINT"    
                 #монтируем раздел
                 mount "$btrfs_path" "$CURRENT_BTRFS_MOUNTPOINT"
             fi
