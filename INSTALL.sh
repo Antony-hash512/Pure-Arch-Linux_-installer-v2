@@ -312,7 +312,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 mount "$btrfs_device" "$CURRENT_BTRFS_MOUNTPOINT"
             fi
 
-            btrfs_subvolumes_str=$(echo "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_"]}"| xargs -I {} sudo btrfs subvolume list {})           
+            btrfs_subvolumes_str=$(echo "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}"| xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_device:"
             echo "$btrfs_subvolumes_str"
 
