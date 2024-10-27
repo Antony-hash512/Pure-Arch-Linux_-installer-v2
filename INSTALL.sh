@@ -226,7 +226,7 @@ if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
 fi
 
 #задаём массив для временных точек монтирования
-declare -A TEMP_BTRFS_MOUNTPOINTS
+#declare -A TEMP_BTRFS_MOUNTPOINTS
 
 #ассоциативный массив для хранения точек монтирования корневых разделов всех btrfs
 declare -A ALL_ROOT_BTRFS_MOUNTPOINTS
@@ -234,34 +234,34 @@ declare -A ALL_ROOT_BTRFS_MOUNTPOINTS
 # Функция для получения точки монтирования BTRFS устройства
 # Аргумент: путь к BTRFS устройству
 # Возвращает: путь к точке монтирования
-get_btrfs_mountpoint() {
-    local btrfs_device="$1"
-    local mount_point_btrfs
-    
-    # Проверяем, смонтирован ли уже раздел (без учёта подтомов)
-    if mount_point_btrfs=$(lsblk -no MOUNTPOINT "$btrfs_device") && [[ -n "$mount_point_btrfs" ]]; then
-        echo "$mount_point_btrfs"
-        return 0
-    else
-        # Создаём временную точку монтирования и монтируем раздел
-        #добавляем случайное число и количество секунд по времени unix для уникальности
-        local temp_mount="/tmp/temp_btrfs_mount_$(date +%s)_$RANDOM"
-        
-        mkdir -p "$temp_mount"
-        
-        if ! mount "$btrfs_device" "$temp_mount"; then
-            echo "Ошибка: Не удалось смонтировать $btrfs_device" >&2
-            rmdir "$temp_mount"
-            return 1
-        fi
-
-        #добавляем в массив
-        TEMP_BTRFS_MOUNTPOINTS["$btrfs_device"]="$temp_mount"
-        
-        echo "$temp_mount"
-        return 0
-    fi
-}
+#get_btrfs_mountpoint() {
+#    local btrfs_device="$1"
+#    local mount_point_btrfs
+#    
+#    # Проверяем, смонтирован ли уже раздел (без учёта подтомов)
+#    if mount_point_btrfs=$(lsblk -no MOUNTPOINT "$btrfs_device") && [[ -n "$mount_point_btrfs" ]]; then
+#        echo "$mount_point_btrfs"
+#        return 0
+#    else
+#        # Создаём временную точку монтирования и монтируем раздел
+#        #добавляем случайное число и количество секунд по времени unix для уникальности
+#        local temp_mount="/tmp/temp_btrfs_mount_$(date +%s)_$RANDOM"
+#        
+#        mkdir -p "$temp_mount"
+#        
+#        if ! mount "$btrfs_device" "$temp_mount"; then
+#            echo "Ошибка: Не удалось смонтировать $btrfs_device" >&2
+#            rmdir "$temp_mount"
+#            return 1
+#        fi
+#
+#        #добавляем в массив
+#        TEMP_BTRFS_MOUNTPOINTS["$btrfs_device"]="$temp_mount"
+#        
+#        echo "$temp_mount"
+#        return 0
+#    fi
+#}
 
 # Обходим массивы, используя их имена
 i=0;
@@ -309,10 +309,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
 
             # выводим список сабволюмов
-            btrfs_subvolumes_str=$(get_btrfs_mountpoint "$btrfs_path" | xargs -I {} sudo btrfs subvolume list {})           
+            btrfs_subvolumes_str=$("${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]}" | xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_path:"
             echo "$btrfs_subvolumes_str"
-
             #проверяем, что нет уже такого сабтома
             if echo "$btrfs_subvolumes_str" | grep -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_path" >&2
@@ -342,7 +341,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 mount "$btrfs_path" "$CURRENT_BTRFS_MOUNTPOINT"
             fi
 
-            btrfs_subvolumes_str=$(get_btrfs_mountpoint "$btrfs_path"| xargs -I {} sudo btrfs subvolume list {})           
+            btrfs_subvolumes_str=$("${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_path"]}"| xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_path:"
             echo "$btrfs_subvolumes_str"
 
@@ -384,10 +383,10 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 done
 
 #размонтирование содержимого массива TEMP_BTRFS_MOUNTPOINTS
-for current_mount_point in "${TEMP_BTRFS_MOUNTPOINTS[@]}"; do
-    umount "$current_mount_point"
-    rmdir "$current_mount_point"
-done
+#for current_mount_point in "${TEMP_BTRFS_MOUNTPOINTS[@]}"; do
+#    umount "$current_mount_point"
+#    rmdir "$current_mount_point"
+#done
 
 echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
