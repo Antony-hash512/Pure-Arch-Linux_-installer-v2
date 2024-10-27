@@ -14,7 +14,7 @@ INSTALL_FROM="other_arch_system" # other_arch_system - с уже установ�
 
 # случаи для legacy будут добавлены потом
 EFI_DEV="/dev/nvme0n1p1"
-EFI_LOCATION_4INSTALL_FROM="/boot/efi" #только для случая other_arch_system
+#EFI_LOCATION_4INSTALL_FROM="/boot/efi" #только для случая other_arch_system
 EFI_NEW_LOCATION="/boot/efi" # точка монтирования для efi в новой системе
 
 
@@ -460,10 +460,10 @@ TODO
 
 #ВНИМАНИЕ! тут начинается непосредственно установка
 
-#этот шаг нужен, если установка идёт с уже установленной системы
-if [[ $INSTALL_FROM == "other_arch_system" ]]; then
-    umount $EFI_LOCATION_4INSTALL_FROM
-fi
+#этот шаг нужен, если установка идёт с уже установленной системы (на самом деле нет)
+#if [[ $INSTALL_FROM == "other_arch_system" ]]; then
+#    umount $EFI_LOCATION_4INSTALL_FROM
+#fi
 
 #добавляем к имени каталога текущую дату и время для уникальности
 INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
@@ -509,9 +509,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             case "${current_row["crypt_mode"]}" in
                 "none_in_none")
                     #создаём подтом
-                    btrfs subvolume create $ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]/$subvol_name
+                    btrfs subvolume create "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
                     #монтируем подтом в каталог установки (внутри chroot'а)
-                    mount -o subvol=$subvol_name $lv_name $INST_DIR$mount_point
+                    mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point
                     ;;
                 "none_in_file")
                     :
@@ -569,7 +569,10 @@ arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFT_PACK2\" \"$EFI
 #-------------------------------
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта
-rm $INST_DIR/run_inside_chroot.sh 
+rm $INST_DIR/run_inside_chroot.sh
+
+#размонтируем раздел EFI
+umount $INST_DIR$EFI_NEW_LOCATION
 
 # Размонтирование всех разделов
 umount -R $INST_DIR
@@ -580,18 +583,18 @@ else
 fi
 
 #размонтирование всех разделов btrfs
-for btrfs_path in "${!ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
+for btrfs_path in "${ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
     umount "$btrfs_path"
 done
 #удаление пустых каталогов точек монтирования
-for btrfs_path in "${!ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
+for btrfs_path in "${ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
     rmdir "$btrfs_path"
 done
 
 
 echo "ALL DONE"
 if [[ $INSTALL_FROM == "other_arch_system" ]]; then
-    mount $EFI_DEV $EFI_LOCATION_4INSTALL_FROM
+    #mount $EFI_DEV $EFI_LOCATION_4INSTALL_FROM
     echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
     read -p "Нажмите Enter для выхода..."
 else
