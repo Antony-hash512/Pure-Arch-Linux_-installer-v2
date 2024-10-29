@@ -124,6 +124,10 @@ audacious — аудиоплеер.
 mediainfo-gui — анализ мультимедийных файлов.
 #https://www.youtube.com/watch?v=GPxzcaGErcM
 
+Проверка орфографии в LibreOffice Writer
+hunspell-ru
+libreoffice-still-ru
+
 
    - Убедитесь, что все пакеты, 
    перечисленные в этих переменных, доступны в репозиториях вашей системы. 
