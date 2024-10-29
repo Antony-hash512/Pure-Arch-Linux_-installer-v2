@@ -1,6 +1,6 @@
 
-# Игнорировать все автоматически сгенерированные скрипты удаления
 autocreated_scripts/*
+!autocreated_scripts/.gitkeep
 errors/*
 testing/*
-!REMOVE_INSTALED_SYSTEM.sh
+CREATE_TAR.sh
