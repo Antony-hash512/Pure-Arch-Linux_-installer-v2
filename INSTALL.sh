@@ -10,7 +10,7 @@ else
 fi
 
 # откуда устанавливается система
-INSTALL_FROM="other_arch_system" # other_arch_system - с уже установленного Арча, iso - с LiveCD/DVD/USB
+INSTALL_FROM="iso" # other_arch_system - с уже установленного Арча, iso - с LiveCD/DVD/USB
 
 # случаи для legacy будут добавлены потом
 EFI_DEV="/dev/nvme0n1p1"

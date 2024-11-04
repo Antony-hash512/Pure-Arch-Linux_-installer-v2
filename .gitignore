@@ -2,5 +2,6 @@
 autocreated_scripts/*
 !autocreated_scripts/.gitkeep
 errors/*
-testing/*
+iso2/*
 CREATE_TAR.sh
+CREATE_ISO.sh
