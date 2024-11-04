@@ -163,17 +163,9 @@ SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK20"
 #Обновление времени
 timedatectl set-ntp true
 
-if [[ $INSTALL_FROM == "iso" ]]; then
-    echo "test тест"
-    setfont cyr-sun16
-    echo "test тест"
-fi
-
-
-
 # Скачивание нужных для установки пакетов
 pacman -Suy
-packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr")
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
@@ -183,6 +175,14 @@ done
 # "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
 # можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
+
+
+if [[ $INSTALL_FROM == "iso" ]]; then
+    echo "test тест"
+    setfont cyr-sun16
+    echo "test тест"
+fi
+
 
 
 # Получаем путь к каталогу, где находится скрипт
