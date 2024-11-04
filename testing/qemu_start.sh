@@ -10,7 +10,7 @@ qemu-system-x86_64 \
     -drive file=/home/mega/data/extra/vm_disks/archlinux_vm_disk.qcow2,format=qcow2 \
     -virtfs local,path=/home/mega/git/Pure-Arch-Linux_-installer-v2/,mount_tag=inst_scripts,security_model=none \
     -cdrom /home/mega/data/extra/torrents/archlinux-2024.11.01-x86_64.iso \
-    -drive file=../mntfld.iso,media=cdrom \
+    -drive file=./mntfld.iso,media=cdrom \
     -boot order=d \
     -nic user,model=virtio-net-pci \
     -vga virtio
