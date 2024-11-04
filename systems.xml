@@ -3,26 +3,26 @@
 #софт для установки сразу (настоятельно рекомендуется оставить самый необходимый минимум т.к. наличие пакетов здесь не проверяется по отдельности как pakages_pacman)
 base base-devel linux linux-firmware
 #софт, который будет установлен на новую систему (тоже сразу, но уже pacman'ом)
-		<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
 #дополнительные списки пакетов, которые можно включать и выключать ниже
-		<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
-		<bundle>neofetch cowsay</bundle>
-		<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
-		<bundle>bluez bluez-utils blueman</bundle>
-		<bundle>openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
+			<bundle>bluez bluez-utils blueman</bundle>
+			<bundle>openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
 # TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия); gsimplecal - мини-календарь
-		<bundle>wmctrl xdotool</bundle>
-		<bundle>meld geany gtksourceview5</bundle>
-		<bundle>vimdiff, emacs, diff3</bundle>
-		<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
-		<bundle>midori feh scrot xarchiver xterm</bundle>
-		<bundle>tumbler menumaker conky pinta</bundle>
-		<bundle>maim menyoki</bundle>
-		<bundle>deluge deluge-gtk gimp inkscape krita obsidian</bundle>
-		<bundle>qemu-system-x86 virtmanager</bundle>
-		<bundle>i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig</bundle>
-		<bundle>libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
-		<bundle>stacer ananicy</bundle>
+			<bundle>wmctrl xdotool</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>vimdiff, emacs, diff3</bundle>
+			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
+			<bundle>midori feh scrot xarchiver xterm</bundle>
+			<bundle>tumbler menumaker conky pinta</bundle>
+			<bundle>maim menyoki</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape krita obsidian</bundle>
+			<bundle>qemu-system-x86 virtmanager</bundle>
+			<bundle>i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig</bundle>
+			<bundle>libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+			<bundle>stacer ananicy</bundle>
 
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt resume filesystems fsck</hooks>
 		<extrafiles>
