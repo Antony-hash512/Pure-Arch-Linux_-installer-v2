@@ -88,6 +88,7 @@ base base-devel linux linux-firmware
 			<tweaks>
 				<iso>true</iso>
 				<openbox>true</openbox>
+				<createroot>false</createroot>
 			</tweaks>
 		</settings>
 	</system>
@@ -147,6 +148,7 @@ base base-devel linux linux-firmware
 			<tweaks>
 				<iso>false</iso>
 				<openbox>true</openbox>
+				<createroot>false</createroot>
 			</tweaks>
 		</settings>
 	</system>
