@@ -129,6 +129,20 @@ def main():
             print(useruid_elem.text.strip())
         else:
             print("")
+    elif command == 'get_locales':
+        locales = system.findall('settings/locales/locale')
+        locales_list = [locale.text.strip() for locale in locales]
+        print('#'.join(locales_list))
+    elif command == 'get_default_locale':
+        default_locale_elem = system.find('settings/locales/default')
+        if default_locale_elem is not None:
+            print(default_locale_elem.text.strip())
+        else:
+            print("")
+    elif command == 'get_vconsole_strings':
+        vconsole_strings = system.findall('settings/locales/vconsole_add')
+        vconsole_strings_list = [vconsole_string.text.strip() for vconsole_string in vconsole_strings]
+        print('#'.join(vconsole_strings_list))
     elif command == 'get_efi_bootlabel':
         bootlabel_elem = system.find('settings/efi/bootlabel')
         if bootlabel_elem is not None:

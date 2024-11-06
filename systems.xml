@@ -108,10 +108,14 @@ mkinitcpio -P
 			<hostname>qemu-arch</hostname>
 			<username>user</username>
 			<useruid>1000</useruid>
+			<init_system>systemd</init_system>
 			<locales>
 				<locale>en_US.UTF-8 UTF-8</locale>
 				<locale>ru_RU.UTF-8 UTF-8</locale>
-				<default>en_US.UTF-8 UTF-8</default>
+				<default>en_US.UTF-8</default>
+				<vconsole_add>FONT=cyr-sun16</vconsole_add>
+				<vconsole_add>KEYMAP=us</vconsole_add>
+				<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
 			</locales>
 			<efi>
 				<bootlabel>ArchTest</bootlabel>
@@ -168,10 +172,14 @@ mkinitcpio -P
 			<hostname>katana</hostname>
 			<username>user</username>
 			<useruid>1000</useruid>
+			<init_system>systemd</init_system>
 			<locales>
 				<locale>en_US.UTF-8 UTF-8</locale>
 				<locale>ru_RU.UTF-8 UTF-8</locale>
-				<default>en_US.UTF-8 UTF-8</default>
+				<default>en_US.UTF-8</default>
+				<vconsole_add>FONT=cyr-sun16</vconsole_add>
+				<vconsole_add>KEYMAP=us</vconsole_add>
+				<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
 			</locales>
 			<efi>
 				<bootlabel>ArchTest43</bootlabel>

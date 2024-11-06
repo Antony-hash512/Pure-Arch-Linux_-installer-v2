@@ -5,7 +5,8 @@ EFI_SYS_NAME=$2
 SOFT_PACK2="$(python3 get_data_from_xml.py $SYSTEM_ID get_pkgs_pacman)"
 MY_UID="$(python3 get_data_from_xml.py $SYSTEM_ID get_useruid)"
 MY_TIMEZONE="$(python3 get_data_from_xml.py $SYSTEM_ID get_timezone)"
-MY_LOCALE="en_US.UTF-8"
+MY_LOCALE="$(python3 get_data_from_xml.py $SYSTEM_ID get_default_locale)"
+ALL_LOCALES="$(python3 get_data_from_xml.py $SYSTEM_ID get_locales)"
 EXTRA_SETTINGS_4OPENBOX="$(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_openbox)"
 ADD_FILES_TO_HOME="true"
 IS_CREATEROOT="$(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_createroot)"
@@ -19,19 +20,19 @@ ln -sf /usr/share/zoneinfo/$MY_TIMEZONE /etc/localtime
 hwclock --systohc
 
 
-# Установка языка и локали
-echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
-echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
+# Установка языка и локали используя цикл и разделитель #
+IFS='#' read -ra LOCALES <<< "$ALL_LOCALES"
+for locale in "${LOCALES[@]}"; do
+    echo "$locale" >> /etc/locale.gen
+done
 locale-gen
 echo "LANG=$MY_LOCALE" >> /etc/locale.conf
 
-echo "FONT=cyr-sun16" >> /etc/vconsole.conf
-echo "KEYMAP=us" >> /etc/vconsole.conf
-
-#добавляем русскую раскладку для текстового режима
-echo "KEYMAP=ruwin_alt_sh-UTF-8" >> /etc/vconsole.conf
-#команда ниже не будет работать без systemd:
-#localectl set-keymap --no-convert ruwin_alt_sh-UTF-8
+VCONSOLE_STRINGS="$(python3 get_data_from_xml.py $SYSTEM_ID get_vconsole_strings)"
+IFS='#' read -ra VCONSOLE_STRINGS_ARRAY <<< "$VCONSOLE_STRINGS"
+for vconsole_string in "${VCONSOLE_STRINGS_ARRAY[@]}"; do
+    echo "$vconsole_string" >> /etc/vconsole.conf
+done
 
 
 # Настройка hostname
@@ -97,16 +98,13 @@ mkinitcpio -P
 
 
 # Установка загрузчика
-#если grub уже установлен другой системой
-#при желании можно просто устоновить пакеты
-#если они не были прописаны в $SOFT_PACK2
 pacman -S grub efibootmgr  --noconfirm
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=$EFI_SYS_NAME
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Делаем новую запись EFI загрузчиком по умолчанию
-BOOT_NUM=$(efibootmgr | grep $EFI_SYS_NAME | sed 's/Boot\([0-9a-fA-F]*\).*/\1/')
-efibootmgr -o $BOOT_NUM
+#BOOT_NUM=$(efibootmgr | grep $EFI_SYS_NAME | sed 's/Boot\([0-9a-fA-F]*\).*/\1/')
+#efibootmgr -o $BOOT_NUM
 
 #don't forget about update-grub ( grub-mkonfig -o /boot/grub/grub.cfg ) in the main linux system 
 if [[ $EXTRA_SETTINGS_4OPENBOX = "true" ]]; then
@@ -128,8 +126,6 @@ if [[ $EXTRA_SETTINGS_4OPENBOX = "true" ]]; then
     ln -sf /usr/lib/systemd/user/pipewire-pulse.service /home/$USERNAME/.config/systemd/user/default.target.wants/
     ln -sf /usr/lib/systemd/user/wireplumber.service /home/$USERNAME/.config/systemd/user/default.target.wants/
     
-    # Установка правильных прав доступа
-    chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     
     
     #su $USERNAME -c "systemctl --user enable pulseaudio.socket"
