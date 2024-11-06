@@ -23,7 +23,40 @@ base base-devel linux linux-firmware
 			<bundle>i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig</bundle>
 			<bundle>libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
 			<bundle>stacer ananicy</bundle>
+TODO:
+Добавить свободные шрифты для:
+    Оформления часов на панеле
+    Отображения символов всех языков
 
+    проверить работоспособность menyoki (для записи видео, создания гифок) или maim(альтернатива scrot)
+    узнать подробнее про пакеты
+    viewnior — простой просмотрщик изображений.
+virtmanager — управление виртуальными машинами.
+stacer — мониторинг и оптимизация системы.
+ananicy — оптимизация приоритетов процессов.
+ffmpegthumbs — генерация миниатюр для видеофайлов.
+pureref (нету) — организация изображений для референсов.
+obs — запись экрана и стриминг.
+shotcut — видеоредактор с открытым исходным кодом.
+handbrake — конвертация видео.
+oceanaudio-bin — аудиоредактор.
+audacious — аудиоплеер.
+mediainfo-gui — анализ мультимедийных файлов.
+#https://www.youtube.com/watch?v=GPxzcaGErcM
+
+Проверка орфографии в LibreOffice Writer
+hunspell-ru
+libreoffice-still-ru
+   - Убедитесь, что все пакеты, 
+   перечисленные в этих переменных, доступны в репозиториях вашей системы. 
+   Вы можете проверить их наличие с помощью команды `pacman -Ss <package_name>`.
+
+			
+#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect modconf block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
+#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keymap consolefont block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
+#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt filesystems fsck)/' /etc/mkinitcpio.conf
+sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt resume filesystems fsck)/' /etc/mkinitcpio.conf
+mkinitcpio -P
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt resume filesystems fsck</hooks>
 		<extrafiles>
 			<homefiles>

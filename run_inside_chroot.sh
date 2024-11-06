@@ -1,15 +1,17 @@
 #!/bin/bash
-SOFT_PACK2=$1
+SYSTEM_ID=$1
 EFI_SYS_NAME=$2
-MY_UID="1000"
-#MY_TIMEZONE="Europe/Istanbul"
-MY_TIMEZONE="Asia/Dubai"
+
+SOFT_PACK2="$(python3 get_data_from_xml.py $SYSTEM_ID get_pkgs_pacman)"
+MY_UID="$(python3 get_data_from_xml.py $SYSTEM_ID get_useruid)"
+MY_TIMEZONE="$(python3 get_data_from_xml.py $SYSTEM_ID get_timezone)"
 MY_LOCALE="en_US.UTF-8"
-EXTRA_SETTINGS_4OPENBOX="true"
+EXTRA_SETTINGS_4OPENBOX="$(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_openbox)"
 ADD_FILES_TO_HOME="true"
+IS_CREATEROOT="$(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_createroot)"
 
 
-read -p "Введите имя хоста: " HOSTNAME
+HOSTNAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_hostname)"
 
 
 # Установка часового пояса
@@ -39,13 +41,13 @@ echo "::1 localhost" >> /etc/hosts
 echo "127.0.1.1 $HOSTNAME.localdomain $HOSTNAME" >> /etc/hosts
 
 # Установка пароля root
-# раскоментировать для установки пароля root
-#echo "Введите пароль для пользователя root:"
-#passwd
+if [[ $IS_CREATEROOT = "true" ]]; then
+    echo "Введите пароль для пользователя root:"
+    passwd
+fi
 
-# Запрос имени нового пользователя
-echo "Введите имя нового пользователя (например, user):"
-read USERNAME
+
+USERNAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_username)"
 
 # Создание нового пользователя с UID и GID равными 1000 (или тем, что указано в начале файла)
 groupadd -g $MY_UID $USERNAME
@@ -88,11 +90,8 @@ EDITOR="sed -i 's/^#%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL'" visudo -
 
 
 
-# Настройка mkinitcpio для поддержки LVM и шифрования
-#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect modconf block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
-#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keymap consolefont block btrfs lvm2 keyboard encrypt filesystems fsck)/' /etc/mkinitcpio.conf
-#sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt filesystems fsck)/' /etc/mkinitcpio.conf
-sed -i 's/^HOOKS=(.*)/HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 encrypt resume filesystems fsck)/' /etc/mkinitcpio.conf
+# Настройка хуков для mkinitcpio
+sed -i 's/^HOOKS=(.*)/HOOKS=($(python3 get_data_from_xml.py $SYSTEM_ID get_hooks))/' /etc/mkinitcpio.conf
 mkinitcpio -P
 
 
@@ -153,12 +152,16 @@ echo "настройка автозапуска NetworkManager для работ
 ln -s /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-user.target.wants/NetworkManager.service
 
 #------------------------------------------------------------------------------------
-
+#получаем список архивов для распаковки в домашнюю папку пользователя
+ARCHIVES_4HOME="$(python3 get_data_from_xml.py $SYSTEM_ID get_archs4home)"
 
 if [[ $ADD_FILES_TO_HOME = "true" ]]; then
     #распаковка tar-архива в домашнюю папку пользователя
-    tar -xzf /homefiles.tar.gz -C /home/$USERNAME
-    rm /homefiles.tar.gz
+    #испльзуем цикл для распаковки всех архивов
+    for archive in $ARCHIVES_4HOME; do
+        tar -xzf "/$archive" -C /home/$USERNAME
+        rm "/$archive"
+    done
 fi
 
 # Выход из chroot

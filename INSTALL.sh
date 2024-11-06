@@ -9,13 +9,59 @@ else
     exit 1
 fi
 
+# Скачивание нужных для установки пакетов
+echo "Вы хотите обновить всю вашу систему перед установкой или установить только необходимые пакеты?"
+echo "Введите \"skip\", чтобы установить только необходимые пакеты не обновляя систему или Enter - обновить систему"
+read UPDATE_SYSTEM
+if [[ $UPDATE_SYSTEM == "skip" ]]; then
+    echo "Полное обновление системы пропущено"
+    echo "Будет выполнено только обновление базы пакетов перед установкой нужных"
+    pacman -Sy
+else
+    echo "Обновление системы"
+    pacman -Syu
+fi
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python")
+
+for pkg in "${packages[@]}"; do
+    if ! pacman -Qi "$pkg" &>/dev/null; then
+        sudo pacman -S "$pkg" --noconfirm
+    fi
+done
+# "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
+# почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
+# можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
+
+#получаем список всех систем настроенных в systems.xml
+ALL_SYSTEM_IDS="$(python3 get_data_from_xml.py list_system_ids)"
+echo "В файле systems.xml найдены настройки следующих систем: $ALL_SYSTEM_IDS"
+
+read -p "Введите id системы для установки:" SYSTEM_ID
+# Проверяем уникальность имени и предлагаем варианты
+while true; do 
+    if echo "$ALL_SYSTEM_IDS" | grep -qw "$SYSTEM_ID"; then
+        echo "Используем настройки системы с id $SYSTEM_ID"
+        break
+    else
+        echo "Система с id $SYSTEM_ID не найдена в файле systems.xml"
+        echo "Введите другой id системы для установки или совершите выход при помощи ctrl+C"
+        echo "В файле systems.xml найдены настройки следующих систем: $ALL_SYSTEM_IDS"
+        read -p "Введите существующий в файле systems.xml id системы для установки:" SYSTEM_ID
+    fi
+done
+
+
 # откуда устанавливается система
-INSTALL_FROM="iso" # other_arch_system - с уже установленного Арча, iso - с LiveCD/DVD/USB
+if [[ $(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_iso) == "true" ]]; then
+    INSTALL_FROM="iso"
+else
+    INSTALL_FROM="other_arch_system"
+fi
 
 # случаи для legacy будут добавлены потом
-EFI_DEV="/dev/nvme0n1p1"
-#EFI_LOCATION_4INSTALL_FROM="/boot/efi" #только для случая other_arch_system
-EFI_NEW_LOCATION="/boot/efi" # точка монтирования для efi в новой системе
+
+EFI_DEV="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_dev)"
+EFI_NEW_LOCATION="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_new_location)"
 
 
 : <<'COMMENT'
@@ -56,125 +102,37 @@ COMMENT
 # Создаём ассоциативные массивы для каждой строки "двумерного" массива
 # C именем new_point+число
 # корневой каталог должен быть первым, а вложенные быть после родительских
-declare -A new_point0=(
-    ["mount_point"]="/" 
-    ["type"]="new_subvol_in_btrfs_in_lvm" 
-    ["crypt_mode"]="none_in_none" 
-    ["name"]="@arch_system_test42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
-)
-
-declare -A new_point1=(
-    ["mount_point"]="/home" 
-    ["type"]="new_subvol_in_btrfs_in_lvm" 
-    ["crypt_mode"]="none_in_none" 
-    ["name"]="@arch_openhome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8"
-)
-# далее задаём точки монтирования уже существующих разделов
-# будет реализовано позже
-declare -A extra_point1=(
-    ["mount_point"]="/ntfs/c" 
-    ["type"]="in_main_gpt" 
-    ["crypt_mode"]="none" 
-    ["name"]="/dev/nvme0n1p2"
-)
-#здесь можно настроить какие пакеты нужно установить вместе с системой
-#софт для установки сразу (настоятельно рекомендуется оставить самый необходимый минимум т.к. наличие пакетов здесь не проверяется по отдельности как SOFT_PACK2)
-SOFT_PACK1="base base-devel linux linux-firmware"
-#софт, который будет установлен на новую систему (тоже сразу, но уже pacman'ом)
-SOFT_PACK2="networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift"
-
-#дополнительные списки пакетов, которые можно включать и выключать ниже
-SOFT_PACK2E="curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo"
-SOFT_PACK2F="neofetch cowsay"
-SOFT_PACK2A="alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer"
-SOFT_PACK2B="bluez bluez-utils blueman"
-SOFT_PACK2G="openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet \
-obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal"
-# TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия); gsimplecal - мини-календарь
-SOFT_PACK2D="meld geany gtksourceview5"
-SOFT_PACK2C="vimdiff, emacs, diff3"
-SOFT_PACK2H="firefox chromium vlc viewnior xfce4-screenshooter engrampa"
-SOFT_PACK2L="midori feh scrot xarchiver xterm"
-SOFT_PACK20="tumbler menumaker conky pinta"
-SOFT_PACK21="maim menyoki"
-SOFT_PACK22="deluge deluge-gtk gimp inkscape krita obsidian"
-SOFT_PACK23="qemu-system-x86 virtmanager"
-SOFT_PACK24="i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig"
-SOFT_PACK25="libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity"
-SOFT_PACK26="stacer ananicy"
-
-: <<'TODO'
-Добавить свободные шрифты для:
-    Оформления часов на панеле
-    Отображения символов всех языков
-
-    проверить работоспособность menyoki (для записи видео, создания гифок) или maim(альтернатива scrot)
-    узнать подробнее про пакеты
-    viewnior — простой просмотрщик изображений.
-virtmanager — управление виртуальными машинами.
-stacer — мониторинг и оптимизация системы.
-ananicy — оптимизация приоритетов процессов.
-ffmpegthumbs — генерация миниатюр для видеофайлов.
-pureref (нету) — организация изображений для референсов.
-obs — запись экрана и стриминг.
-shotcut — видеоредактор с открытым исходным кодом.
-handbrake — конвертация видео.
-oceanaudio-bin — аудиоредактор.
-audacious — аудиоплеер.
-mediainfo-gui — анализ мультимедийных файлов.
-#https://www.youtube.com/watch?v=GPxzcaGErcM
-
-Проверка орфографии в LibreOffice Writer
-hunspell-ru
-libreoffice-still-ru
+# получаем количество точек монтирования
+ALL_NEW_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_new_points_count)"
+ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_extra_points_count)"
+# создаём массивы для новых точек монтирования
+for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
+    declare -A new_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_new_point $i)"
+done
+# создаём массивы для дополнительных точек монтирования
+for ((i=0; i<ALL_EXTRA_POINTS_COUNT; i++)); do
+    declare -A extra_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_extra_point $i)"
+done
 
 
-   - Убедитесь, что все пакеты, 
-   перечисленные в этих переменных, доступны в репозиториях вашей системы. 
-   Вы можете проверить их наличие с помощью команды `pacman -Ss <package_name>`.
 
-TODO
+## будет реализовано позже
+#declare -A extra_point1=(
+#    ["mount_point"]="/ntfs/c" 
+#    ["type"]="in_main_gpt" 
+#    ["crypt_mode"]="none" 
+#    ["name"]="/dev/nvme0n1p2"
+#)
 
 
-#uncooment to install more soft:
-###########impotant#################
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2E"
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2F"
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2A"
-#: <<'NOUSING'
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2B"
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2G"
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2D"
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2C"
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2H"
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK2L"
-SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK20"
-###########extra##################
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK21"
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK22" #
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK23" #
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK24"
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK25"
-#SOFT_PACK2="$SOFT_PACK2 $SOFT_PACK26"
-#NOUSING
+#получаем список пакетов для pacstrap
+SOFT_PACK1="$(python3 get_data_from_xml.py $SYSTEM_ID get_pkgs_pacstrap)"
 
 #===============конец настроек=============================================================
 
 #Обновление времени
 timedatectl set-ntp true
 
-# Скачивание нужных для установки пакетов
-pacman -Suy
-packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python")
-
-for pkg in "${packages[@]}"; do
-    if ! pacman -Qi "$pkg" &>/dev/null; then
-        sudo pacman -S "$pkg" --noconfirm
-    fi
-done
-# "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
-# почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
-# можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
 
 
 if [[ $INSTALL_FROM == "iso" ]]; then
@@ -183,10 +141,30 @@ if [[ $INSTALL_FROM == "iso" ]]; then
     echo "test тест"
 fi
 
-
-
 # Получаем путь к каталогу, где находится скрипт
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
+# Показываем пользователю список записей EFI
+efibootmgr
+
+EFI_SYS_NAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_name)"
+
+# Проверяем уникальность имени и предлагаем варианты
+while true; do
+    if efibootmgr | grep -q "$EFI_SYS_NAME"; then
+        echo "Загрузчик с именем $EFI_SYS_NAME уже существует."
+        read -p "Хотите перезаписать существующий загрузчик? (type YES using Capital letters): " overwrite
+        if [[ $overwrite =~ ^YES$ ]]; then
+            echo "Будет выполнена перезапись существующего загрузчика."
+            break
+        else
+            read -p "Введите другое имя загрузчика в EFI-разделе: " EFI_SYS_NAME
+        fi
+    else
+        echo "Имя загрузчика $EFI_SYS_NAME уникально и будет использовано."
+        break
+    fi
+done
 
 # Определяем количество массивов вида new_pointX автоматически
 ALL_NEW_POINTS=()
@@ -358,14 +336,16 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 done
 
 
-echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования данного скрипта"
+echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла systems.xml"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
-read -p "Введите имя установки (будет использовано в имени скрипта для удаления): " INSTALLATION_NAME
+INSTALLATION_NAME="$SYSTEM_ID"
 NEW_SCRIPT_4REMOVE="$SCRIPT_DIR/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
 cp "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
+
+#### начало создания скрипта удаления
 # Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
 lvm_volumes_str=""
 for volume in "${LVM_VOLUMES[@]}"; do
@@ -427,31 +407,11 @@ while IFS= read -r line; do
 $line" "$NEW_SCRIPT_4REMOVE"
 done <<< "$btrfs_subvolumes_str"
 
-# Показываем пользователю список записей EFI
-efibootmgr
-
-# Запрашиваем имя нового загрузчика
-read -p "Введите имя нового загрузчика в EFI-разделе: " EFI_SYS_NAME
-
-# Проверяем уникальность имени и предлагаем варианты
-while true; do
-    if efibootmgr | grep -q "$EFI_SYS_NAME"; then
-        echo "Загрузчик с именем $EFI_SYS_NAME уже существует."
-        read -p "Хотите перезаписать существующий загрузчик? (type YES using Capital letters): " overwrite
-        if [[ $overwrite =~ ^YES$ ]]; then
-            echo "Будет выполнена перезапись существующего загрузчика."
-            break
-        else
-            read -p "Введите другое имя загрузчика в EFI-разделе: " EFI_SYS_NAME
-        fi
-    else
-        echo "Имя загрузчика $EFI_SYS_NAME уникально и будет использовано."
-        break
-    fi
-done
 
 # выполняем замену в копии файла REMOVE_INSTALED_SYSTEM.sh
 sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_SCRIPT_4REMOVE"
+
+#### конец создания скрипта удаления 
 
 #продолжаем дописывать скрипт
 : <<'TODO'
@@ -464,10 +424,6 @@ TODO
 
 #ВНИМАНИЕ! тут начинается непосредственно установка
 
-#этот шаг нужен, если установка идёт с уже установленной системы (на самом деле нет)
-#if [[ $INSTALL_FROM == "other_arch_system" ]]; then
-#    umount $EFI_LOCATION_4INSTALL_FROM
-#fi
 
 #добавляем к имени каталога текущую дату и время для уникальности
 INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
@@ -563,13 +519,19 @@ genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 #копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
 cp $SCRIPT_DIR/run_inside_chroot.sh $INST_DIR
 
-#копирование и распоковка архива с файлами для домашнего каталога (будут распаковываны в chroot'е)
-cp $SCRIPT_DIR/homefiles.tar.gz $INST_DIR
+
+#получаем список архивов для распаковки в домашнюю папку пользователя
+ARCHIVES_4HOME="$(python3 get_data_from_xml.py $SYSTEM_ID get_archs4home)"
+
+#копирование и распоковка архивов с файлами для домашнего каталога (будут распаковываны в chroot'е)
+for archive in $ARCHIVES_4HOME; do
+    cp $SCRIPT_DIR/$archive $INST_DIR
+done
 
 #-------------------------------
 # Chroot в новую систему
 # передаём в скрипт список пакетов и имя загрузчика в EFI-разделе
-arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFT_PACK2\" \"$EFI_SYS_NAME\""
+arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SYSTEM_ID\" \"$EFI_SYS_NAME\""
 #-------------------------------
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта

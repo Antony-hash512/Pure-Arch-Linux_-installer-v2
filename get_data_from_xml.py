@@ -3,11 +3,26 @@ import sys
 import xml.etree.ElementTree as ET
 
 def main():
-    if len(sys.argv) < 3:
-        print("Использование: python script.py <system_id> <command> [дополнительные аргументы]")
+    if len(sys.argv) < 2:
+        print("Использование: python get_data_from_xml.py <system_id> <command> [дополнительные аргументы]")
+        print("Или для получения списка систем: python get_data_from_xml.py list_system_ids")
         sys.exit(1)
     
+    # Проверяем, если команда 'list_system_ids'
+    if sys.argv[1] == 'list_system_ids':
+        # Парсим XML-файл
+        tree = ET.parse('systems.xml')
+        root = tree.getroot()
+        # Получаем все 'id' систем
+        system_ids = [sys_elem.get('id') for sys_elem in root.findall('system')]
+        print(' '.join(system_ids))
+        sys.exit(0)
+    
+    # В остальных случаях ожидаем, что первый аргумент - это 'system_id'
     system_id = sys.argv[1]
+    if len(sys.argv) < 3:
+        print("Использование: python get_data_from_xml.py <system_id> <command> [дополнительные аргументы]")
+        sys.exit(1)
     command = sys.argv[2]
     optional_args = sys.argv[3:]
 
@@ -156,3 +171,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
