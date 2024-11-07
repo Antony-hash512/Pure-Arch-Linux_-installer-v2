@@ -103,8 +103,8 @@ COMMENT
 # C именем new_point+число
 # корневой каталог должен быть первым, а вложенные быть после родительских
 # получаем количество точек монтирования
-ALL_NEW_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_new_points_count)"
-ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_extra_points_count)"
+ALL_NEW_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_amount_of_new_mountpoints)"
+ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_amount_of_extra_mountpoints)"
 # создаём массивы для новых точек монтирования
 for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
     declare -A new_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_new_point $i)"

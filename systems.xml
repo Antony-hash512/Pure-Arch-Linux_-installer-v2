@@ -23,6 +23,7 @@ base base-devel linux linux-firmware
 			<bundle>i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig</bundle>
 			<bundle>libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
 			<bundle>stacer ananicy</bundle>
+			<bundle>libreoffice hunspell-ru libreoffice-still-ru</bundle>
 TODO:
 Добавить свободные шрифты для:
     Оформления часов на панеле
