@@ -211,6 +211,17 @@ fi
 #ассоциативный массив для хранения точек монтирования корневых разделов всех btrfs
 declare -A ALL_ROOT_BTRFS_MOUNTPOINTS
 
+#####начало отладки
+echo "ALL_NEW_POINTS: ${ALL_NEW_POINTS[@]}"
+echo "ALL_EXTRA_POINTS: ${ALL_EXTRA_POINTS[@]}" #вывод всех элементов массива   
+
+
+
+
+
+#####конец отладки
+
+
 
 # Обходим массивы, используя их имена
 i=0;
