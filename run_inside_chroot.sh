@@ -96,7 +96,7 @@ EDITOR="sed -i 's/^#%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL'" visudo -
 
 
 # Настройка хуков для mkinitcpio
-sed -i 's/^HOOKS=(.*)/HOOKS=($(python3 get_data_from_xml.py $SYSTEM_ID get_hooks))/' /etc/mkinitcpio.conf
+sed -i "s/^HOOKS=(.*)/HOOKS=($(python3 get_data_from_xml.py $SYSTEM_ID get_hooks))/" /etc/mkinitcpio.conf
 mkinitcpio -P
 
 
