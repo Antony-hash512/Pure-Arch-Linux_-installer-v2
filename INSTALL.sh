@@ -108,12 +108,10 @@ ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_amount_of_
 # создаём массивы для новых точек монтирования
 for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
     declare -A new_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_new_mountpoint $i)"
-    echo "new_point$i: ${new_point$i[@]}"
 done
 # создаём массивы для дополнительных точек монтирования
 for ((i=0; i<ALL_EXTRA_POINTS_COUNT; i++)); do
     declare -A extra_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_extra_mountpoint $i)"
-    echo "extra_point$i: ${extra_point$i[@]}"
 done
 
 
