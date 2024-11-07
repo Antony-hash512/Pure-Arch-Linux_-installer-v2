@@ -541,6 +541,8 @@ genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
 #копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
 cp $SCRIPT_DIR/run_inside_chroot.sh $INST_DIR
+cp $SCRIPT_DIR/get_data_from_xml.py $INST_DIR
+cp $SCRIPT_DIR/systems.xml $INST_DIR
 
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
@@ -559,6 +561,8 @@ arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SYSTEM_ID\" \"$EFI_
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта
 rm $INST_DIR/run_inside_chroot.sh
+rm $INST_DIR/get_data_from_xml.py
+rm $INST_DIR/systems.xml
 
 #размонтируем раздел EFI
 umount $INST_DIR$EFI_NEW_LOCATION
