@@ -375,10 +375,10 @@ for volume in "${LVM_VOLUMES[@]}"; do
     lvm_volumes_str+="    \"$volume\"\n"
 done
 
-# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]=("значения")
+# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]="значения"
 btrfs_subvolumes_str=""
 for key in "${!BTRFS_SUBVOLUMES[@]}"; do
-    btrfs_subvolumes_str+="    [\"$key\"]=(\"${BTRFS_SUBVOLUMES[$key]}\")\n"
+    btrfs_subvolumes_str+="    [\"$key\"]=\"${BTRFS_SUBVOLUMES[$key]}\"\n"
 done
 
 # Переводим символы новой строки (\n) в литеральные символы, чтобы sed корректно обработал
