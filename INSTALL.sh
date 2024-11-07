@@ -216,6 +216,10 @@ echo "ALL_NEW_POINTS: ${ALL_NEW_POINTS[@]}"
 #вывод всех элементов массива
 for item in "${ALL_NEW_POINTS[@]}"; do
     echo "$item"
+    declare -n current_array="$item"
+    for key in "${!current_array[@]}"; do
+        echo "[$key]=${current_array[$key]}"
+    done
 done    
 
 echo "ALL_EXTRA_POINTS: ${ALL_EXTRA_POINTS[@]}" 
