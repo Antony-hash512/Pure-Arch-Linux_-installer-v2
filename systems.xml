@@ -68,6 +68,7 @@ mkinitcpio -P
 -->
 <systems>
 	<system id="vm_test1">
+		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
 			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
@@ -109,7 +110,6 @@ mkinitcpio -P
 			<hostname>qemu-arch</hostname>
 			<username>user</username>
 			<useruid>1000</useruid>
-			<init_system>systemd</init_system>
 			<locales>
 				<locale>en_US.UTF-8 UTF-8</locale>
 				<locale>ru_RU.UTF-8 UTF-8</locale>
@@ -132,6 +132,7 @@ mkinitcpio -P
 	</system>
 
 	<system id="openbox_barehard_test43">
+		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
 			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
@@ -173,7 +174,6 @@ mkinitcpio -P
 			<hostname>katana</hostname>
 			<username>user</username>
 			<useruid>1000</useruid>
-			<init_system>systemd</init_system>
 			<locales>
 				<locale>en_US.UTF-8 UTF-8</locale>
 				<locale>ru_RU.UTF-8 UTF-8</locale>

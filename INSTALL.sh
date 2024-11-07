@@ -147,7 +147,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 # Показываем пользователю список записей EFI
 efibootmgr
 
-EFI_SYS_NAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_name)"
+EFI_SYS_NAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_bootlabel)"
 
 # Проверяем уникальность имени и предлагаем варианты
 while true; do
