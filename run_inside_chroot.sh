@@ -70,6 +70,7 @@ pacman -S sudo --noconfirm
 
 # Установка всего дополнительного софта
 for package in $SOFT_PACK2; do
+    echo "Установка пакета: $package и его зависимостей"
     pacman -S $package --noconfirm
 done
 
