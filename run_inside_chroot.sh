@@ -2,6 +2,10 @@
 SYSTEM_ID=$1
 EFI_SYS_NAME=$2
 
+#первым делом устанавливаем python3 в новую систему т.к. нужен для продолжения парсинга xml-файла
+pacman -Syu python3 --noconfirm
+
+
 SOFT_PACK2="$(python3 get_data_from_xml.py $SYSTEM_ID get_pkgs_pacman)"
 MY_UID="$(python3 get_data_from_xml.py $SYSTEM_ID get_useruid)"
 MY_TIMEZONE="$(python3 get_data_from_xml.py $SYSTEM_ID get_timezone)"
@@ -65,7 +69,6 @@ pacman -S sudo --noconfirm
 
 
 # Установка всего дополнительного софта
-pacman -Syu
 for package in $SOFT_PACK2; do
     pacman -S $package --noconfirm
 done
