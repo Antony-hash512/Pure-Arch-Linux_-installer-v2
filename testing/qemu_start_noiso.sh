@@ -6,7 +6,7 @@ qemu-system-x86_64 \
     -cpu host \
     -smp 2 \
     -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2-ovmf/x64/OVMF_CODE.fd \
-    -drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/x64/OVMF_VARS.fd \
+    -drive if=pflash,format=raw,file=/home/mega/data/extra/vm_disks/OVMF_VARS.fd \
     -drive file=/home/mega/data/extra/vm_disks/archlinux_vm_disk.qcow2,format=qcow2 \
     -nic user,model=virtio-net-pci \
     -vga virtio
