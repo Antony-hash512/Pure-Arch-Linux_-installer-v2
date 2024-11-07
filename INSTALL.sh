@@ -213,8 +213,16 @@ declare -A ALL_ROOT_BTRFS_MOUNTPOINTS
 
 #####начало отладки
 echo "ALL_NEW_POINTS: ${ALL_NEW_POINTS[@]}"
-echo "ALL_EXTRA_POINTS: ${ALL_EXTRA_POINTS[@]}" #вывод всех элементов массива   
+#вывод всех элементов массива
+for item in "${ALL_NEW_POINTS[@]}"; do
+    echo "$item"
+done    
 
+echo "ALL_EXTRA_POINTS: ${ALL_EXTRA_POINTS[@]}" 
+#вывод всех элементов массива   
+for item in "${ALL_EXTRA_POINTS[@]}"; do
+    echo "$item"
+done    
 
 
 
