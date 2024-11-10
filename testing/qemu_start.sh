@@ -5,8 +5,8 @@ qemu-system-x86_64 \
     -m 2G \
     -cpu host \
     -smp 2 \
-    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2-ovmf/x64/OVMF_CODE.fd \
-    -drive if=pflash,format=raw,file=/home/mega/data/extra/vm_disks/OVMF_VARS.fd \
+    -drive if=pflash,format=raw,readonly=on,file=/home/mega/data/extra/vm_disks/edk2/2024/OVMF_CODE.4m.fd \
+    -drive if=pflash,format=raw,file=/home/mega/data/extra/vm_disks/edk2/2024/OVMF_VARS.4m.fd \
     -drive file=/home/mega/data/extra/vm_disks/archlinux_vm_disk.qcow2,format=qcow2 \
     -virtfs local,path=/home/mega/git/Pure-Arch-Linux_-installer-v2/,mount_tag=inst_scripts,security_model=none \
     -cdrom /home/mega/data/extra/torrents/archlinux-2024.11.01-x86_64.iso \
