@@ -71,6 +71,64 @@ mkinitcpio -P
 		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu ffmpeg mediainfo</bundle>
+		</pakages>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_openbox.tar.gz</archive>
+			</home>
+		</extrafiles>
+
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+		</mountpoints>
+
+
+		<settings>
+			<timezone>Asia/Dubai</timezone>
+			<hostname>qemu-arch</hostname>
+			<username>user</username>
+			<useruid>1000</useruid>
+			<locales>
+				<locale>en_US.UTF-8 UTF-8</locale>
+				<locale>ru_RU.UTF-8 UTF-8</locale>
+				<default>en_US.UTF-8</default>
+				<vconsole_add>FONT=cyr-sun16</vconsole_add>
+				<vconsole_add>KEYMAP=us</vconsole_add>
+				<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
+			</locales>
+			<efi>
+				<bootlabel>ArchTestMini</bootlabel>
+				<dev>/dev/sda1</dev>
+				<new_location>/boot/efi</new_location>
+			</efi>
+			<tweaks>
+				<iso>true</iso>
+				<openbox>false</openbox>
+				<createroot>false</createroot>
+			</tweaks>
+		</settings>
+	</system>
+
+	<system id="vm_test1_openbox">
+		<init_system>systemd</init_system>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
 			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>

@@ -530,8 +530,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 done
 
 #монтируем раздел EFI
-mkdir -p $INST_DIR$EFI_NEW_LOCATION
-mount $EFI_DEV $INST_DIR$EFI_NEW_LOCATION
+mkdir -p $INST_DIR/$EFI_NEW_LOCATION
+mount $EFI_DEV $INST_DIR/$EFI_NEW_LOCATION
 
 # Установка основных пакетов
 pacstrap $INST_DIR $SOFT_PACK1
@@ -566,7 +566,7 @@ rm $INST_DIR/get_data_from_xml.py
 rm $INST_DIR/systems.xml
 
 #размонтируем раздел EFI
-umount $INST_DIR$EFI_NEW_LOCATION
+umount $INST_DIR/$EFI_NEW_LOCATION
 
 # Размонтирование всех разделов
 umount -R $INST_DIR
