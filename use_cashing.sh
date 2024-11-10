@@ -5,3 +5,5 @@ if ! pacman -Qi pacserve &>/dev/null; then
 fi
 
 sudo systemctl start pacserve
+
+sudo systemctl start pacserve-ports.service

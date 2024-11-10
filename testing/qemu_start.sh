@@ -12,5 +12,5 @@ qemu-system-x86_64 \
     -cdrom /home/mega/data/extra/torrents/archlinux-2024.11.01-x86_64.iso \
     -drive file=./mntfld.iso,media=cdrom \
     -boot order=d \
-    -nic user,model=virtio-net-pci \
+    -nic user,model=virtio-net-pci,hostfwd=tcp::15678-:15678 \
     -vga virtio
