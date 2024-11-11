@@ -70,12 +70,12 @@ mkinitcpio -P
 	<system id="vm_test1">
 		<init_system>systemd</init_system>
 		<pakages>
-			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar</bundle>
+			<pacstrap>base linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk</bundle>
 			<bundle>neofetch cowsay</bundle>
-			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu ffmpeg mediainfo</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu</bundle>
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
@@ -139,7 +139,7 @@ mkinitcpio -P
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
@@ -203,7 +203,7 @@ mkinitcpio -P
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
