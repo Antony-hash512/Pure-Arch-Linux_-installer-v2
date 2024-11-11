@@ -1,6 +1,7 @@
 #!/bin/bash
+# Данный скрипт приспособлен для нескольких LVM-разделов и подтомов Btrfs
 
-#Служебный каталог для монтирования томов btrfs, добавляем текущую дату и время для уникальности
+# Служебный каталог для монтирования томов Btrfs, добавляем текущую дату и время для уникальности
 MOUNT_POINT="/mnt/btrfs_mount_$(date +%Y%m%d_%H%M%S)"
 
 # Примеры использования
@@ -12,8 +13,8 @@ MOUNT_POINT="/mnt/btrfs_mount_$(date +%Y%m%d_%H%M%S)"
 # Определение сабволюмов btrfs для удаления
 # Ассоциативный массив, где ключ — это устройство, а значение — массив с именами подтомов
 # BTRFS_SUBVOLUMES=(
-#     ["/dev/mainvg/gigabox"]=("@arch_system" "@home_system")
-#     ["/dev/nvme0n1p9"]=("@arch_system_boot")
+#     ["/dev/mainvg/gigabox"]="@arch_system" "@home_system"
+#     ["/dev/nvme0n1p9"]="@arch_system_boot"
 # )
 
 # Определение томов lvm для удаления
@@ -23,10 +24,41 @@ LVM_VOLUMES=("/dev/mainvg/arch_system" "/dev/mainvg/home_system")
 # Ассоциативный массив, где ключ — это устройство, а значение — массив с именами подтомов
 declare -A BTRFS_SUBVOLUMES
 BTRFS_SUBVOLUMES=(
-    ["/dev/mainvg/gigabox"]=("@arch_system @home_system")
+    ["/dev/mainvg/gigabox"]="@arch_system @home_system"
 )
 
 EFI_NOTE_TO_DELETE=""
+
+# Функция рекурсивного удаления подтомов
+delete_subvolumes_recursively() {
+    local subvol_path="$1"
+
+    # Проверяем существование подтома перед удалением
+    if sudo btrfs subvolume show "$subvol_path" &>/dev/null; then
+        # Получаем список всех вложенных подтомов, сортируя их по длине пути в обратном порядке (самые глубокие сначала)
+        sudo btrfs subvolume list -o "$subvol_path" --sort=-path | while read -r line; do
+            # Извлекаем путь к подтомам
+            path=$(echo "$line" | awk '{$1=$2=$3=$4=$5=$6=$7=$8=""; print $0}' | sed 's/^ *//')
+            full_path="$MOUNT_POINT/$path"
+            echo "Удаляем подтом: $full_path"
+            sudo btrfs subvolume delete "$full_path"
+            if [ $? -ne 0 ]; then
+                echo "Ошибка при удалении подтома: $full_path" >&2
+            fi
+        done
+
+        # Удаляем главный подтом
+        if [ -d "$subvol_path" ]; then
+            echo "Удаляем подтом: $subvol_path"
+            sudo btrfs subvolume delete "$subvol_path"
+            if [ $? -ne 0 ]; then
+                echo "Ошибка при удалении подтома: $subvol_path" >&2
+            fi
+        fi
+    else
+        echo "Подтом $subvol_path не найден. Пропуск."
+    fi
+}
 
 # Создаем каталог для точки монтирования, если он не существует
 if [ ! -d "$MOUNT_POINT" ]; then
@@ -65,11 +97,10 @@ for volume in "${LVM_VOLUMES[@]}"; do
     fi
 done
 
-# Удаляем подтома Btrfs
-
-echo "Удаляем подтома Btrfs..."
+# Удаляем подтомы Btrfs
+echo "Удаляем подтомы Btrfs..."
 for device in "${!BTRFS_SUBVOLUMES[@]}"; do
-    #subvolumes=(${BTRFS_SUBVOLUMES[$device]})
+
     read -r -a subvolumes <<< "${BTRFS_SUBVOLUMES[$device]}"
 
     echo "Монтируем $device в $MOUNT_POINT"
@@ -80,17 +111,9 @@ for device in "${!BTRFS_SUBVOLUMES[@]}"; do
     fi
 
     for subvol in "${subvolumes[@]}"; do
-        # Проверяем существование подтома перед удалением
-        if sudo btrfs subvolume show "$MOUNT_POINT/$subvol" &>/dev/null; then
-            # Удаляем подтом
-            echo "Удаляем подтом: $subvol"
-            sudo btrfs subvolume delete "$MOUNT_POINT/$subvol"
-            if [ $? -ne 0 ]; then
-                echo "Ошибка при удалении подтома: $subvol" >&2
-            fi
-        else
-            echo "Подтом $subvol не найден. Пропуск."
-        fi
+        subvol_path="$MOUNT_POINT/$subvol"
+        echo "Удаляем подтом: $subvol"
+        delete_subvolumes_recursively "$subvol_path"
     done
 
     # Отмонтируем $MOUNT_POINT после удаления
@@ -118,12 +141,20 @@ fi
 # Удаляем запись EFI, если указано
 if [ -n "$EFI_NOTE_TO_DELETE" ]; then
     echo "Удаляем запись EFI: $EFI_NOTE_TO_DELETE"
-    sudo efibootmgr -b "$EFI_NOTE_TO_DELETE" -B
-    if [ $? -ne 0 ]; then
-        echo "Ошибка при удалении записи EFI: $EFI_NOTE_TO_DELETE." >&2
+    # Ищем BootNum по имени
+    bootnum=$(sudo efibootmgr | grep -Ei "Boot[0-9a-fA-F]{4}.*$EFI_NOTE_TO_DELETE" | head -n1 | sed -n 's/^Boot\([0-9a-fA-F]\{4\}\)\*.*/\1/p')
+    if [ -n "$bootnum" ]; then
+        echo "Найден BootNum: $bootnum для записи $EFI_NOTE_TO_DELETE"
+        sudo efibootmgr -b "$bootnum" -B
+        if [ $? -ne 0 ]; then
+            echo "Ошибка при удалении записи EFI: $EFI_NOTE_TO_DELETE." >&2
+        else
+            echo "Запись EFI $EFI_NOTE_TO_DELETE успешно удалена."
+        fi
+    else
+        echo "Запись EFI с именем $EFI_NOTE_TO_DELETE не найдена."
     fi
 fi
-
 
 echo "Удаление системы завершено."
 read -p "Нажмите Enter для выхода..."
