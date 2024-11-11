@@ -127,7 +127,6 @@ mkinitcpio -P
 		</settings>
 	</system>
 
-	<systems>
 	<system id="vm_test1_gnome">
 		<init_system>systemd</init_system>
 		<pakages>
