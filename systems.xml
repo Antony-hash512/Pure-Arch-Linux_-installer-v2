@@ -24,6 +24,8 @@ base base-devel linux linux-firmware
 			<bundle>libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
 			<bundle>stacer ananicy</bundle>
 			<bundle>libreoffice hunspell-ru libreoffice-still-ru</bundle>
+			
+			<bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi dolphin</bundle>
 TODO:
 Добавить свободные шрифты для:
     Оформления часов на панеле
