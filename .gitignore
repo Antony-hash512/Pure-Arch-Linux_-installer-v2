@@ -2,7 +2,5 @@
 autocreated_scripts/*
 !autocreated_scripts/.gitkeep
 errors/*
-iso2/*
 cash-repo/*
 CREATE_TAR.sh
-CREATE_ISO.sh
