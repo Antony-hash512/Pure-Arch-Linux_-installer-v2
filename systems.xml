@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
+#TODO:
+Нужно произвести разделение:
+настройки пакетов, допфайлов и т.п.
+отдельно, а разделов, точек монтирования и т.п. отдельно,
+чтобы можно было комбинировать эти настройки
+
+
 #софт для установки сразу (настоятельно рекомендуется оставить самый необходимый минимум т.к. наличие пакетов здесь не проверяется по отдельности как pakages_pacman)
 base base-devel linux linux-firmware
 #софт, который будет установлен на новую систему (тоже сразу, но уже pacman'ом)
@@ -9,7 +16,7 @@ base base-devel linux linux-firmware
 			<bundle>neofetch cowsay</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
-			<bundle>openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
+			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
 # TODO: проверить нужны ли мне: wmctrl xdotool(авто-действия); gsimplecal - мини-календарь
 			<bundle>wmctrl xdotool</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
@@ -21,11 +28,13 @@ base base-devel linux linux-firmware
 			<bundle>deluge deluge-gtk gimp inkscape krita obsidian</bundle>
 			<bundle>qemu-system-x86 virtmanager</bundle>
 			<bundle>i2pd tor electrum bitcoin-daemon bitcoin-qt monero p2pool xmrig</bundle>
-			<bundle>libreoffice blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+			<bundle>libreoffice-still blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
 			<bundle>stacer ananicy</bundle>
-			<bundle>libreoffice hunspell-ru libreoffice-still-ru</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			
 			<bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi dolphin</bundle>
+			<bundle>nvidia nvidia-utils nvidia-setting</bundle>
+			<bundle>intel-ucode</bundle>
 TODO:
 Добавить свободные шрифты для:
     Оформления часов на панеле
@@ -73,7 +82,7 @@ mkinitcpio -P
 		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu</bundle>
 		</pakages>
@@ -131,17 +140,21 @@ mkinitcpio -P
 		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu</bundle>
-			<bundle>gnome</bundle>
-			<bundle>libreoffice hunspell-ru libreoffice-still-ru</bundle>
-			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>gnome xorg-server xorg-xinit xorg-xauth</bundle>
+			<bundle>xf86-video-vesa</bundle>
+			<bundle>gnome-extra</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru</bundle>
+			<bundle>firefox chromium thunar pcmanfm terminator obsidian</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
 		</pakages>
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_gnome.tar.gz</archive>
 			</home>
 		</extrafiles>
 
@@ -187,16 +200,87 @@ mkinitcpio -P
 		</settings>
 	</system>
 
+
+		<system id="gnome_nvidia">
+		<init_system>systemd</init_system>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu mplayer</bundle>
+			<bundle>gnome xorg-server xorg-xinit xorg-xauth</bundle>
+			<bundle>gnome-extra i3lock</bundle>
+			<bundle>sof-firmware mplayer</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>nvidia nvidia-utils nvidia-settings</bundle>
+			<bundle>intel-ucode</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta baobab</bundle>
+			<bundle>qemu-system-x86 virtmanager</bundle>
+			<bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+		</pakages>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_gnome.tar.gz</archive>
+			</home>
+		</extrafiles>
+
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_gnome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@homes_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+			</point>
+		</mountpoints>
+
+
+		<settings>
+			<timezone>Asia/Dubai</timezone>
+			<hostname>katana</hostname>
+			<username>fireice</username>
+			<useruid>1000</useruid>
+			<locales>
+				<locale>en_US.UTF-8 UTF-8</locale>
+				<locale>ru_RU.UTF-8 UTF-8</locale>
+				<default>ru_RU.UTF-8</default>
+				<vconsole_add>FONT=cyr-sun16</vconsole_add>
+				<vconsole_add>KEYMAP=us</vconsole_add>
+				<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
+			</locales>
+			<efi>
+				<bootlabel>ArchGnomeNotCrypted</bootlabel>
+				<dev>/dev/nvme0n1p1</dev>
+				<new_location>/boot/efi</new_location>
+			</efi>
+			<tweaks>
+				<iso>false</iso>
+				<openbox>false</openbox>
+				<createroot>false</createroot>
+			</tweaks>
+		</settings>
+	</system>
+
 	<system id="vm_test1_openbox">
 		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
-			<bundle>openbox gparted xorg-xinit tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
+			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
+			<bundle>xf86-video-vesa</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
@@ -255,7 +339,7 @@ mkinitcpio -P
 		<init_system>systemd</init_system>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
