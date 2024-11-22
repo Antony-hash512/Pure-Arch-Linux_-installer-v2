@@ -3,4 +3,5 @@ autocreated_scripts/*
 !autocreated_scripts/.gitkeep
 errors/*
 cash-repo/*
+git_configs/*
 CREATE_TAR.sh
