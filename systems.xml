@@ -35,6 +35,8 @@ base base-devel linux linux-firmware
 			<bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi dolphin</bundle>
 			<bundle>nvidia nvidia-utils nvidia-setting</bundle>
 			<bundle>intel-ucode</bundle>
+
+            <bundle>mesa xf86-video-intel</bundle>
 TODO:
 Добавить свободные шрифты для:
     Оформления часов на панеле
@@ -264,6 +266,142 @@ mkinitcpio -P
 			</efi>
 			<tweaks>
 				<iso>false</iso>
+				<openbox>false</openbox>
+				<createroot>false</createroot>
+			</tweaks>
+		</settings>
+	</system>
+
+<system id="gnome_intel_vivo">
+		<init_system>systemd</init_system>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk diffutils</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu mplayer</bundle>
+			<bundle>gnome xorg-server xorg-xinit xorg-xauth</bundle>
+			<bundle>gnome-extra i3lock</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>mesa xf86-video-intel</bundle>
+			<bundle>intel-ucode</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta baobab</bundle>
+			<bundle>qemu-system-x86 virtmanager</bundle>
+			<bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+		</pakages>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_gnome.tar.gz</archive>
+			</home>
+		</extrafiles>
+
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_gnome_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+		</mountpoints>
+
+
+		<settings>
+			<timezone>Asia/Dubai</timezone>
+			<hostname>vivobook</hostname>
+			<username>fireice</username>
+			<useruid>1000</useruid>
+			<locales>
+				<locale>en_US.UTF-8 UTF-8</locale>
+				<locale>ru_RU.UTF-8 UTF-8</locale>
+				<default>ru_RU.UTF-8</default>
+				<vconsole_add>FONT=cyr-sun16</vconsole_add>
+				<vconsole_add>KEYMAP=us</vconsole_add>
+				<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
+			</locales>
+			<efi>
+				<bootlabel>ArchGnomeNotCrypted</bootlabel>
+				<dev>/dev/nvme0n1p1</dev>
+				<new_location>/boot/efi</new_location>
+			</efi>
+			<tweaks>
+				<iso>true</iso>
+				<openbox>false</openbox>
+				<createroot>false</createroot>
+			</tweaks>
+		</settings>
+	</system>
+
+<system id="hyperland_intel_vivo">
+		<init_system>systemd</init_system>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk diffutils</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu mplayer</bundle>
+            <bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi dolphin</bundle>
+            <bundle>bluez bluez-utils blueman</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>mesa xf86-video-intel</bundle>
+			<bundle>intel-ucode</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta baobab</bundle>
+			<bundle>qemu-system-x86 virtmanager</bundle>
+			<bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+		</pakages>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_hyprland.tar.gz</archive>
+			</home>
+		</extrafiles>
+
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+		</mountpoints>
+
+
+		<settings>
+			<timezone>Asia/Dubai</timezone>
+			<hostname>vivobook</hostname>
+			<username>mega</username>
+			<useruid>1000</useruid>
+			<locales>
+				<locale>en_US.UTF-8 UTF-8</locale>
+				<locale>ru_RU.UTF-8 UTF-8</locale>
+				<default>ru_RU.UTF-8</default>
+				<vconsole_add>FONT=cyr-sun16</vconsole_add>
+				<vconsole_add>KEYMAP=us</vconsole_add>
+				<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
+			</locales>
+			<efi>
+				<bootlabel>ArchHyprlandNotCrypted</bootlabel>
+				<dev>/dev/nvme0n1p1</dev>
+				<new_location>/boot/efi</new_location>
+			</efi>
+			<tweaks>
+				<iso>true</iso>
 				<openbox>false</openbox>
 				<createroot>false</createroot>
 			</tweaks>
