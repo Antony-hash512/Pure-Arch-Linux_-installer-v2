@@ -343,22 +343,24 @@ mkinitcpio -P
 <system id="hyperland_intel_vivo">
 		<init_system>systemd</init_system>
 		<pakages>
-			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk diffutils</bundle>
-			<bundle>neofetch cowsay</bundle>
-			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu mplayer</bundle>
-            <bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi dolphin</bundle>
+			<pacstrap>base linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>fastfetch neofetch cowsay</bundle>
+			<bundle>base-devel diffutils rust</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu</bundle>
+            <bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi</bundle>
+            <bundle>brightnessctl waybar swaylock hyprlock nm-applet swayidle hypridle xed nwg-look</bundle>
+            <bundle>pipewire pipewire-pulse sof-firmware</bundle>
             <bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
-			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>firefox chromium thunar vlc terminator</bundle>
 			<bundle>mesa xf86-video-intel</bundle>
 			<bundle>intel-ucode</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
-			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta baobab</bundle>
-			<bundle>qemu-system-x86 virtmanager</bundle>
-			<bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape obsidian pinta baobab</bundle>
+
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>

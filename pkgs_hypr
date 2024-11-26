@@ -1,0 +1,15 @@
+brightnessctl
+waybar
+swaylock
+hyprlock
+nm-applet
+fastfetch
+swayidle
+hypridle
+xed
+rust
+nwg-look
+
+paru:
+  wlogout
+  hyprshot
