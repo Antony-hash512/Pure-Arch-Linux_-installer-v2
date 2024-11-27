@@ -12,6 +12,7 @@ nwg-look
 gnome-themes-extra
 noto-fonts
 noto-fonts-emoji
+ttf-font-awesome
 
 paru:
   wlogout
