@@ -9,7 +9,9 @@ hypridle
 xed
 rust
 nwg-look
-conky
+gnome-themes-extra
+noto-fonts
+noto-fonts-emoji
 
 paru:
   wlogout
