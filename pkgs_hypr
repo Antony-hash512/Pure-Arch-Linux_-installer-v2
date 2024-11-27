@@ -13,6 +13,10 @@ gnome-themes-extra
 noto-fonts
 noto-fonts-emoji
 ttf-font-awesome
+xreader
+bat
+gvfs
+gvfs-mtp
 
 paru:
   wlogout
