@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- возможное содержимое softpack/sofpack_tweaks: openbox hyperland multilibs paru flatpack downgrade swap createroot zsh fish-->
+<componets>
+<driverspacks>
+	<driverspack name="intel_cpu_gpu" descripton="Графика и проц от интел">
+		<pakages>
+			<bundle>mesa xf86-video-intel lib32-vulkan-intel vulkan-intel</bundle>
+			<bundle>intel-ucode</bundle>
+		</pakages>
+	</driverspack>
+	<driverspack name="none" descripton="Не устанавливать драйвера">
+		<pakages>
+			<bundle></bundle>
+		</pakages>
+	</driverspack>
+</driverspacks>
+<softpacks>
+	<softpack name="hyprland_mydesktop1" descripton="Сборка для оконного wayland-менеджера hyprland">
+		<init_system>systemd</init_system>
+		<softpack_tweaks>hyrpland userdirs multilibs paru flatpack fish</softpack_tweaks>
+		<pakages>
+			<pacstrap>base linux-zen linux-zen-headers linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget curl git htop p7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
+			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
+			<bundle>base-devel diffutils rust cmake meson ninja</bundle>
+			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
+			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
+			<bundle>zsh zsh-syntax-highlighting fish</bundle>
+			<bundle>hyprland wayland wayland-utils wl-clipboard xorg-xwayland xorg-xhost wlroots polkit kitty wofi mako ttf-font-awesome network-manager-applet</bundle>
+			<bundle>brightnessctl waybar swaylock hyprlock swayidle hypridle tumbler ffmpegthumbnailer xdg-user-dirs expac noto-fonts noto-fonts-emoji noto-fonts-cjk noto-fonts-extra</bundle>
+			<bundle>xed xreader xarchiver gmrun lshw feh mpv hyprpicker</bundle>
+			<bundle>yad zenity grim slurp jq</bundle>
+			<bundle>firefox chromium thunar thunar-archive-plugin vlc torbrowser-launcher gvfs gvfs-mtp thunar-volman</bundle>
+			<bundle>polkit-gnome polkit-qt5 polkit-qt6 nwg-look gnome-themes-extra gnome-keyring</bundle>
+			<bundle>alsa-utils pipewire pipewire-pulse pipewire-alsa sof-firmware pavucontrol</bundle>
+			<bundle>bluez bluez-utils blueman</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>meld geany gtksourceview5 code</bundle>
+			<bundle>rhvoice-language-english rhvoice-language-russian rhvoice-language-georgian rhvoice-voice-tatiana rhvoice-voice-natia rhvoice-voice-alan</bundle>
+			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
+			<!--bundle>rhvoice-voice-anna rhvoice-voice-arina rhvoice-voice-irina rhvoice-voice-victoria rhvoice-voice-elena</bundle-->
+			<!--bundle>deluge deluge-gtk gimp inkscape pinta baobab smplayer kommit telegram-desktop</bundle-->
+			<!--bundle>evtest antimicrox steam joystick grub-customizer</bundle-->
+			<aur>wlogout wshot-git grimblast clipgrab ttf-symbola downgrade cursor-bin</aur>
+			<flatpak>obsidian</flatpak>
+		</pakages>
+		
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_hyprland.tar.gz</archive>
+			</home>
+		</extrafiles>
+	</softpack>
+	<softpack name="minimum" description="Минимальная установка без графического интерфейса">
+	<init_system>systemd</init_system>
+		<softpack_tweaks></softpack_tweaks>
+		<pakages>
+			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget curl git htop p7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
+			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
+			<bundle>base-devel diffutils rust cmake</bundle>
+			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
+			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
+		</pakages>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+			</home>
+		</extrafiles>
+	</softpack>
+</softpacks>
+
+<install_locations>
+	<install_location name="vivo_new_home_fld" description="Стандартоная установка ">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@hypr_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home2_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+		</mountpoints>
+		<hostname>katana</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>Hyprland_nocrypt2</bootlabel>
+			<dev>/dev/nvme0n1p1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>false</iso>
+	</install_location>
+</install_locations>
+
+<settings_variants>
+	<settings name="standard" description="Стандартные параметры">
+		<timezone>Asia/Dubai</timezone>
+		<locales>
+			<locale>en_US.UTF-8 UTF-8</locale>
+			<locale>ru_RU.UTF-8 UTF-8</locale>
+			<default>en_US.UTF-8</default>
+			<vconsole_add>FONT=cyr-sun16</vconsole_add>
+			<vconsole_add>KEYMAP=us</vconsole_add>
+			<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
+		</locales>
+	</settings>
+</settings_variants>
+</componets>

@@ -92,7 +92,6 @@ mkinitcpio -P
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
-				<archive>homefiles_openbox.tar.gz</archive>
 			</home>
 		</extrafiles>
 
