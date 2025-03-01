@@ -8,6 +8,16 @@
 			<bundle>intel-ucode</bundle>
 		</pakages>
 	</driverspack>
+	<driverspack name="nvidia" descripton="Графика NVIDIA">
+		<pakages>
+			<bundle>nvidia nvidia-utils nvidia-settings</bundle>
+		</pakages>
+	</driverspack>
+	<driverspack name="vesa" descripton="Базовые драйверы VESA">
+		<pakages>
+			<bundle>xf86-video-vesa</bundle>
+		</pakages>
+	</driverspack>
 	<driverspack name="none" descripton="Не устанавливать драйвера">
 		<pakages>
 			<bundle></bundle>
@@ -53,8 +63,91 @@
 			</home>
 		</extrafiles>
 	</softpack>
+	
+	<softpack name="hyperland_vivo" descripton="Hyprland для ноутбука Vivobook">
+		<init_system>systemd</init_system>
+		<softpack_tweaks>hyrpland userdirs multilibs</softpack_tweaks>
+		<pakages>
+			<pacstrap>base linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>fastfetch neofetch cowsay</bundle>
+			<bundle>base-devel diffutils rust</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu</bundle>
+            <bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi</bundle>
+            <bundle>brightnessctl waybar swaylock hyprlock nm-applet swayidle hypridle xed nwg-look</bundle>
+            <bundle>pipewire pipewire-pulse sof-firmware</bundle>
+            <bundle>bluez bluez-utils blueman</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>firefox chromium thunar vlc terminator</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape obsidian pinta baobab</bundle>
+		</pakages>
+		
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_hyprland.tar.gz</archive>
+			</home>
+		</extrafiles>
+	</softpack>
+	
+	<softpack name="gnome_desktop" descripton="Рабочий стол GNOME с дополнительными приложениями">
+		<init_system>systemd</init_system>
+		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu mplayer</bundle>
+			<bundle>gnome xorg-server xorg-xinit xorg-xauth</bundle>
+			<bundle>gnome-extra i3lock</bundle>
+			<bundle>sof-firmware mplayer</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta baobab</bundle>
+			<bundle>qemu-system-x86 virtmanager</bundle>
+			<bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+		</pakages>
+		
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_gnome.tar.gz</archive>
+			</home>
+		</extrafiles>
+	</softpack>
+	
+	<softpack name="openbox_desktop" descripton="Легкий рабочий стол Openbox">
+		<init_system>systemd</init_system>
+		<softpack_tweaks>openbox multilibs</softpack_tweaks>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop p7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
+			<bundle>neofetch cowsay</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
+			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
+			<bundle>bluez bluez-utils blueman</bundle>
+			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
+			<bundle>tumbler menumaker conky pinta</bundle>
+			<bundle>wmctrl xdotool</bundle>
+		</pakages>
+		
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles_openbox.tar.gz</archive>
+			</home>
+		</extrafiles>
+	</softpack>
+	
 	<softpack name="minimum" description="Минимальная установка без графического интерфейса">
-	<init_system>systemd</init_system>
+		<init_system>systemd</init_system>
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
@@ -99,6 +192,162 @@
 		</efi>
 		<iso>false</iso>
 	</install_location>
+	
+	<install_location name="vivo_hyprland" description="Установка Hyprland на Vivobook">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+		</mountpoints>
+		<hostname>vivobook</hostname>
+		<username>mega</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>ArchHyprlandNotCrypted</bootlabel>
+			<dev>/dev/nvme0n1p1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	
+	<install_location name="vivo_gnome" description="Установка GNOME на Vivobook">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_gnome_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+			</point>
+		</mountpoints>
+		<hostname>vivobook</hostname>
+		<username>fireice</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>ArchGnomeNotCrypted</bootlabel>
+			<dev>/dev/nvme0n1p1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	
+	<install_location name="main_nvidia_gnome" description="Установка GNOME с NVIDIA">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_gnome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@homes_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+			</point>
+		</mountpoints>
+		<hostname>katana</hostname>
+		<username>fireice</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>ArchGnomeNotCrypted</bootlabel>
+			<dev>/dev/nvme0n1p1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>false</iso>
+	</install_location>
+	
+	<install_location name="main_openbox" description="Установка Openbox на основной системе">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_system_test43_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_home43_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+			</point>
+		</mountpoints>
+		<hostname>katana</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>ArchTest43</bootlabel>
+			<dev>/dev/nvme0n1p1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>false</iso>
+	</install_location>
+	
+	<install_location name="vm_test" description="Тестовая установка на VM">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>ArchTest</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	
+	<install_location name="vm_gnome" description="Тестовая установка GNOME на VM">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch_gnome_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@homes_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<efi>
+			<bootlabel>ArchTestGnome</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
 </install_locations>
 
 <settings_variants>
@@ -108,6 +357,18 @@
 			<locale>en_US.UTF-8 UTF-8</locale>
 			<locale>ru_RU.UTF-8 UTF-8</locale>
 			<default>en_US.UTF-8</default>
+			<vconsole_add>FONT=cyr-sun16</vconsole_add>
+			<vconsole_add>KEYMAP=us</vconsole_add>
+			<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
+		</locales>
+	</settings>
+	
+	<settings name="russian" description="Русские параметры">
+		<timezone>Asia/Dubai</timezone>
+		<locales>
+			<locale>en_US.UTF-8 UTF-8</locale>
+			<locale>ru_RU.UTF-8 UTF-8</locale>
+			<default>ru_RU.UTF-8</default>
 			<vconsole_add>FONT=cyr-sun16</vconsole_add>
 			<vconsole_add>KEYMAP=us</vconsole_add>
 			<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
