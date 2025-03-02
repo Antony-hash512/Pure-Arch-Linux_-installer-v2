@@ -229,6 +229,14 @@ def main():
             print(flatpak_elem.text.strip())
         else:
             print("")
+    elif command == 'get_description':
+        # Получаем атрибут description
+        description = component.get('description')
+        
+        if description is not None and description.strip():
+            print(description.strip())
+        else:
+            print("Описание отсутствует")
     else:
         print(f"Неизвестная команда '{command}'")
         sys.exit(1)

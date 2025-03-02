@@ -2,30 +2,30 @@
 <!-- возможное содержимое softpack/sofpack_tweaks: openbox hyperland multilibs paru flatpack downgrade swap createroot zsh fish-->
 <componets>
 <driverspacks>
-	<driverspack name="intel_cpu_gpu" descripton="Графика и проц от интел">
+	<driverspack name="intel_cpu_gpu" description="Графика и проц от интел">
 		<pakages>
 			<bundle>mesa xf86-video-intel lib32-vulkan-intel vulkan-intel</bundle>
 			<bundle>intel-ucode</bundle>
 		</pakages>
 	</driverspack>
-	<driverspack name="nvidia" descripton="Графика NVIDIA">
+	<driverspack name="nvidia" description="Графика NVIDIA">
 		<pakages>
 			<bundle>nvidia nvidia-utils nvidia-settings</bundle>
 		</pakages>
 	</driverspack>
-	<driverspack name="vesa" descripton="Базовые драйверы VESA">
+	<driverspack name="vesa" description="Базовые драйверы VESA">
 		<pakages>
 			<bundle>xf86-video-vesa</bundle>
 		</pakages>
 	</driverspack>
-	<driverspack name="none" descripton="Не устанавливать драйвера">
+	<driverspack name="none" description="Не устанавливать драйвера">
 		<pakages>
 			<bundle></bundle>
 		</pakages>
 	</driverspack>
 </driverspacks>
 <softpacks>
-	<softpack name="hyprland_mydesktop1" descripton="Сборка для оконного wayland-менеджера hyprland">
+	<softpack name="hyprland_mydesktop1" description="Сборка для оконного wayland-менеджера hyprland">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>hyrpland userdirs multilibs paru flatpack fish</softpack_tweaks>
 		<pakages>
@@ -63,7 +63,7 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="hyperland_vivo" descripton="Hyprland для ноутбука Vivobook">
+	<softpack name="hyperland_vivo" description="Hyprland для ноутбука Vivobook">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>hyrpland userdirs multilibs</softpack_tweaks>
 		<pakages>
@@ -90,7 +90,7 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="gnome_desktop" descripton="Рабочий стол GNOME с дополнительными приложениями">
+	<softpack name="gnome_desktop" description="Рабочий стол GNOME с дополнительными приложениями">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
 		<pakages>
@@ -117,7 +117,7 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="openbox_desktop" descripton="Легкий рабочий стол Openbox">
+	<softpack name="openbox_desktop" description="Легкий рабочий стол Openbox">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>openbox multilibs</softpack_tweaks>
 		<pakages>
