@@ -3,7 +3,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print("Использование: python get_data_from_componetst_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")
         print("Или для получения списка компонентов: python get_data_from_componetst_xml.py list_<тип компонента>")
         print("Типы компонентов: driverspack, softpack, install_location, settings")
@@ -33,13 +33,12 @@ def main():
         sys.exit(0)
     
     # В остальных случаях ожидаем тип компонента, id и команду
-    component_type = sys.argv[1]
-    component_id = sys.argv[2]
-    
     if len(sys.argv) < 4:
         print("Использование: python get_data_from_componetst_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")
         sys.exit(1)
         
+    component_type = sys.argv[1]
+    component_id = sys.argv[2]
     command = sys.argv[3]
     optional_args = sys.argv[4:]
     
