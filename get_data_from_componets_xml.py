@@ -4,8 +4,8 @@ import xml.etree.ElementTree as ET
 
 def main():
     if len(sys.argv) < 2:
-        print("Использование: python get_data_from_componetst_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")
-        print("Или для получения списка компонентов: python get_data_from_componetst_xml.py list_<тип компонента>")
+        print("Использование: python get_data_from_componets_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")
+        print("Или для получения списка компонентов: python get_data_from_componets_xml.py list_<тип компонента>")
         print("Типы компонентов: driverspack, softpack, install_location, settings")
         sys.exit(1)
     
@@ -34,7 +34,7 @@ def main():
     
     # В остальных случаях ожидаем тип компонента, id и команду
     if len(sys.argv) < 4:
-        print("Использование: python get_data_from_componetst_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")
+        print("Использование: python get_data_from_componets_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")
         sys.exit(1)
         
     component_type = sys.argv[1]
