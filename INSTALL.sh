@@ -9,6 +9,11 @@ else
     exit 1
 fi
 
+# Определение переменных для цвета
+RED='\033[31m'
+GREEN='\033[32m'
+NC='\033[0m' # Сброс цвета
+
 # Скачивание нужных для установки пакетов
 echo "Вы хотите обновить всю вашу систему перед установкой или установить только необходимые пакеты?"
 echo "Введите \"skip\", чтобы установить только необходимые пакеты не обновляя систему или Enter - обновить систему"
@@ -33,6 +38,7 @@ done
 # можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
 
 #получаем список всех систем настроенных в systems.xml
+: << 'OLD_CODE'
 ALL_SYSTEM_IDS="$(python3 get_data_from_xml.py list_system_ids)"
 echo "В файле systems.xml найдены настройки следующих систем: $ALL_SYSTEM_IDS"
 
@@ -49,10 +55,66 @@ while true; do
         read -p "Введите существующий в файле systems.xml id системы для установки:" SYSTEM_ID
     fi
 done
+OLD_CODE
+# Функция для запроса ID компонента у пользователя
+request_component_id() {
+    local component_type=$1
+    local prompt_text=$2
+    local component_list=$(python3 get_data_from_components_xml.py list_${component_type})
+    local component_id
+
+    echo "Доступные компоненты типа '${component_type}':" > /dev/tty
+    for id in $component_list; do
+        description="$(python3 get_data_from_components_xml.py ${component_type} $id get_description)"
+        echo "  - $id: $description" > /dev/tty
+    done
+    
+    # Запрашиваем у пользователя ID компонента
+    read -p "${prompt_text}:" component_id
+    
+    # Проверяем, существует ли компонент с указанным ID
+    while true; do 
+        if echo "$component_list" | grep -qw "$component_id"; then
+            echo -e "${GREEN}Выбран компонент '$component_id' типа '${component_type}'${NC}" > /dev/tty
+            break
+        else
+            echo -e "${RED}Компонент с ID '$component_id' типа '${component_type}' не найден${NC}" >&2
+            echo -e "${RED}Введите другой ID компонента или совершите выход при помощи ctrl+C${NC}" > /dev/tty
+            
+            # Выводим список компонентов снова
+            echo "Доступные компоненты типа '${component_type}':" > /dev/tty
+            for id in $component_list; do
+                description="$(python3 get_data_from_components_xml.py ${component_type} $id get_description)"
+                echo "  - $id: $description" > /dev/tty
+            done
+            
+            read -p "${prompt_text}:" component_id
+        fi
+    done
+    
+    # Возвращаем выбранный ID
+    echo "$component_id"
+}
+
+# Выбор драйверов
+DRIVERS_ID=$(request_component_id "driverspack" "Введите ID пакета драйверов для установки")
+echo -e "${GREEN}Выбран пакет драйверов: $DRIVERS_ID${NC}"
+
+# Выбор программного обеспечения
+SOFTPACK_ID=$(request_component_id "softpack" "Введите ID набора программного обеспечения для установки")
+echo -e "${GREEN}Выбран набор ПО: $SOFTPACK_ID${NC}"
+
+# Выбор места установки
+INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
+echo -e "${GREEN}Выбрано место установки: $INSTALL_LOCATION_ID${NC}"
+
+# Выбор настроек
+SETTINGS_ID=$(request_component_id "settings" "Введите ID настроек системы")
+echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
 
 
 # откуда устанавливается система
-if [[ $(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_iso) == "true" ]]; then
+if [[ $(python3 get_data_from_xml.py settings $SETTINGS_ID get_tweak_iso) == "true" ]]; then
     INSTALL_FROM="iso"
 else
     INSTALL_FROM="other_arch_system"
@@ -60,8 +122,8 @@ fi
 
 # случаи для legacy будут добавлены потом
 
-EFI_DEV="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_dev)"
-EFI_NEW_LOCATION="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_new_location)"
+EFI_DEV="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_efi_dev)"
+EFI_NEW_LOCATION="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_efi_new_location)"
 
 
 : <<'COMMENT'
@@ -103,15 +165,15 @@ COMMENT
 # C именем new_point+число
 # корневой каталог должен быть первым, а вложенные быть после родительских
 # получаем количество точек монтирования
-ALL_NEW_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_amount_of_new_mountpoints)"
-ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py $SYSTEM_ID get_amount_of_extra_mountpoints)"
+ALL_NEW_POINTS_COUNT="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)"
+ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_extra_mountpoints)"
 # создаём массивы для новых точек монтирования
 for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
-    declare -A new_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_new_mountpoint $i)"
+    declare -A new_point$i="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_new_mountpoint $i)"
 done
 # создаём массивы для дополнительных точек монтирования
 for ((i=0; i<ALL_EXTRA_POINTS_COUNT; i++)); do
-    declare -A extra_point$i="$(python3 get_data_from_xml.py $SYSTEM_ID get_extra_mountpoint $i)"
+    declare -A extra_point$i="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_extra_mountpoint $i)"
 done
 
 
@@ -126,7 +188,7 @@ done
 
 
 #получаем список пакетов для pacstrap
-SOFT_PACK1="$(python3 get_data_from_xml.py $SYSTEM_ID get_pkgs_pacstrap)"
+SOFT_PACK1="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_pkgs_pacstrap)"
 
 #===============конец настроек=============================================================
 
@@ -147,7 +209,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 # Показываем пользователю список записей EFI
 efibootmgr
 
-EFI_SYS_NAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_efi_bootlabel)"
+EFI_SYS_NAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_efi_bootlabel)"
 
 # Проверяем уникальность имени и предлагаем варианты
 while true; do
@@ -363,7 +425,7 @@ echo "Точки монтирования и опции шифрования д�
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
-INSTALLATION_NAME="$SYSTEM_ID"
+INSTALLATION_NAME="$INSTALL_LOCATION_ID"
 NEW_SCRIPT_4REMOVE="$SCRIPT_DIR/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
 cp "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
@@ -543,12 +605,11 @@ genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
 #копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
 cp $SCRIPT_DIR/run_inside_chroot.sh $INST_DIR
-cp $SCRIPT_DIR/get_data_from_xml.py $INST_DIR
-cp $SCRIPT_DIR/systems.xml $INST_DIR
-
+cp $SCRIPT_DIR/get_data_from_components_xml.py $INST_DIR
+cp $SCRIPT_DIR/components.xml $INST_DIR
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
-ARCHIVES_4HOME="$(python3 get_data_from_xml.py $SYSTEM_ID get_archs4home)"
+ARCHIVES_4HOME="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_archs4home)"
 
 #копирование и распоковка архивов с файлами для домашнего каталога (будут распаковываны в chroot'е)
 for archive in $ARCHIVES_4HOME; do
@@ -558,13 +619,13 @@ done
 #-------------------------------
 # Chroot в новую систему
 # передаём в скрипт список пакетов и имя загрузчика в EFI-разделе
-arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SYSTEM_ID\" \"$EFI_SYS_NAME\""
+arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DRIVERSPACK_ID\" \"$INSTALL_LOCATION_ID\" \"$SETTINGS_ID\" \"$EFI_SYS_NAME\""
 #-------------------------------
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта
 rm $INST_DIR/run_inside_chroot.sh
-rm $INST_DIR/get_data_from_xml.py
-rm $INST_DIR/systems.xml
+rm $INST_DIR/get_data_from_components_xml.py
+rm $INST_DIR/components.xml
 
 #размонтируем раздел EFI
 umount $INST_DIR/$EFI_NEW_LOCATION

@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# Определение переменных для цвета
+# Цвета для вывода
 RED='\033[31m'
 GREEN='\033[32m'
+YELLOW='\033[33m'
 NC='\033[0m' # Сброс цвета
 
+# Счетчики для статистики тестов
+PASSED=0
+FAILED=0
+TOTAL=0
 
 # Функция для запроса ID компонента у пользователя
 request_component_id() {
@@ -61,3 +66,4 @@ echo -e "${GREEN}Выбрано место установки: $INSTALL_LOCATION
 # Выбор настроек
 SETTINGS_ID=$(request_component_id "settings" "Введите ID настроек системы")
 echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
+

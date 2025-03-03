@@ -2,6 +2,8 @@
 import sys
 import xml.etree.ElementTree as ET
 
+#TODO: проверить, что теги ищутся действительно там где надо
+
 def main():
     if len(sys.argv) < 2:
         print("Использование: python get_data_from_componets_xml.py <тип компонента> <id компонента> <команда> [дополнительные аргументы]")

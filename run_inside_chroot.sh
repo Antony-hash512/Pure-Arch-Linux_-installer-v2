@@ -1,22 +1,25 @@
 #!/bin/bash
-SYSTEM_ID=$1
-EFI_SYS_NAME=$2
+SOFTPACK_ID=$1
+DRIVERSPACK_ID=$2
+INSTALL_LOCATION_ID=$3
+SETTINGS_ID=$4
+EFI_SYS_NAME=$5
 
 #первым делом устанавливаем python3 в новую систему т.к. нужен для продолжения парсинга xml-файла
 pacman -Syu python3 --noconfirm
 
 
-SOFT_PACK2="$(python3 get_data_from_xml.py $SYSTEM_ID get_pkgs_pacman)"
-MY_UID="$(python3 get_data_from_xml.py $SYSTEM_ID get_useruid)"
-MY_TIMEZONE="$(python3 get_data_from_xml.py $SYSTEM_ID get_timezone)"
-MY_LOCALE="$(python3 get_data_from_xml.py $SYSTEM_ID get_default_locale)"
-ALL_LOCALES="$(python3 get_data_from_xml.py $SYSTEM_ID get_locales)"
-EXTRA_SETTINGS_4OPENBOX="$(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_openbox)"
+SOFT_PACK2="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_pkgs_pacman)"
+MY_UID="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_useruid)"
+MY_TIMEZONE="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_timezone)"
+MY_LOCALE="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_default_locale)"
+ALL_LOCALES="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_locales)"
+EXTRA_SETTINGS_4OPENBOX="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_tweak_openbox)"
 ADD_FILES_TO_HOME="true"
-IS_CREATEROOT="$(python3 get_data_from_xml.py $SYSTEM_ID get_tweak_createroot)"
+IS_CREATEROOT="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_tweak_createroot)"
 
 
-HOSTNAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_hostname)"
+HOSTNAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_hostname)"
 
 
 # Установка часового пояса
@@ -32,7 +35,7 @@ done
 locale-gen
 echo "LANG=$MY_LOCALE" >> /etc/locale.conf
 
-VCONSOLE_STRINGS="$(python3 get_data_from_xml.py $SYSTEM_ID get_vconsole_strings)"
+VCONSOLE_STRINGS="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_vconsole_strings)"
 IFS='#' read -ra VCONSOLE_STRINGS_ARRAY <<< "$VCONSOLE_STRINGS"
 for vconsole_string in "${VCONSOLE_STRINGS_ARRAY[@]}"; do
     echo "$vconsole_string" >> /etc/vconsole.conf
@@ -52,7 +55,7 @@ if [[ $IS_CREATEROOT = "true" ]]; then
 fi
 
 
-USERNAME="$(python3 get_data_from_xml.py $SYSTEM_ID get_username)"
+USERNAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_username)"
 
 # Создание нового пользователя с UID и GID равными 1000 (или тем, что указано в начале файла)
 groupadd -g $MY_UID $USERNAME
@@ -96,7 +99,7 @@ echo '%wheel ALL=(ALL:ALL) ALL' | EDITOR='tee -a' visudo -f /etc/sudoers.d/rules
 
 
 # Настройка хуков для mkinitcpio
-sed -i "s/^HOOKS=(.*)/HOOKS=($(python3 get_data_from_xml.py $SYSTEM_ID get_hooks))/" /etc/mkinitcpio.conf
+sed -i "s/^HOOKS=(.*)/HOOKS=($(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_hooks))/" /etc/mkinitcpio.conf
 mkinitcpio -P
 
 
@@ -153,7 +156,7 @@ ln -s /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-u
 
 #------------------------------------------------------------------------------------
 #получаем список архивов для распаковки в домашнюю папку пользователя
-ARCHIVES_4HOME="$(python3 get_data_from_xml.py $SYSTEM_ID get_archs4home)"
+ARCHIVES_4HOME="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_archs4home)"
 
 if [[ $ADD_FILES_TO_HOME = "true" ]]; then
     #распаковка tar-архива в домашнюю папку пользователя
