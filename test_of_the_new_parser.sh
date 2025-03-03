@@ -83,7 +83,7 @@ echo -e "\n${YELLOW}Запуск тестов для выбранных комп
 # Тесты для драйверов
 echo -e "\n${YELLOW}Тесты для пакета драйверов: $DRIVERS_ID${NC}"
 run_test "Получение описания драйверов" "python3 get_data_from_components_xml.py driverspack $DRIVERS_ID get_description"
-run_test "Получение пакетов драйверов" "python3 get_data_from_components_xml.py driverspack $DRIVERS_ID get_pkgs_pacman | wc -w"
+run_test "Получение пакетов драйверов" "python3 get_data_from_components_xml.py driverspack $DRIVERS_ID get_pkgs_pacman"
 
 # Тесты для программного обеспечения
 echo -e "\n${YELLOW}Тесты для набора ПО: $SOFTPACK_ID${NC}"
@@ -91,10 +91,10 @@ run_test "Получение описания ПО" "python3 get_data_from_compo
 run_test "Получение pacstrap пакетов" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_pkgs_pacstrap"
 run_test "Получение системы инициализации" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_init_system"
 run_test "Получение дополнительных настроек ПО" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_softpack_tweaks"
+run_test "Получение пакетов для установки" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_pkgs_pacman"
 run_test "Получение AUR пакетов" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_aur_packages"
 run_test "Получение Flatpak пакетов" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_flatpak_packages"
 run_test "Получение архивов для домашней директории" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_archs4home"
-run_test "Получение hooks" "python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_hooks"
 
 # Тесты для места установки
 echo -e "\n${YELLOW}Тесты для места установки: $INSTALL_LOCATION_ID${NC}"
@@ -108,20 +108,22 @@ run_test "Получение метки загрузчика" "python3 get_data_
 run_test "Получение устройства EFI" "python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_dev"
 run_test "Получение нового расположения EFI" "python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_new_location"
 run_test "Получение флага ISO" "python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_tweak_iso"
+run_test "Получение hooks" "python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_hooks"
+
 
 # Тест для получения информации о первой точке монтирования
 MOUNT_POINTS_COUNT=$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)
 if [ "$MOUNT_POINTS_COUNT" -gt 0 ]; then
-    run_test "Получение информации о первой точке монтирования" "python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_new_mountpoint 0 | grep -o 'mount_point'"
+    run_test "Получение информации о первой точке монтирования" "python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_new_mountpoint 0"
 fi
 
 # Тесты для настроек
 echo -e "\n${YELLOW}Тесты для настроек: $SETTINGS_ID${NC}"
 run_test "Получение описания настроек" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_description"
 run_test "Получение часового пояса" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_timezone"
-run_test "Получение локалей" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_locales | grep -c '#'"
+run_test "Получение локалей" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_locales"
 run_test "Получение локали по умолчанию" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_default_locale"
-run_test "Получение строк vconsole" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_vconsole_strings | grep -c '#'"
+run_test "Получение строк vconsole" "python3 get_data_from_components_xml.py settings $SETTINGS_ID get_vconsole_strings"
 
 read -p "Нажмите Enter для завершения..."
 
