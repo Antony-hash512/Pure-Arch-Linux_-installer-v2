@@ -232,6 +232,8 @@ for var in $(compgen -A variable | grep -E '^extra_point[0-9]+$'); do
 done
 
 #выводим на экран список точек монтирования
+#это отобразилось как mount_point0 и mount_point1 т.е. только названия без подробной информации
+#нужно вывести подробную информацию о каждой точке монтирования
 echo -e "${YELLOW}список точек монтирования:${NC}"
 for item in "${ALL_NEW_POINTS[@]}"; do
     echo "$item"
@@ -652,6 +654,10 @@ done
 
 
 echo "ALL DONE"
+
+echo "Debug: $INSTALL_FROM"
+
+
 if [[ $INSTALL_FROM == "other_arch_system" ]]; then
     echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
     read -p "Нажмите Enter для выхода..."
