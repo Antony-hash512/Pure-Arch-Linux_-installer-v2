@@ -1,13 +1,29 @@
 #!/bin/bash
 
-echo "Версия bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+echo "Bash version: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
 echo ""
 if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
     :
 else
-    echo "Требуется Bash версии 4.3 или выше" >&2
+    echo "The required version of Bash is 4.3 or higher" >&2
     exit 1
 fi
+
+echo "test тест"
+echo "если это текст можно прочитать, то можно смело отказаться от последующего предупреждения :)))"
+echo "Do you want to switch to a font with Cyrillic support? (Y/n)"
+read -r USE_CYRILLIC_FONT
+if [[ -z "$USE_CYRILLIC_FONT" || "$USE_CYRILLIC_FONT" =~ ^[Yy]$ ]]; then
+    setfont cyr-sun16
+    echo "test тест"
+    echo "была использована команда setfont cyr-sun16"
+    echo "if it doesn't work, you can use Ctrl+C to exit and to solve this problem by another way"
+else
+    echo "Остаемся на стандартном шрифте (if the cyrillic font doesn't work, you can use Ctrl+C to exit)"
+fi
+#далее считается что кириллица поддерживается (ведем диалог с пользователем на русском, английская версия будет реализована позже, пока что нет смысла)
+echo "перед использованием скрипта также должен быть настроен доступ в интернет и вылонена необходимая минимальная разбивка разделов на диске"
+read -p "Enter - продолжить; ctrl+C - прервать"
 
 # Определение переменных для цвета
 RED='\033[31m'
@@ -19,8 +35,8 @@ echo "Вы хотите обновить всю вашу систему пере
 echo "Введите \"skip\", чтобы установить только необходимые пакеты не обновляя систему или Enter - обновить систему"
 read UPDATE_SYSTEM
 if [[ $UPDATE_SYSTEM == "skip" ]]; then
-    echo "Полное обновление системы пропущено"
-    echo "Будет выполнено только обновление базы пакетов перед установкой нужных"
+    echo "Полное обновление всей системы пропущено"
+    echo "Будет выполнено только обновление базы данных пакетов перед установкой необходимых компонентов"
     pacman -Sy
 else
     echo "Обновление системы"
@@ -37,25 +53,7 @@ done
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
 # можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
 
-#получаем список всех систем настроенных в systems.xml
-: << 'OLD_CODE'
-ALL_SYSTEM_IDS="$(python3 get_data_from_xml.py list_system_ids)"
-echo "В файле systems.xml найдены настройки следующих систем: $ALL_SYSTEM_IDS"
 
-read -p "Введите id системы для установки:" SYSTEM_ID
-# Проверяем уникальность имени и предлагаем варианты
-while true; do 
-    if echo "$ALL_SYSTEM_IDS" | grep -qw "$SYSTEM_ID"; then
-        echo "Используем настройки системы с id $SYSTEM_ID"
-        break
-    else
-        echo "Система с id $SYSTEM_ID не найдена в файле systems.xml"
-        echo "Введите другой id системы для установки или совершите выход при помощи ctrl+C"
-        echo "В файле systems.xml найдены настройки следующих систем: $ALL_SYSTEM_IDS"
-        read -p "Введите существующий в файле systems.xml id системы для установки:" SYSTEM_ID
-    fi
-done
-OLD_CODE
 # Функция для запроса ID компонента у пользователя
 request_component_id() {
     local component_type=$1
@@ -127,6 +125,7 @@ EFI_NEW_LOCATION="$(python3 get_data_from_xml.py install_location $INSTALL_LOCAT
 
 
 : <<'COMMENT'
+Сейчас это прописывается не здесь, а в components.xml
 Примеры использования:
 declare -A new_point0=(
     ["mount_point"]="/" 
@@ -178,7 +177,7 @@ done
 
 
 
-## будет реализовано позже
+## дополнительные точки монтирования будут реализованы позже
 #declare -A extra_point1=(
 #    ["mount_point"]="/ntfs/c" 
 #    ["type"]="in_main_gpt" 
@@ -195,13 +194,6 @@ SOFT_PACK1="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_pkgs_pacstr
 #Обновление времени
 timedatectl set-ntp true
 
-
-
-if [[ $INSTALL_FROM == "iso" ]]; then
-    echo "test тест"
-    setfont cyr-sun16
-    echo "test тест"
-fi
 
 # Получаем путь к каталогу, где находится скрипт
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -239,6 +231,16 @@ for var in $(compgen -A variable | grep -E '^extra_point[0-9]+$'); do
     ALL_EXTRA_POINTS+=("$var")
 done
 
+#выводим на экран список точек монтирования
+echo -e "${YELLOW}список точек монтирования:${NC}"
+for item in "${ALL_NEW_POINTS[@]}"; do
+    echo "$item"
+done
+echo -e "${YELLOW}список дополнительных точек монтирования:${NC}"
+for item in "${ALL_EXTRA_POINTS[@]}"; do
+    echo "$item"
+done
+echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk
 echo "разделы должны быть созданы заранее вручную, автоматически создаются только тома на них"
 read -p "Enter - продолжить; ctrl+C - прервать"
@@ -421,7 +423,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 done
 
 
-echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла systems.xml"
+echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла components.xml"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
@@ -503,8 +505,8 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 * !!! НАЗВАНИЕ ПАКЕТА ДЛЯ АРХИВАТОРА 7ZIP ИЗМЕНИЛОСЬ, НУЖНО ВЕЗДЕ ОБНОВИТЬ
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * добавить монтирование уже существующих разделов (в процессе)
+* выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
-* упорядочить код, так чтобы все что отвечает за создание копии скрипта удаления было в одном блоке
 * разобраться что не так с удалением сабволюмов через автоматический скрипт
 TODO
 #=======================================================================================

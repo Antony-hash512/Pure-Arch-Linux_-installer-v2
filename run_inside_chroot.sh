@@ -8,15 +8,17 @@ EFI_SYS_NAME=$5
 #первым делом устанавливаем python3 в новую систему т.к. нужен для продолжения парсинга xml-файла
 pacman -Syu python3 --noconfirm
 
-
+DRIVERS_PACK="$(python3 get_data_from_xml.py driverspack $DRIVERSPACK_ID get_pkgs_pacman)"
 SOFT_PACK2="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_pkgs_pacman)"
+USERNAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_username)"
 MY_UID="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_useruid)"
 MY_TIMEZONE="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_timezone)"
 MY_LOCALE="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_default_locale)"
 ALL_LOCALES="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_locales)"
-EXTRA_SETTINGS_4OPENBOX="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_tweak_openbox)"
+EXTRA_SETTINGS_4OPENBOX="false"
 ADD_FILES_TO_HOME="true"
-IS_CREATEROOT="$(python3 get_data_from_xml.py settings $SETTINGS_ID get_tweak_createroot)"
+IS_CREATEROOT="false" #реализиуем чтение этих параметров из файла components.xml
+
 
 
 HOSTNAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_hostname)"
@@ -55,8 +57,6 @@ if [[ $IS_CREATEROOT = "true" ]]; then
 fi
 
 
-USERNAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_username)"
-
 # Создание нового пользователя с UID и GID равными 1000 (или тем, что указано в начале файла)
 groupadd -g $MY_UID $USERNAME
 useradd -m -u $MY_UID -g $MY_UID -G users,wheel,storage,power -s /bin/bash $USERNAME
@@ -71,8 +71,13 @@ passwd $USERNAME
 pacman -S sudo --noconfirm
 
 
-# Установка всего дополнительного софта
+# Установка всего дополнительного софта через pacman (кроме драйверов)
 for package in $SOFT_PACK2; do
+    echo "Установка пакета: $package и его зависимостей"
+    pacman -S $package --noconfirm
+done
+# Установка драйверов
+for package in $DRIVERS_PACK; do
     echo "Установка пакета: $package и его зависимостей"
     pacman -S $package --noconfirm
 done
