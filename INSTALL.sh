@@ -112,7 +112,7 @@ echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
 
 
 # откуда устанавливается система
-if [[ $(python3 get_data_from_xml.py settings $SETTINGS_ID get_tweak_iso) == "true" ]]; then
+if [[ $(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_tweak_iso) == "true" ]]; then
     INSTALL_FROM="iso"
 else
     INSTALL_FROM="other_arch_system"
@@ -120,8 +120,8 @@ fi
 
 # случаи для legacy будут добавлены потом
 
-EFI_DEV="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_efi_dev)"
-EFI_NEW_LOCATION="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_efi_new_location)"
+EFI_DEV="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_dev)"
+EFI_NEW_LOCATION="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_new_location)"
 
 
 : <<'COMMENT'
@@ -164,15 +164,15 @@ COMMENT
 # C именем new_point+число
 # корневой каталог должен быть первым, а вложенные быть после родительских
 # получаем количество точек монтирования
-ALL_NEW_POINTS_COUNT="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)"
-ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_extra_mountpoints)"
+ALL_NEW_POINTS_COUNT="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)"
+ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_extra_mountpoints)"
 # создаём массивы для новых точек монтирования
 for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
-    declare -A new_point$i="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_new_mountpoint $i)"
+    declare -A new_point$i="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_new_mountpoint $i)"
 done
 # создаём массивы для дополнительных точек монтирования
 for ((i=0; i<ALL_EXTRA_POINTS_COUNT; i++)); do
-    declare -A extra_point$i="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_extra_mountpoint $i)"
+    declare -A extra_point$i="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_extra_mountpoint $i)"
 done
 
 
@@ -187,7 +187,7 @@ done
 
 
 #получаем список пакетов для pacstrap
-SOFT_PACK1="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_pkgs_pacstrap)"
+SOFT_PACK1="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_pkgs_pacstrap)"
 
 #===============конец настроек=============================================================
 
@@ -201,7 +201,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 # Показываем пользователю список записей EFI
 efibootmgr
 
-EFI_SYS_NAME="$(python3 get_data_from_xml.py install_location $INSTALL_LOCATION_ID get_efi_bootlabel)"
+EFI_SYS_NAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_bootlabel)"
 
 # Проверяем уникальность имени и предлагаем варианты
 while true; do
@@ -612,7 +612,7 @@ cp $SCRIPT_DIR/get_data_from_components_xml.py $INST_DIR
 cp $SCRIPT_DIR/components.xml $INST_DIR
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
-ARCHIVES_4HOME="$(python3 get_data_from_xml.py softpack $SOFTPACK_ID get_archs4home)"
+ARCHIVES_4HOME="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_archs4home)"
 
 #копирование и распоковка архивов с файлами для домашнего каталога (будут распаковываны в chroot'е)
 for archive in $ARCHIVES_4HOME; do
