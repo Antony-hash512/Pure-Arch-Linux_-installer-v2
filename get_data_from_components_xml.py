@@ -2,7 +2,6 @@
 import sys
 import xml.etree.ElementTree as ET
 
-#TODO: проверить, что теги ищутся действительно там где надо
 
 def main():
     if len(sys.argv) < 2:
