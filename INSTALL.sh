@@ -10,7 +10,7 @@ else
 fi
 
 echo "test тест"
-echo "если это текст можно прочитать, то можно смело отказаться от последующего предупреждения :)))"
+echo "если это текст можно прочитать, то можно смело отказаться от последующего предложения :)))"
 echo "Do you want to switch to a font with Cyrillic support? (Y/n)"
 read -r USE_CYRILLIC_FONT
 if [[ -z "$USE_CYRILLIC_FONT" || "$USE_CYRILLIC_FONT" =~ ^[Yy]$ ]]; then
