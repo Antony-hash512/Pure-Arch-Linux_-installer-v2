@@ -144,6 +144,9 @@ declare -A new_point1=(
 )
 
 * возможные значения type: format_ext4, new_subvol_in_btrfs, new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm
+* также я думаю имеет смысл добавить: new_subvol_in_new_btrfs, new_subvol_in_new_btrfs_in_lvm, new_subvol_in_new_btrfs_in_new_lvm, new_ext4_in_new_lvm
+
+
 * возможные значение crypt_mode: (для format_ext4, new_subvol_in_btrfs): none, file, pwd, (для new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm): none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none: (случаи двойного шифорования не рассматриваем из-за избыточности такого действия), file или pwd - какой метод расшифровки будет использован при загрузке системы файл с ключём или пароль?
 * keyfile: путь к файлу ключа (где создать или откуда использовать), требуется только при использовании опции с file
 * name: название(я) тома(oв) и/или раздела (для вложенной структуры нужно использовать разделение "_in_" например: @arch_system42_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8)
@@ -503,7 +506,7 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 #продолжаем дописывать скрипт
 : <<'TODO'
 * написать код для всех случаев с lvm, btrfs и опций шифрования
-* добавить монтирование уже существующих разделов
+* написать скрипт для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
 * выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
 * реализовать поддержку старых ноутбуков с legacy bios
@@ -535,6 +538,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
     mount_point=${current_row["mount_point"]}
 
+    #в каждый кейс должен быть прописан подкейс в опциями шифрования
     case "${current_row["type"]}" in
         "format_ext4")            
             ext4_path=${current_row["name"]}
@@ -556,6 +560,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             mkdir -p $INST_DIR$mount_point
             
             case "${current_row["crypt_mode"]}" in
+                #сейчас будем работать над вариантами шифрования
+                #т.к. скипт работает с уже созданными разделами lvm и btrfs, то предпологается что они уже зашифрованы
+                #для создания новых зашифрованных разделов нужно будет использовать другие скрипты
                 "none_in_none")
                     #создаём подтом
                     btrfs subvolume create "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
