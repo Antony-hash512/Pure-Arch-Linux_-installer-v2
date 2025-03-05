@@ -350,7 +350,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Список существующих подтомов в $btrfs_device:"
             echo "$btrfs_subvolumes_str"
             #проверяем, что нет уже такого сабтома
-            if echo "$btrfs_subvolumes_str" | grep -q "$subvol_name"; then
+            if echo "$btrfs_subvolumes_str" | grep -w -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_device" >&2
                 exit 1
             else
@@ -385,7 +385,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "$btrfs_subvolumes_str"
 
             #проверяем, что нет уже такого сабтома
-            if echo "$btrfs_subvolumes_str" | grep -q "$subvol_name"; then
+            if echo "$btrfs_subvolumes_str" | grep -w -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_device" >&2
                 exit 1
             else
