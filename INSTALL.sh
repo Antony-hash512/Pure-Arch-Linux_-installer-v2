@@ -65,7 +65,7 @@ request_component_id() {
     echo "Доступные компоненты типа '${component_type}':" > /dev/tty
     for id in $component_list; do
         description="$(python3 get_data_from_components_xml.py ${component_type} $id get_description)"
-        echo "  - ${YELLOW}$id${NC}: $description" > /dev/tty
+        echo -e "  - ${YELLOW}$id${NC}: $description" > /dev/tty
     done
     
     # Запрашиваем у пользователя ID компонента
@@ -84,7 +84,7 @@ request_component_id() {
             echo "Доступные компоненты типа '${component_type}':" > /dev/tty
             for id in $component_list; do
                 description="$(python3 get_data_from_components_xml.py ${component_type} $id get_description)"
-                echo "  - ${YELLOW}$id${NC}: $description" > /dev/tty
+                echo -e "  - ${YELLOW}$id${NC}: $description" > /dev/tty
             done
             
             read -p "${prompt_text}:" component_id
