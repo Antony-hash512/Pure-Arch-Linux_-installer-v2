@@ -102,11 +102,11 @@
 			<bundle>gnome-extra i3lock</bundle>
 			<bundle>sof-firmware mplayer</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
-			<bundle>firefox chromium geany thunar pcmanfm meld terminator</bundle>
+			<bundle>firefox chromium geany thunar pcmanfm meld terminator baobab</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
-			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta baobab</bundle>
-			<bundle>qemu-system-x86 virtmanager</bundle>
-			<bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle>
+			<!--bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle-->
+			<!--bundle>qemu-system-x86 virt-manager virt-viewer</bundle-->
+			<!--bundle>blender doublecmd godot shotcut openshot pitivi obs audacity</bundle-->
 		</pakages>
 		
 		<extrafiles>
@@ -365,7 +365,7 @@
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@homes_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@home_gnome_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>

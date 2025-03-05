@@ -131,7 +131,8 @@ grub-mkconfig -o /boot/grub/grub.cfg
 #don't forget about update-grub ( grub-mkonfig -o /boot/grub/grub.cfg ) in the main linux system 
 if [[ $EXTRA_SETTINGS_4OPENBOX = "true" ]]; then
     #добавление юзера в группы для работы звука
-    usermod -a -G audio,pulse-access $USERNAME
+    #usermod -a -G audio,pulse-access $USERNAME
+    usermod -a -G audio $USERNAME
     #также надо добавить в группу realtime, если установлен пакет realtime-privileges
     #добавление в группу video
     usermod -a -G video $USERNAME
@@ -144,10 +145,13 @@ if [[ $EXTRA_SETTINGS_4OPENBOX = "true" ]]; then
     
     # Настройка автозапуска PipeWire
     mkdir -p /home/$USERNAME/.config/systemd/user/default.target.wants/
+
     ln -sf /usr/lib/systemd/user/pipewire.service /home/$USERNAME/.config/systemd/user/default.target.wants/
     ln -sf /usr/lib/systemd/user/pipewire-pulse.service /home/$USERNAME/.config/systemd/user/default.target.wants/
     ln -sf /usr/lib/systemd/user/wireplumber.service /home/$USERNAME/.config/systemd/user/default.target.wants/
     
+    # Установка правильных прав доступа
+    chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
     
     
     #su $USERNAME -c "systemctl --user enable pulseaudio.socket"
