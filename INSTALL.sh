@@ -651,7 +651,7 @@ done
 
 echo "ALL DONE"
 
-echo "Debug: $INSTALL_FROM"
+echo "Debug: $(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_tweak_iso)"
 
 
 if [[ $INSTALL_FROM == "other_arch_system" ]]; then

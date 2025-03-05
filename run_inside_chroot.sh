@@ -12,16 +12,26 @@ DRIVERS_PACK="$(python3 get_data_from_components_xml.py driverspack $DRIVERSPACK
 SOFT_PACK2="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_pkgs_pacman)"
 USERNAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_username)"
 MY_UID="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_useruid)"
+HOSTNAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_hostname)"
 MY_TIMEZONE="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_timezone)"
 MY_LOCALE="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_default_locale)"
 ALL_LOCALES="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_locales)"
-EXTRA_SETTINGS_4OPENBOX="false"
+
+SOFTPACK_TWEAKS="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_softpack_tweaks)"
+
+#проверяем, есть ли в настройках openbox
+if [[ $SOFTPACK_TWEAKS == *"openbox"* ]]; then
+    EXTRA_SETTINGS_4OPENBOX="true"
+else
+    EXTRA_SETTINGS_4OPENBOX="false"
+fi
+
+
 ADD_FILES_TO_HOME="true"
 IS_CREATEROOT="false" #реализиуем чтение этих параметров из файла components.xml
 
 
 
-HOSTNAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_hostname)"
 
 
 # Установка часового пояса
