@@ -538,7 +538,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
     mount_point=${current_row["mount_point"]}
 
-    #в каждый кейс прописан подкейс в опциями шифрования
+    #в каждый кейс прописан подкейс с опциями шифрования
     case "${current_row["type"]}" in
         "format_ext4")            
             ext4_path=${current_row["name"]}
@@ -584,9 +584,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             lvm_path="${names[2]}"
             btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже
 
-            if ! pacman -Qi "$pkg" &>/dev/null; then
-                pacman -S "$pkg" --noconfirm
-            fi
+            #if ! pacman -Qi "$pkg" &>/dev/null; then
+            #    pacman -S "$pkg" --noconfirm
+            #fi
 
             mkdir -p $INST_DIR$mount_point
             
