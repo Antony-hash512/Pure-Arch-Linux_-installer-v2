@@ -294,9 +294,6 @@ for item in "${ALL_EXTRA_POINTS[@]}"; do
     echo "$item"
 done    
 
-
-
-
 #####конец отладки
 
 

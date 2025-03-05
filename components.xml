@@ -63,7 +63,7 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="hyperland_vivo" description="Hyprland для ноутбука Vivobook">
+	<softpack name="hyperland" description="Hyprland тайловый Wayland-менеджер">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>hyrpland userdirs multilibs</softpack_tweaks>
 		<pakages>
@@ -117,12 +117,12 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="openbox_desktop" description="Легкий рабочий стол Openbox">
+	<softpack name="openbox" description="Легкий рабочий стол Openbox">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>openbox multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop 7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
+			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget git htop 7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
@@ -131,7 +131,7 @@
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
-			<bundle>wmctrl xdotool</bundle>
+			<!--bundle>wmctrl xdotool</bundle-->
 		</pakages>
 		
 		<extrafiles>
@@ -320,6 +320,33 @@
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
 		<efi>
 			<bootlabel>ArchTest</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+
+	<install_location name="vm_test2" description="Тестовая установка на VM">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@arch2_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>@home2_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch2</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<efi>
+			<bootlabel>ArchTest2</bootlabel>
 			<dev>/dev/sda1</dev>
 			<new_location>/boot/efi</new_location>
 		</efi>
