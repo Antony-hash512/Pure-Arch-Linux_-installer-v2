@@ -506,7 +506,7 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 #продолжаем дописывать скрипт
 : <<'TODO'
 * написать код для всех случаев с lvm, btrfs и опций шифрования
-* написать скрипт для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
+* написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
 * выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
 * реализовать поддержку старых ноутбуков с legacy bios
@@ -538,16 +538,47 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
     mount_point=${current_row["mount_point"]}
 
-    #в каждый кейс должен быть прописан подкейс в опциями шифрования
+    #в каждый кейс прописан подкейс в опциями шифрования
     case "${current_row["type"]}" in
         "format_ext4")            
             ext4_path=${current_row["name"]}
+            case "${current_row["crypt_mode"]}" in
+                "none")
+                    :
+                    ;;
+                "file")
+                    :
+                    ;;
+                "pwd")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
             ;;
         "new_subvol_in_btrfs")
             subvol_name="${names[0]}"
             btrfs_device="${names[1]}"
+            case "${current_row["crypt_mode"]}" in
+                "none")
+                    :
+                    ;;
+                "file")
+                    :
+                    ;;
+                "pwd")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
             ;;
         "new_subvol_in_btrfs_in_lvm")
+            #этот случай польностью протестирован (в режиме none_in_none)
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
             lvm_path="${names[2]}"
@@ -562,7 +593,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             case "${current_row["crypt_mode"]}" in
                 #сейчас будем работать над вариантами шифрования
                 #т.к. скипт работает с уже созданными разделами lvm и btrfs, то предпологается что они уже зашифрованы
-                #для создания новых зашифрованных разделов нужно будет использовать другие скрипты
+                #для создания новых зашифрованных разделов нужно будет использовать другие случаи
                 "none_in_none")
                     #создаём подтом
                     btrfs subvolume create "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
@@ -591,6 +622,101 @@ for row in "${ALL_NEW_POINTS[@]}"; do
         "new_ext4_in_lvm")
             lv_name="${names[0]}"
             lvm_path="${names[1]}"
+            case "${current_row["crypt_mode"]}" in
+                "none")
+                    :
+                    ;;
+                "file")
+                    :
+                    ;;
+                "pwd")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "new_subvol_in_new_btrfs")
+            case "${current_row["crypt_mode"]}" in
+                "none")
+                    :
+                    ;;
+                "file")
+                    :
+                    ;;
+                "pwd")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "new_subvol_in_new_btrfs_in_lvm")
+            case "${current_row["crypt_mode"]}" in
+                "none_in_none")
+                    :
+                    ;;
+                "none_in_file")
+                    :
+                    ;;
+                "none_in_pwd")
+                    :
+                    ;;
+                "file_in_none")
+                    :
+                    ;;
+                "pwd_in_none")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "new_subvol_in_new_btrfs_in_new_lvm")
+            case "${current_row["crypt_mode"]}" in
+                "none_in_none")
+                    :
+                    ;;
+                "none_in_file")
+                    :
+                    ;;
+                "none_in_pwd")
+                    :
+                    ;;
+                "file_in_none")
+                    :
+                    ;;
+                "pwd_in_none")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "new_ext4_in_new_lvm")
+            case "${current_row["crypt_mode"]}" in
+                "none")
+                    :
+                    ;;
+                "file")
+                    :
+                    ;;
+                "pwd")
+                    :
+                    ;;
+                *)
+                    echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
+                    exit 1
+                    ;;
+            esac
             ;;
         *)
             echo "Неизвестный тип: ${current_row["type"]}" >&2
