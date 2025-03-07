@@ -332,14 +332,14 @@
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none</crypt_mode>
-				<names>/dev/virtvg/ext4root</names>
+				<names>/dev/virtvg/ext4root_in_/dev/sda2</names>
 				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none</crypt_mode>
-				<names>/dev/virtvg/ext4home</names>
+				<names>/dev/virtvg/ext4home_in_/dev/sda2</names>
 				<size>5G</size>
 			</point>
 		</mountpoints>
