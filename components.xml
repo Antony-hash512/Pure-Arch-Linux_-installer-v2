@@ -153,7 +153,7 @@
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
@@ -182,7 +182,7 @@
 		<hostname>katana</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>Hyprland_nocrypt2</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
@@ -209,7 +209,7 @@
 		<hostname>vivobook</hostname>
 		<username>mega</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchHyprlandNotCrypted</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
@@ -236,7 +236,7 @@
 		<hostname>vivobook</hostname>
 		<username>fireice</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchGnomeNotCrypted</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
@@ -263,7 +263,7 @@
 		<hostname>katana</hostname>
 		<username>fireice</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchGnomeNotCrypted</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
@@ -290,7 +290,7 @@
 		<hostname>katana</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchTest43</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
@@ -317,7 +317,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchTest</bootlabel>
 			<dev>/dev/sda1</dev>
@@ -326,27 +326,27 @@
 		<iso>true</iso>
 	</install_location>
 
-	<install_location name="vm_test_ext4_in_lvm" description="Тестовая установка на VM новый ext4 на lvm">
+	<install_location name="vm_test_ext4" description="Тестовая установка на VM новый ext4 на lvm">
 		<mountpoints>
 			<point type="new">
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/virtvg/ext4root_in_/dev/sda2</names>
+				<crypt_mode>none</crypt_mode>
+				<names>/dev/virtvg/ext4root</names>
 				<size>10G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/virtvg/ext4home_in_/dev/sda2</names>
+				<crypt_mode>none</crypt_mode>
+				<names>/dev/virtvg/ext4home</names>
 				<size>5G</size>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch-ext4-in-lvm</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchTestExt4InLvm</bootlabel>
 			<dev>/dev/sda1</dev>
@@ -373,7 +373,7 @@
 		<hostname>qemu-arch2</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
 			<dev>/dev/sda1</dev>
@@ -400,7 +400,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems resume fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchTestGnome</bootlabel>
 			<dev>/dev/sda1</dev>
