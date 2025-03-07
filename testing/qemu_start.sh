@@ -17,7 +17,7 @@ qemu-system-x86_64 \
     -device virtio-net-pci,netdev=mynet0 \
     -display gtk,zoom-to-fit=off \
     -vga virtio -device virtio-vga,edid=on,xres=1280,yres=720 \
-    -audiodev pa,id=pa,server=unix:${XDG_RUNTIME_DIR}/pulse/native \
-    -device intel-hda \
-    -device hda-duplex,audiodev=pa
+    #-audiodev pa,id=pa,server=unix:${XDG_RUNTIME_DIR}/pulse/native \
+    #-device intel-hda \
+   # -device hda-duplex,audiodev=pa
 
