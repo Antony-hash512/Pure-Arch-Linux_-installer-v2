@@ -333,7 +333,7 @@
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none</crypt_mode>
 				<names>/dev/virtvg/ext4root</names>
-				<size>10G</size>
+				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
