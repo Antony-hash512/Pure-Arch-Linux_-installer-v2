@@ -124,6 +124,9 @@ def main():
             "crypt_mode": point.find('crypt_mode').text.strip(),
             "name": point.find('names').text.strip()
         }
+        #проверяем есть ли тег size внутри point
+        if point.find('size') is not None:
+            data["size"] = point.find('size').text.strip()
         bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
         print(bash_array)
     elif command == 'get_extra_mountpoint':

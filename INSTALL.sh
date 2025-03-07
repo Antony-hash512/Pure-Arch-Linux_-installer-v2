@@ -371,7 +371,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
-            echo "Путь к разделу LVM: $lvm_path"
+            #echo "Путь к разделу LVM: $lvm_path" #Имеет смысл убрать как лишнее поле, т.к. lvm_path не используется
 
             #проверяем что этого раздела нет в массиве
             if [[ ! -v ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"] ]]; then
@@ -405,12 +405,27 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             ;;
         "new_ext4_in_lvm")
             lv_name="${names[0]}"
-            lvm_path="${names[1]}"
+            lv_basename=$(basename "$lv_name")  # Получаем только имя тома
+            vg_name=$(echo "$lv_name" | awk -F/ '{print $3}')  # Получаем имя группы томов
+            #lvm_device="${names[1]}" #Примечание при уже размеченной структуре lvm, это лишнее поле, но пока оставляем, чтобы не менять структуру components.xml
             echo "Логический том LVM (ext4): $lv_name"
-            echo "Путь к разделу LVM: $lvm_path"
+            #echo "Путь к физическому разделу LVM: $lvm_device"
+            #проверяем существует ли группа томов
+            if ! lvdisplay "/dev/$vg_name" &> /dev/null; then
+                echo "Ошибка: Группа томов с именем $vg_name не существует" >&2
+                echo "Создайте её вручную или используйте другой вариант установки" >&2
+                exit 1
+            fi
+            #проверяем отформатирован ли физический раздел как lvm
+            #if ! pvdisplay "$lvm_device" &> /dev/null; then
+            #    echo "Ошибка: Физический раздел $lvm_device не отформатирован как lvm" >&2
+            #    echo "Отформатируйте его вручную или используйте другой вариант установки" >&2
+            #    exit 1
+            #fi
             # Проверяем, существует ли уже логический том с именем $lv_name
-            if lvdisplay "$lvm_path/$lv_name" &> /dev/null; then
-                echo "Ошибка: Логический том с именем $lv_name уже существует в $lvm_path" >&2
+            if lvdisplay "/dev/$vg_name/$lv_basename" &> /dev/null; then
+                echo "Ошибка: Логический том с именем $lv_basename уже существует в группе томов $vg_name" >&2
+                echo "В components.xml требуется прописать новое новое уникальное имя для нового ext4 тома внутри lvm" >&2
                 exit 1
             fi
             
@@ -507,6 +522,7 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 : <<'TODO'
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
+* убрать небходимость указывать физический раздел lvm в components.xml, когда это по сути не требуется
 * выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
 * реализовать поддержку старых ноутбуков с legacy bios
@@ -539,12 +555,16 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     mount_point=${current_row["mount_point"]}
 
     #в каждый кейс прописан подкейс с опциями шифрования
+    #заполняем случаи none_in_none и none
     case "${current_row["type"]}" in
         "format_ext4")            
             ext4_path=${current_row["name"]}
             case "${current_row["crypt_mode"]}" in
                 "none")
-                    :
+                    #форматируем раздел
+                    mkfs.ext4 $ext4_path
+                    #монтируем раздел
+                    mount $ext4_path $INST_DIR$mount_point
                     ;;
                 "file")
                     :
@@ -563,7 +583,10 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             btrfs_device="${names[1]}"
             case "${current_row["crypt_mode"]}" in
                 "none")
-                    :
+                    #создаём подтом
+                    btrfs subvolume create "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
+                    #монтируем подтом в каталог установки (внутри chroot'а)
+                    mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point
                     ;;
                 "file")
                     :
@@ -584,9 +607,6 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             lvm_path="${names[2]}"
             btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже
 
-            #if ! pacman -Qi "$pkg" &>/dev/null; then
-            #    pacman -S "$pkg" --noconfirm
-            #fi
 
             mkdir -p $INST_DIR$mount_point
             
@@ -621,10 +641,18 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             ;;
         "new_ext4_in_lvm")
             lv_name="${names[0]}"
-            lvm_path="${names[1]}"
+            lv_basename=$(basename "$lv_name")  # Получаем только имя тома
+            vg_name=$(echo "$lv_name" | awk -F/ '{print $3}')  # Получаем имя группы томов
             case "${current_row["crypt_mode"]}" in
                 "none")
-                    :
+                    
+                    #создаём том с указанным размером
+                    size=${current_row["size"]}
+                    lvcreate -L $size -n $lv_basename $vg_name
+                    #форматируем том
+                    mkfs.ext4 /dev/$vg_name/$lv_basename
+                    #монтируем том
+                    mount /dev/$vg_name/$lv_basename $INST_DIR$mount_point
                     ;;
                 "file")
                     :
