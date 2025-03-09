@@ -78,12 +78,12 @@ convert_to_bytes() {
     #мегабайты в lvcreate используются по умолчанию но без буквы не используем для совместимости с другими утилитами типа dd
 
     case "$unit" in
-        "E") echo "$num * $EB" | bc ;;  # 1 ЭБ = 1024^6 B
-        "P") echo "$num * $PB" | bc ;;  # 1 ПБ = 1024^5 B
-        "T") echo "$num * $TB" | bc ;;  # 1 ТБ = 1024^4 B
-        "G") echo "$num * $GB" | bc ;;  # 1 ГБ = 1024^3 B
-        "M") echo "$num * $MB" | bc ;;  # 1 МБ = 1024^2 B
-        "K") echo "$num * 1024" | bc ;;  # 1 КБ = 1024 B
+        "E") echo $((num * EB)) ;;  # 1 ЭБ = 1024^6 B
+        "P") echo $((num * PB)) ;;  # 1 ПБ = 1024^5 B
+        "T") echo $((num * TB)) ;;  # 1 ТБ = 1024^4 B
+        "G") echo $((num * GB)) ;;  # 1 ГБ = 1024^3 B
+        "M") echo $((num * MB)) ;;  # 1 МБ = 1024^2 B
+        "K") echo $((num * 1024)) ;;  # 1 КБ = 1024 B
         "B") echo "$num" ;;               # Байты
         *) echo "Ошибка: неизвестная единица '$unit' в записи '$size'" >&2; exit 1 ;;
     esac
@@ -406,12 +406,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
         "new_subvol_in_btrfs_in_lvm")
             subvol_name="${names[0]}"
             lv_name="${names[1]}"
-            lvm_path="${names[2]}"
             btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже
             echo "Имя субтома Btrfs: $subvol_name"
             echo "Логический том LVM (btrfs): $lv_name"
-            #echo "Путь к разделу LVM: $lvm_path" #Имеет смысл убрать как лишнее поле, т.к. lvm_path не используется
-
             #проверяем что этого раздела нет в массиве
             if [[ ! -v ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"] ]]; then
                 #получаем имя точки монтирования используя время unix и случайное число
@@ -447,21 +444,13 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             lv_name="${names[0]}"
             lv_basename=$(basename "$lv_name")  # Получаем только имя тома
             vg_name=$(echo "$lv_name" | awk -F/ '{print $3}')  # Получаем имя группы томов
-            #lvm_device="${names[1]}" #Примечание при уже размеченной структуре lvm, это лишнее поле, но пока оставляем, чтобы не менять структуру components.xml
             echo "Логический том LVM (ext4): $lv_name"
-            #echo "Путь к физическому разделу LVM: $lvm_device"
             #проверяем существует ли группа томов
             if ! lvdisplay "/dev/$vg_name" &> /dev/null; then
                 echo "Ошибка: Группа томов с именем $vg_name не существует" >&2
                 echo "Создайте её вручную или используйте другой вариант установки" >&2
                 exit 1
             fi
-            #проверяем отформатирован ли физический раздел как lvm
-            #if ! pvdisplay "$lvm_device" &> /dev/null; then
-            #    echo "Ошибка: Физический раздел $lvm_device не отформатирован как lvm" >&2
-            #    echo "Отформатируйте его вручную или используйте другой вариант установки" >&2
-            #    exit 1
-            #fi
             # Проверяем, существует ли уже логический том с именем $lv_name
             if lvdisplay "/dev/$vg_name/$lv_basename" &> /dev/null; then
                 echo "Ошибка: Логический том с именем $lv_basename уже существует в группе томов $vg_name" >&2
@@ -474,7 +463,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             if [[ ! -v ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] ]]; then
                 ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=0
             fi
-            # получаем размер нового тома из переменной size ${current_row["size"]} в байтах
+            # получаем размер нового тома из переменной size ${current_row["size"]} в байтах (функция задана в начале скрипта)
             size_in_bytes=$(convert_to_bytes "${current_row["size"]}")
 
             # добавляем размер нового тома в ассоциативный массив
@@ -490,19 +479,21 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     esac
 done
 
-#проверяем доступное свободное место в lvm томах
+#проверяем доступное свободное место в группах томов
 if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
     for vg_name in "${!ALL_LVM_VOLUMES_REQUIRED_SPACE[@]}"; do
         echo "Требуемый размер для группы томов $vg_name: ${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} байт"
-        echo "Требуемый размер для группы томов $vg_name: $(echo "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} / $GB" | bc) GB"
-        #проверяем доступное свободное место в lvm томах
-        #free_space=$(lvdisplay "/dev/$vg_name" | grep "Free  " | awk '{print $3}')
-        #echo "Доступное свободное место в группе томов $vg_name: $free_space GB"
-        #if [[ "$free_space" -lt "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]}" ]]; then
-        #    echo "Ошибка: Доступное свободное место в группе томов $vg_name меньше требуемого" >&2
-        #    exit 1
-        #fi
-        #^ тут всё не правильно, нужно сформировать список тз для корректных расчётов
+        echo "Требуемый размер для группы томов $vg_name: $(echo "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} / $GB" | bc) гигов"
+        #проверяем доступное свободное место группе томов в байтах
+        free_space=$(vgs /dev/$vg_name --rows --nosuffix --units b | grep VFree | awk '{print $2}')
+        echo "Доступное свободное место в группе томов $vg_name: $(echo "$free_space / $GB" | bc) гигов"
+        if [[ "$free_space" -lt "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]}" ]]; then
+            echo "Ошибка: Доступное свободное место в группе томов $vg_name меньше требуемого" >&2
+            echo "Увеличте свободное место. После чего перезапустите установку" >&2
+            exit 1
+        else
+            echo "свободного в группе томов места достаточно"
+        fi
     done
 fi
 
@@ -587,11 +578,11 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 
 #продолжаем дописывать скрипт
 : <<'TODO'
-* проверять свобоное место в lvm томах
+* протестировать проверку свобоного места в lvm томах
 * выдавать предупреждение, когда мало свободного места в btrfs разделах, которые добавляются новые сабволюмы
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
-* убрать небходимость указывать физический раздел lvm в components.xml, когда это по сути не требуется
+* убрать лишнее указание физического раздела lvm в components.xml (осталось просто убрать из xml файла)
 * снабдить скрипт более подробными комментариями
 * выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
