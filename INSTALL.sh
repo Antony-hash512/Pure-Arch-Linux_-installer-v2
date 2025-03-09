@@ -31,6 +31,14 @@ GREEN='\033[32m'
 YELLOW='\033[33m'
 NC='\033[0m' # Сброс цвета
 
+# Заранее вычисленные степени 1024
+MB=1048576  # 1024^2
+GB=1073741824  # 1024^3
+TB=1099511627776  # 1024^4
+PB=1125899906842624  # 1024^5
+EB=1152921504606846976  # 1024^6
+
+
 # Скачивание нужных для установки пакетов
 echo "Вы хотите обновить всю вашу систему перед установкой или установить только необходимые пакеты?"
 echo "Введите \"skip\", чтобы установить только необходимые пакеты не обновляя систему или Enter - обновить систему"
@@ -43,7 +51,7 @@ else
     echo "Обновление системы"
     pacman -Syu
 fi
-packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python")
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
@@ -54,6 +62,32 @@ done
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
 # можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
 
+#функция для перевода в байты
+convert_to_bytes() {
+    local size=$1
+    
+    # Проверяем формат: должны быть только цифры и одна буква на конце
+    if ! [[ $size =~ ^[0-9]+[A-Za-z]?$ ]]; then
+        echo "Ошибка: неверный формат '$size'. Должны быть только цифры и одна буква на конце." >&2
+        exit 1
+    fi
+    
+    local num=${size//[^0-9]/}  # Извлекаем число
+    local unit=${size//[0-9]/}   # Извлекаем единицу измерения
+    unit=${unit^^}  # Приводим к верхнему регистру
+    #мегабайты в lvcreate используются по умолчанию но без буквы не используем для совместимости с другими утилитами типа dd
+
+    case "$unit" in
+        "E") echo "$num * $EB" | bc ;;  # 1 ЭБ = 1024^6 B
+        "P") echo "$num * $PB" | bc ;;  # 1 ПБ = 1024^5 B
+        "T") echo "$num * $TB" | bc ;;  # 1 ТБ = 1024^4 B
+        "G") echo "$num * $GB" | bc ;;  # 1 ГБ = 1024^3 B
+        "M") echo "$num * $MB" | bc ;;  # 1 МБ = 1024^2 B
+        "K") echo "$num * 1024" | bc ;;  # 1 КБ = 1024 B
+        "B") echo "$num" ;;               # Байты
+        *) echo "Ошибка: неизвестная единица '$unit' в записи '$size'" >&2; exit 1 ;;
+    esac
+}
 
 # Функция для запроса ID компонента у пользователя
 request_component_id() {
@@ -321,8 +355,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     echo "Имя (Имена) раздела/томов: ${current_row["name"]}"
     echo ""
 
-
-
+    #создаём новый ассоциативный массив для посчёта того сколько требуется свободного места в каждой группе томов
+    declare -A ALL_LVM_VOLUMES_REQUIRED_SPACE # для сличаев: new_ext4_in_lvm, new_subvol_in_new_btrfs_in_lvm, new_subvol_in_new_btrfs_in_new_lvm
+    ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED=false
 
 
     # Разбивка строки с разделителем "_in_" и запись значений в переменные
@@ -408,6 +443,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             fi
             ;;
         "new_ext4_in_lvm")
+            ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED=true
             lv_name="${names[0]}"
             lv_basename=$(basename "$lv_name")  # Получаем только имя тома
             vg_name=$(echo "$lv_name" | awk -F/ '{print $3}')  # Получаем имя группы томов
@@ -434,6 +470,15 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             else
                 echo "имя для нового логического тома $lv_basename уникально и будет использовано"
             fi
+            # проверяем есть ли поле в ассоциативном массиве ALL_LVM_VOLUMES_REQUIRED_SPACE с названием группы томов $vg_name
+            if [[ ! -v ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] ]]; then
+                ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=0
+            fi
+            # получаем размер нового тома из переменной size ${current_row["size"]} в байтах
+            size_in_bytes=$(convert_to_bytes "${current_row["size"]}")
+
+            # добавляем размер нового тома в ассоциативный массив
+            ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=$((ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] + size_in_bytes))
             
             # Добавляем lv_name в массив LVM_VOLUMES
             LVM_VOLUMES+=("$lv_name")
@@ -443,10 +488,26 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             exit 1
             ;;
     esac
-    printf "\n\n\n"
 done
 
+#проверяем доступное свободное место в lvm томах
+if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
+    for vg_name in "${!ALL_LVM_VOLUMES_REQUIRED_SPACE[@]}"; do
+        echo "Требуемый размер для группы томов $vg_name: ${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} байт"
+        echo "Требуемый размер для группы томов $vg_name: $(echo "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} / $GB" | bc) GB"
+        #проверяем доступное свободное место в lvm томах
+        #free_space=$(lvdisplay "/dev/$vg_name" | grep "Free  " | awk '{print $3}')
+        #echo "Доступное свободное место в группе томов $vg_name: $free_space GB"
+        #if [[ "$free_space" -lt "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]}" ]]; then
+        #    echo "Ошибка: Доступное свободное место в группе томов $vg_name меньше требуемого" >&2
+        #    exit 1
+        #fi
+        #^ тут всё не правильно, нужно сформировать список тз для корректных расчётов
+    done
+fi
 
+
+printf "\n\n\n"
 echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла components.xml"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
@@ -527,6 +588,7 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 #продолжаем дописывать скрипт
 : <<'TODO'
 * проверять свобоное место в lvm томах
+* выдавать предупреждение, когда мало свободного места в btrfs разделах, которые добавляются новые сабволюмы
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
 * убрать небходимость указывать физический раздел lvm в components.xml, когда это по сути не требуется
