@@ -321,6 +321,10 @@ for row in "${ALL_NEW_POINTS[@]}"; do
     echo "Имя (Имена) раздела/томов: ${current_row["name"]}"
     echo ""
 
+
+
+
+
     # Разбивка строки с разделителем "_in_" и запись значений в переменные
     spaced_names="${current_row["name"]//_in_/ }"
     # Преобразуем строку в массив по пробелам
@@ -427,6 +431,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 echo "Ошибка: Логический том с именем $lv_basename уже существует в группе томов $vg_name" >&2
                 echo "В components.xml требуется прописать новое новое уникальное имя для нового ext4 тома внутри lvm" >&2
                 exit 1
+            else
+                echo "имя для нового логического тома $lv_basename уникально и будет использовано"
             fi
             
             # Добавляем lv_name в массив LVM_VOLUMES
@@ -521,7 +527,6 @@ sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_S
 #продолжаем дописывать скрипт
 : <<'TODO'
 * проверять свобоное место в lvm томах
-* добавить mkdir'ы в остальные кейсы
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
 * убрать небходимость указывать физический раздел lvm в components.xml, когда это по сути не требуется
@@ -566,6 +571,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 "none")
                     #форматируем раздел
                     mkfs.ext4 $ext4_path
+                    #создаём каталог $INST_DIR$mount_point если он не существует
+                    mkdir -p $INST_DIR$mount_point
                     #монтируем раздел
                     mount $ext4_path $INST_DIR$mount_point
                     ;;
@@ -588,6 +595,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 "none")
                     #создаём подтом
                     btrfs subvolume create "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
+                    #создаём каталог $INST_DIR$mount_point если он не существует
+                    mkdir -p $INST_DIR$mount_point
                     #монтируем подтом в каталог установки (внутри chroot'а)
                     mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point
                     ;;
@@ -620,6 +629,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 "none_in_none")
                     #создаём подтом
                     btrfs subvolume create "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
+                    #создаём каталог $INST_DIR$mount_point если он не существует
+                    mkdir -p $INST_DIR$mount_point
                     #монтируем подтом в каталог установки (внутри chroot'а)
                     mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point
                     ;;
