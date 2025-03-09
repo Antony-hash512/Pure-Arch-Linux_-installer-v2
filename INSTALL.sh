@@ -653,6 +653,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                     lvcreate -L $size -n $lv_basename $vg_name
                     #форматируем том
                     mkfs.ext4 /dev/$vg_name/$lv_basename
+                    #создаём каталог $INST_DIR$mount_point если он не существует
+                    mkdir -p $INST_DIR$mount_point
                     #монтируем том
                     mount /dev/$vg_name/$lv_basename $INST_DIR$mount_point
                     ;;
