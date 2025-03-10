@@ -181,7 +181,7 @@ if [[ $ADD_FILES_TO_HOME = "true" ]]; then
     #распаковка tar-архива в домашнюю папку пользователя
     #испльзуем цикл для распаковки всех архивов
     for archive in $ARCHIVES_4HOME; do
-        tar -xzf "/$archive" -C /home/$USERNAME
+        tar -xzf --numeric-owner "/$archive" -C /home/$USERNAME
         rm "/$archive"
     done
 fi

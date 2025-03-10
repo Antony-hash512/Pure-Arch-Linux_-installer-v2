@@ -1,0 +1,8 @@
+/root/.bashrc
+/root/.zshrc
+/root/.vimrc
+/root/.nanorc
+/etc/pacman.conf
+/usr/local/bin/sayru
+/usr/local/bin/wxsudo
+
