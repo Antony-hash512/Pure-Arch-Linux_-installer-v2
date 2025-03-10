@@ -142,7 +142,7 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="minimum" description="Минимальная установка без графического интерфейса">
+	<softpack name="cli" description="Минимальная установка без графического интерфейса">
 		<init_system>systemd</init_system>
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
@@ -160,6 +160,22 @@
 			</home>
 		</extrafiles>
 	</softpack>
+
+	<softpack name="super_mini" description="Ещё более минимальная установка без графического интерфейса например для тестирования установки">
+		<init_system>systemd</init_system>
+		<softpack_tweaks></softpack_tweaks>
+		<pakages>
+			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less htop lvm2 cryptsetup</bundle>
+			<bundle>ntfs-3g dosfstools os-prober</bundle>
+		</pakages>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.gz</archive>
+			</home>
+		</extrafiles>
+	</softpack>
 </softpacks>
 
 <install_locations>
@@ -169,13 +185,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@hypr_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+				<names>@hypr_in_/dev/vivo/btrbox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@home2_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+				<names>@home2_in_/dev/vivo/btrbox</names>
 			</point>
 		</mountpoints>
 		
@@ -197,13 +213,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+				<names>@_in_/dev/vivo/btrbox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@home_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+				<names>@home_in_/dev/vivo/btrbox</names>
 			</point>
 		</mountpoints>
 		<hostname>vivobook</hostname>
@@ -224,13 +240,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_gnome_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+				<names>@arch_gnome_in_/dev/vivo/btrbox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@home_in_/dev/vivo/btrbox_in_/dev/nvme0n1p6</names>
+				<names>@home_in_/dev/vivo/btrbox</names>
 			</point>
 		</mountpoints>
 		<hostname>vivobook</hostname>
@@ -251,13 +267,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_gnome_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+				<names>@arch_gnome_in_/dev/mainvg/gigabox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@homes_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+				<names>@homes_in_/dev/mainvg/gigabox</names>
 			</point>
 		</mountpoints>
 		<hostname>katana</hostname>
@@ -278,13 +294,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_system_test43_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+				<names>@arch_system_test43_in_/dev/mainvg/gigabox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_home43_in_/dev/mainvg/gigabox_in_/dev/nvme0n1p8</names>
+				<names>@arch_home43_in_/dev/mainvg/gigabox</names>
 			</point>
 		</mountpoints>
 		<hostname>katana</hostname>
@@ -305,13 +321,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@arch_in_/dev/virtvg/btrbox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@home_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@home_in_/dev/virtvg/btrbox</names>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
@@ -332,14 +348,14 @@
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none</crypt_mode>
-				<names>/dev/virtvg/ext4root_in_/dev/sda2</names>
+				<names>/dev/virtvg/ext4root</names>
 				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none</crypt_mode>
-				<names>/dev/virtvg/ext4home_in_/dev/sda2</names>
+				<names>/dev/virtvg/ext4home</names>
 				<size>5G</size>
 			</point>
 		</mountpoints>
@@ -361,13 +377,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch2_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@arch2_in_/dev/virtvg/btrbox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@home2_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@home2_in_/dev/virtvg/btrbox</names>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch2</hostname>
@@ -388,13 +404,13 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_gnome_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@arch_gnome_in_/dev/virtvg/btrbox</names>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@home_gnome_in_/dev/virtvg/btrbox_in_/dev/sda2</names>
+				<names>@home_gnome_in_/dev/virtvg/btrbox</names>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
