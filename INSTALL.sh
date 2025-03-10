@@ -482,11 +482,10 @@ done
 #проверяем доступное свободное место в группах томов
 if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
     for vg_name in "${!ALL_LVM_VOLUMES_REQUIRED_SPACE[@]}"; do
-        echo "Требуемый размер для группы томов $vg_name: ${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} байт"
-        echo "Требуемый размер для группы томов $vg_name: $(echo "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} / $GB" | bc) гигов"
+        echo "Требуемый размер для группы томов $vg_name: ${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} байт ($(echo "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]} / $GB" | bc) гигов)"
         #проверяем доступное свободное место группе томов в байтах
         free_space=$(vgs /dev/$vg_name --rows --nosuffix --units b | grep VFree | awk '{print $2}')
-        echo "Доступное свободное место в группе томов $vg_name: $(echo "$free_space / $GB" | bc) гигов"
+        echo "Доступное свободное место в группе томов $vg_name: $free_space байт ($(echo "$free_space / $GB" | bc) гигов)"
         if [[ "$free_space" -lt "${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]}" ]]; then
             echo "Ошибка: Доступное свободное место в группе томов $vg_name меньше требуемого" >&2
             echo "Увеличте свободное место. После чего перезапустите установку" >&2
