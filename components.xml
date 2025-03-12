@@ -391,7 +391,7 @@
 		<hostname>qemu-arch-ext4-in-lvm-enc</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
 		<efi>
 			<bootlabel>ArchTestExt4InLvm</bootlabel>
 			<dev>/dev/sda1</dev>

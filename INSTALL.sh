@@ -745,6 +745,12 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                     mkdir -p $INST_DIR$mount_point
                     #монтируем том
                     mount /dev/mapper/crypt_$lv_basename $INST_DIR$mount_point
+                    #создаём пустой массив CRYPT_VOLUMES если он не существует
+                    if [[ ! -v CRYPT_VOLUMES[@] ]]; then
+                        declare -a CRYPT_VOLUMES
+                    fi
+                    #добавляем lv_name в массив CRYPT_VOLUMES
+                    CRYPT_VOLUMES+=("/dev/$vg_name/$lv_basename")
                     ;;
                 *)
                     echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
@@ -875,6 +881,22 @@ arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DR
 rm $INST_DIR/run_inside_chroot.sh
 rm $INST_DIR/get_data_from_components_xml.py
 rm $INST_DIR/components.xml
+
+#если массив CRYPT_VOLUMES существует
+if [[ -v CRYPT_VOLUMES[@] ]]; then
+    for ((i=0; i<${#CRYPT_VOLUMES[@]}; i++)); do
+        lv_name="${CRYPT_VOLUMES[i]}"
+        #Настройка зашифрованного раздела
+        echo "cryptroot UUID=$(blkid -s UUID -o value $lv_name) none luks" >> $INST_DIR/etc/crypttab
+        echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$lv_name:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+
+    done
+    #проходим по массиву CRYPT_VOLUMES в обратном порядке и закрываем зашифрованные тома
+    for ((i=${#CRYPT_VOLUMES[@]}-1; i>=0; i--)); do
+        lv_name="${CRYPT_VOLUMES[i]}"
+        cryptsetup close /dev/mapper/crypt_$(basename "$lv_name")
+    done
+fi
 
 #размонтируем раздел EFI
 umount $INST_DIR/$EFI_NEW_LOCATION
