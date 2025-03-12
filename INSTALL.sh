@@ -53,6 +53,9 @@ EB=1152921504606846976  # 1024^6
 # Стоковые константы
 AUTODIR="autocreated_scripts"
 XML_FILE="components.xml"
+XML_PARSER="get_data_from_components_xml.py"
+CHROOT_SCRIPT="run_inside_chroot.sh"
+
 
 echo "test тест"
 echo "если этот текст можно прочитать, то можно смело отказаться от последующего предложения :)))"
@@ -184,7 +187,7 @@ echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
 if [[ $(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_tweak_iso) == "true" ]]; then
     INSTALL_FROM="iso"
 else
-    INSTALL_FROM="other_arch_system"
+    INSTALL_FROM="other_system"
 fi
 
 # Запрашиваем у пользователя, нужно ли создавать скрипт удаления
@@ -504,7 +507,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             # Проверяем, существует ли уже логический том с именем $lv_name
             if lvdisplay "/dev/$vg_name/$lv_basename" &> /dev/null; then
                 echo "Ошибка: Логический том с именем $lv_basename уже существует в группе томов $vg_name" >&2
-                echo "В components.xml требуется прописать новое новое уникальное имя для нового ext4 тома внутри lvm" >&2
+                echo -e "В ${BOLD}$XML_FILE${NC} требуется прописать новое новое уникальное имя для нового ext4 тома внутри lvm" >&2
                 exit 1
             else
                 echo "имя для нового логического тома $lv_basename уникально и будет использовано"
@@ -550,7 +553,7 @@ fi
 
 
 printf "\n\n\n"
-echo "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла components.xml"
+echo -e "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла ${BOLD}$XML_FILE${NC}"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
 echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
@@ -911,10 +914,10 @@ if [[ -v CRYPT_VOLUMES[@] ]]; then
 fi
 
 
-#копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
-cp $SCRIPT_DIR/run_inside_chroot.sh $INST_DIR
-cp $SCRIPT_DIR/get_data_from_components_xml.py $INST_DIR
-cp $SCRIPT_DIR/components.xml $INST_DIR
+#копирование дополнительных файлов, для выполнения внутри системы (должны быть в одном каталоге с этим)
+cp $SCRIPT_DIR/$CHROOT_SCRIPT $INST_DIR
+cp $SCRIPT_DIR/$XML_PARSER $INST_DIR
+cp $SCRIPT_DIR/$XML_FILE $INST_DIR
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
 ARCHIVES_4HOME="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_archs4home)"
@@ -931,9 +934,9 @@ arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DR
 #-------------------------------
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта
-rm $INST_DIR/run_inside_chroot.sh
-rm $INST_DIR/get_data_from_components_xml.py
-rm $INST_DIR/components.xml
+rm $INST_DIR/$CHROOT_SCRIPT
+rm $INST_DIR/$XML_PARSER
+rm $INST_DIR/$XML_FILE
 
 
 #размонтируем раздел EFI
@@ -968,7 +971,7 @@ fi
 echo -e "${GREEN}ALL DONE${NC}"
 
 
-if [[ $INSTALL_FROM == "other_arch_system" ]]; then
+if [[ $INSTALL_FROM == "other_system" ]]; then
     echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
     read -p "Нажмите Enter для выхода..."
 else
