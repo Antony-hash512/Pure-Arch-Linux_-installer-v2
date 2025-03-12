@@ -371,6 +371,35 @@
 		<iso>true</iso>
 	</install_location>
 
+	<install_location name="vm_test_enc" description="Тестовая установка на VM новый ext4 на lvm c шифрованием">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>pwd</crypt_mode>
+				<names>/dev/virtvg/ext4root_enc</names>
+				<size>20G</size>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none</crypt_mode>
+				<names>/dev/virtvg/ext4home</names>
+				<size>5G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch-ext4-in-lvm-enc</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<efi>
+			<bootlabel>ArchTestExt4InLvm</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+
 	<install_location name="vm_test2" description="Тестовая установка на VM">
 		<mountpoints>
 			<point type="new">

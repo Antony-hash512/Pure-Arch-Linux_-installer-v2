@@ -731,7 +731,20 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                     :
                     ;;
                 "pwd")
-                    :
+                    #создаём том с указанным размером
+                    size=${current_row["size"]}
+                    lvcreate -L $size -n $lv_basename $vg_name
+                    # Шифрование логических томов
+                    cryptsetup luksFormat /dev/$vg_name/$lv_basename
+                    # Открытие зашифрованных томов
+                    cryptsetup open /dev/$vg_name/$lv_basename crypt_$lv_basename
+
+                    #форматируем том
+                    mkfs.ext4 /dev/mapper/crypt_$lv_basename
+                    #создаём каталог $INST_DIR$mount_point если он не существует
+                    mkdir -p $INST_DIR$mount_point
+                    #монтируем том
+                    mount /dev/mapper/crypt_$lv_basename $INST_DIR$mount_point
                     ;;
                 *)
                     echo "Неизвестный тип: ${current_row["crypt_mode"]}" >&2
