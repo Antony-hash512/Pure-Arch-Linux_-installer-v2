@@ -7,6 +7,7 @@
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
 * добавить проверку хука при установке шифрования до установки системы
+* уточнить, инфу про необязательносить выноса /boot в отдельный раздел и возможность его шифрования
 * снабдить скрипт более подробными комментариями
 * выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
@@ -29,6 +30,15 @@ fi
 RED='\033[31m'
 GREEN='\033[32m'
 YELLOW='\033[33m'
+PURPLE='\033[35m'
+BLUE='\033[34m'
+MAGENTA='\033[35m'
+CYAN='\033[36m'
+GRAY='\033[90m'
+BOLD='\033[1m'
+ITALIC='\033[3m'
+UNDERLINE='\033[4m'
+ORANGE='\033[38;5;208m'
 NC='\033[0m' # Сброс цвета
 
 # Заранее вычисленные степени 1024
@@ -716,7 +726,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             lv_basename=$(basename "$lv_name")  # Получаем только имя тома
             vg_name=$(echo "$lv_name" | awk -F/ '{print $3}')  # Получаем имя группы томов
             case "${current_row["crypt_mode"]}" in
-                "none")
+                "none_in_none")
                     
                     #создаём том с указанным размером
                     size=${current_row["size"]}
@@ -728,10 +738,16 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                     #монтируем том
                     mount /dev/$vg_name/$lv_basename $INST_DIR$mount_point
                     ;;
-                "file")
+                "none_in_file")
                     :
                     ;;
-                "pwd")
+                "none_in_pwd")
+                    :
+                    ;;
+                "file_in_none")
+                    :
+                    ;;
+                "pwd_in_none")
                     #создаём том с указанным размером
                     size=${current_row["size"]}
                     lvcreate -L $size -n $lv_basename $vg_name
@@ -894,14 +910,6 @@ rm $INST_DIR/run_inside_chroot.sh
 rm $INST_DIR/get_data_from_components_xml.py
 rm $INST_DIR/components.xml
 
-#если массив CRYPT_VOLUMES существует
-if [[ -v CRYPT_VOLUMES[@] ]]; then
-    #проходим по массиву CRYPT_VOLUMES в обратном порядке и закрываем зашифрованные тома
-    for ((i=${#CRYPT_VOLUMES[@]}-1; i>=0; i--)); do
-        lv_name="${CRYPT_VOLUMES[i]}"
-        cryptsetup close /dev/mapper/crypt_$(basename "$lv_name")
-    done
-fi
 
 #размонтируем раздел EFI
 umount $INST_DIR/$EFI_NEW_LOCATION
@@ -923,6 +931,14 @@ for btrfs_path in "${ALL_ROOT_BTRFS_MOUNTPOINTS[@]}"; do
     rmdir "$btrfs_path"
 done
 
+#если массив CRYPT_VOLUMES существует
+if [[ -v CRYPT_VOLUMES[@] ]]; then
+    #проходим по массиву CRYPT_VOLUMES в обратном порядке и закрываем зашифрованные тома
+    for ((i=${#CRYPT_VOLUMES[@]}-1; i>=0; i--)); do
+        lv_name="${CRYPT_VOLUMES[i]}"
+        cryptsetup close /dev/mapper/crypt_$(basename "$lv_name")
+    done
+fi
 
 echo -e "${GREEN}ALL DONE${NC}"
 
