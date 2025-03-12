@@ -2,6 +2,7 @@
 
 : <<'TODO'
 * протестировать опцию создания или не создания скрипта удаления
+* парсинг через python можно выделить в функцию, тогда нужно сделать аналогичную функцию в $CHROOT_SCRIPT
 * написать вспомогательный скрипт для сравнения файлов в архиве и в операционной системе
 * добавить переменные окружения для текстового редактора в текстовом режиме работы
 * выдавать предупреждение, когда мало свободного места в btrfs разделах, в которые добавляются новые сабволюмы
@@ -130,12 +131,12 @@ convert_to_bytes() {
 request_component_id() {
     local component_type=$1
     local prompt_text=$2
-    local component_list=$(python3 get_data_from_components_xml.py list_${component_type})
+    local component_list=$(python3 $XML_PARSER list_${component_type})
     local component_id
 
     echo "Доступные компоненты типа '${component_type}':" > /dev/tty
     for id in $component_list; do
-        description="$(python3 get_data_from_components_xml.py ${component_type} $id get_description)"
+        description="$(python3 $XML_PARSER ${component_type} $id get_description)"
         echo -e "  - ${GREEN}$id${NC}: $description" > /dev/tty
     done
     
@@ -154,7 +155,7 @@ request_component_id() {
             # Выводим список компонентов снова
             echo "Доступные компоненты типа '${component_type}':" > /dev/tty
             for id in $component_list; do
-                description="$(python3 get_data_from_components_xml.py ${component_type} $id get_description)"
+                description="$(python3 $XML_PARSER ${component_type} $id get_description)"
                 echo -e "  - ${GREEN}$id${NC}: $description" > /dev/tty
             done
             
@@ -184,7 +185,7 @@ echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
 
 
 # откуда устанавливается система
-if [[ $(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_tweak_iso) == "true" ]]; then
+if [[ $(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_tweak_iso) == "true" ]]; then
     INSTALL_FROM="iso"
 else
     INSTALL_FROM="other_system"
@@ -201,8 +202,8 @@ fi
 
 # случаи для legacy будут добавлены потом
 
-EFI_DEV="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_dev)"
-EFI_NEW_LOCATION="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_new_location)"
+EFI_DEV="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_efi_dev)"
+EFI_NEW_LOCATION="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_efi_new_location)"
 
 
 : <<'COMMENT'
@@ -248,15 +249,15 @@ COMMENT
 # C именем new_point+число
 # корневой каталог должен быть первым, а вложенные быть после родительских
 # получаем количество точек монтирования
-ALL_NEW_POINTS_COUNT="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)"
-ALL_EXTRA_POINTS_COUNT="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_amount_of_extra_mountpoints)"
+ALL_NEW_POINTS_COUNT="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)"
+ALL_EXTRA_POINTS_COUNT="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_amount_of_extra_mountpoints)"
 # создаём массивы для новых точек монтирования
 for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
-    declare -A new_point$i="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_new_mountpoint $i)"
+    declare -A new_point$i="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_new_mountpoint $i)"
 done
 # создаём массивы для дополнительных точек монтирования
 for ((i=0; i<ALL_EXTRA_POINTS_COUNT; i++)); do
-    declare -A extra_point$i="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_extra_mountpoint $i)"
+    declare -A extra_point$i="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_extra_mountpoint $i)"
 done
 
 
@@ -271,7 +272,7 @@ done
 
 
 #получаем список пакетов для pacstrap
-SOFT_PACK1="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_pkgs_pacstrap)"
+SOFT_PACK1="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_pkgs_pacstrap)"
 
 #===============конец настроек=============================================================
 
@@ -285,7 +286,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 # Показываем пользователю список записей EFI
 efibootmgr
 
-EFI_SYS_NAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_efi_bootlabel)"
+EFI_SYS_NAME="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_efi_bootlabel)"
 
 # Проверяем уникальность имени и предлагаем варианты
 while true; do
@@ -920,7 +921,7 @@ cp $SCRIPT_DIR/$XML_PARSER $INST_DIR
 cp $SCRIPT_DIR/$XML_FILE $INST_DIR
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
-ARCHIVES_4HOME="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_archs4home)"
+ARCHIVES_4HOME="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_archs4home)"
 
 #копирование и распоковка архивов с файлами для домашнего каталога (будут распаковываны в chroot'е)
 for archive in $ARCHIVES_4HOME; do

@@ -5,19 +5,21 @@ INSTALL_LOCATION_ID=$3
 SETTINGS_ID=$4
 EFI_SYS_NAME=$5
 
+XML_PARSER="get_data_from_components_xml.py"
+
 #первым делом устанавливаем python3 в новую систему т.к. нужен для продолжения парсинга xml-файла
 pacman -Syu python3 --noconfirm
 
-DRIVERS_PACK="$(python3 get_data_from_components_xml.py driverspack $DRIVERSPACK_ID get_pkgs_pacman)"
-SOFT_PACK2="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_pkgs_pacman)"
-USERNAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_username)"
-MY_UID="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_useruid)"
-HOSTNAME="$(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_hostname)"
-MY_TIMEZONE="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_timezone)"
-MY_LOCALE="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_default_locale)"
-ALL_LOCALES="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_locales)"
+DRIVERS_PACK="$(python3 $XML_PARSER driverspack $DRIVERSPACK_ID get_pkgs_pacman)"
+SOFT_PACK2="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_pkgs_pacman)"
+USERNAME="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_username)"
+MY_UID="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_useruid)"
+HOSTNAME="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_hostname)"
+MY_TIMEZONE="$(python3 $XML_PARSER settings $SETTINGS_ID get_timezone)"
+MY_LOCALE="$(python3 $XML_PARSER settings $SETTINGS_ID get_default_locale)"
+ALL_LOCALES="$(python3 $XML_PARSER settings $SETTINGS_ID get_locales)"
 
-SOFTPACK_TWEAKS="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_softpack_tweaks)"
+SOFTPACK_TWEAKS="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_softpack_tweaks)"
 
 #проверяем, есть ли в настройках openbox
 if [[ $SOFTPACK_TWEAKS == *"openbox"* ]]; then
@@ -47,7 +49,7 @@ done
 locale-gen
 echo "LANG=$MY_LOCALE" >> /etc/locale.conf
 
-VCONSOLE_STRINGS="$(python3 get_data_from_components_xml.py settings $SETTINGS_ID get_vconsole_strings)"
+VCONSOLE_STRINGS="$(python3 $XML_PARSER settings $SETTINGS_ID get_vconsole_strings)"
 IFS='#' read -ra VCONSOLE_STRINGS_ARRAY <<< "$VCONSOLE_STRINGS"
 for vconsole_string in "${VCONSOLE_STRINGS_ARRAY[@]}"; do
     echo "$vconsole_string" >> /etc/vconsole.conf
@@ -114,7 +116,7 @@ echo '%wheel ALL=(ALL:ALL) ALL' | EDITOR='tee -a' visudo -f /etc/sudoers.d/rules
 
 
 # Настройка хуков для mkinitcpio
-sed -i "s/^HOOKS=(.*)/HOOKS=($(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATION_ID get_hooks))/" /etc/mkinitcpio.conf
+sed -i "s/^HOOKS=(.*)/HOOKS=($(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_hooks))/" /etc/mkinitcpio.conf
 mkinitcpio -P
 
 
@@ -175,7 +177,7 @@ ln -s /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-u
 
 #------------------------------------------------------------------------------------
 #получаем список архивов для распаковки в домашнюю папку пользователя
-ARCHIVES_4HOME="$(python3 get_data_from_components_xml.py softpack $SOFTPACK_ID get_archs4home)"
+ARCHIVES_4HOME="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_archs4home)"
 
 if [[ $ADD_FILES_TO_HOME = "true" ]]; then
     #распаковка tar-архива в домашнюю папку пользователя
