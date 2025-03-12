@@ -381,11 +381,11 @@
 				<size>20G</size>
 			</point>
 			<point type="new">
-				<location>/home</location>
+				<location>/boot</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none</crypt_mode>
-				<names>/dev/virtvg/ext4home</names>
-				<size>5G</size>
+				<names>/dev/virtvg/ext4boot</names>
+				<size>2G</size>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch-ext4-in-lvm-enc</hostname>
