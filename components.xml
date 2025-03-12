@@ -153,7 +153,6 @@
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
@@ -169,7 +168,6 @@
 			<bundle>networkmanager btrfs-progs nano vim mc man-db less htop lvm2 cryptsetup</bundle>
 			<bundle>ntfs-3g dosfstools os-prober</bundle>
 		</pakages>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<extrafiles>
 			<home>
 				<archive>homefiles.tar.gz</archive>
