@@ -30,7 +30,7 @@
 		<softpack_tweaks>hyrpland userdirs multilibs paru flatpack fish</softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux-zen linux-zen-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget curl git htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget curl git gitu htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
 			<bundle>base-devel diffutils rust cmake meson ninja</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
@@ -68,7 +68,7 @@
 		<softpack_tweaks>hyrpland userdirs multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
 			<bundle>fastfetch neofetch cowsay</bundle>
 			<bundle>base-devel diffutils rust</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu</bundle>
@@ -95,10 +95,10 @@
 		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git htop 7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
+			<bundle>networkmanager btrfs-progs nano vim mc man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux diff ncdu mplayer</bundle>
-			<bundle>gnome xorg-server xorg-xinit xorg-xauth</bundle>
+			<bundle>gnome xorg-server xorg-xinit xorg-xauth xclip</bundle>
 			<bundle>gnome-extra i3lock</bundle>
 			<bundle>sof-firmware mplayer</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
@@ -122,12 +122,12 @@
 		<softpack_tweaks>openbox multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget git htop 7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
+			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup cfdisk timeshift diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
-			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal</bundle>
+			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs xed gmrun pavucontrol brightnessctl i3lock gsimplecal xclip</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
@@ -147,7 +147,7 @@
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget curl git htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs nano vim micro mc man-db less links wget curl git gitu htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
 			<bundle>base-devel diffutils rust cmake</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
