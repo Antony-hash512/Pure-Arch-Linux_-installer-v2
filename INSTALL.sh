@@ -1,6 +1,7 @@
 #!/bin/bash
 
 : <<'TODO'
+* протестировать опцию создания или не создания скрипта удаления
 * написать вспомогательный скрипт для сравнения файлов в архиве и в операционной системе
 * добавить переменные окружения для текстового редактора в текстовом режиме работы
 * выдавать предупреждение, когда мало свободного места в btrfs разделах, в которые добавляются новые сабволюмы
@@ -10,7 +11,6 @@
 * добавить копирование и распакову архивов для root
 * уточнить, инфу про необязательносить выноса /boot в отдельный раздел и возможность его шифрования
 * снабдить скрипт более подробными комментариями
-* выделить всё что связано с созданием скрипта удаления в отдельный блок, чтобы пользователь мог пропустить этот этап
 * релизовать и протестировать поддержку других систем инициализации на случай установки Artix
 * реализовать поддержку старых ноутбуков с legacy bios
 * сделать возможным установку не из Arch-подобных систем с использованием chroot вместо arch-chroot
@@ -50,6 +50,9 @@ TB=1099511627776  # 1024^4
 PB=1125899906842624  # 1024^5
 EB=1152921504606846976  # 1024^6
 
+# Стоковые константы
+AUTODIR="autocreated_scripts"
+XML_FILE="components.xml"
 
 echo "test тест"
 echo "если этот текст можно прочитать, то можно смело отказаться от последующего предложения :)))"
@@ -182,6 +185,15 @@ if [[ $(python3 get_data_from_components_xml.py install_location $INSTALL_LOCATI
     INSTALL_FROM="iso"
 else
     INSTALL_FROM="other_arch_system"
+fi
+
+# Запрашиваем у пользователя, нужно ли создавать скрипт удаления
+echo -e "Создать скрипт для удаления установленной системы в каталоге ${ORANGE}${AUTODIR}${NC}? (Y/n)"
+read -r CREATE_REMOVE_SCRIPT
+if [[ -z "$CREATE_REMOVE_SCRIPT" || "$CREATE_REMOVE_SCRIPT" =~ ^[Yy]$ ]]; then
+    DONT_CREATE_NEW_REMOVE_SCRIPT=false
+else
+    DONT_CREATE_NEW_REMOVE_SCRIPT=true
 fi
 
 # случаи для legacy будут добавлены потом
@@ -317,31 +329,31 @@ echo "разделы должны быть созданы заранее вру�
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 
-# Задаём массивы для последующей записи в дополнительно созданый скрипт для удаления системы
-LVM_VOLUMES=()
-declare -A BTRFS_SUBVOLUMES
-
-#определяем как там заданы массивы в одну строчку или нет
-lvm_single_line=''
-btrfs_single_line=''
-
-while IFS= read -r line; do
-    if [[ "$line" =~ ^LVM_VOLUMES=\(.*\)$ ]]; then
-        lvm_single_line='true'
-    elif [[ "$line" =~ ^LVM_VOLUMES=\([^\)]*$ ]]; then
-        lvm_single_line='false'
-    elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\(.*\)$ ]]; then
-        btrfs_single_line='true'
-    elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\([^\)]*$ ]]; then
-        btrfs_single_line='false'
-    fi
-done < "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh"
-
-if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
-    echo "Ошибка: не найдены LVM_VOLUMES или BTRFS_SUBVOLUMES в скрипте REMOVE_INSTALED_SYSTEM.sh" >&2
-    exit 1
+if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
+    # Задаём массивы для последующей записи в дополнительно созданый скрипт для удаления системы
+    LVM_VOLUMES=()
+    declare -A BTRFS_SUBVOLUMES
+    #определяем как там заданы массивы в одну строчку или нет
+    lvm_single_line=''
+    btrfs_single_line=''
+     
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^LVM_VOLUMES=\(.*\)$ ]]; then
+            lvm_single_line='true'
+        elif [[ "$line" =~ ^LVM_VOLUMES=\([^\)]*$ ]]; then
+            lvm_single_line='false'
+        elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\(.*\)$ ]]; then
+            btrfs_single_line='true'
+        elif [[ "$line" =~ ^BTRFS_SUBVOLUMES=\([^\)]*$ ]]; then
+            btrfs_single_line='false'
+        fi
+    done < "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh"
+    
+    if [[ -z "$lvm_single_line" || -z "$btrfs_single_line" ]]; then
+        echo "Ошибка: не найдены LVM_VOLUMES или BTRFS_SUBVOLUMES в скрипте REMOVE_INSTALED_SYSTEM.sh" >&2
+        exit 1
+    fi    
 fi
-
 
 #ассоциативный массив для хранения точек монтирования корневых разделов всех btrfs
 declare -A ALL_ROOT_BTRFS_MOUNTPOINTS
@@ -431,7 +443,13 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
            
-
+            if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
+                if [[ -v BTRFS_SUBVOLUMES["$btrfs_device"] ]]; then
+                    BTRFS_SUBVOLUMES["$btrfs_device"]+=" $subvol_name"
+                else
+                    BTRFS_SUBVOLUMES["$btrfs_device"]="$subvol_name"
+                fi
+            fi
             
             ;;
         "new_subvol_in_btrfs_in_lvm")
@@ -463,11 +481,12 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
            
-
-            if [[ -v BTRFS_SUBVOLUMES["$lv_name"] ]]; then
-                BTRFS_SUBVOLUMES["$lv_name"]+=" $subvol_name"
-            else
-                BTRFS_SUBVOLUMES["$lv_name"]="$subvol_name"
+            if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
+                if [[ -v BTRFS_SUBVOLUMES["$btrfs_device"] ]]; then
+                    BTRFS_SUBVOLUMES["$btrfs_device"]+=" $subvol_name"
+                else
+                    BTRFS_SUBVOLUMES["$btrfs_device"]="$subvol_name"
+                fi
             fi
             ;;
         "new_ext4_in_lvm")
@@ -501,7 +520,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=$((ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] + size_in_bytes))
             
             # Добавляем lv_name в массив LVM_VOLUMES
-            LVM_VOLUMES+=("$lv_name")
+            if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
+                LVM_VOLUMES+=("$lv_name")
+            fi
             ;;
         *)
             echo "Неизвестный тип: ${current_row["type"]}" >&2
@@ -539,71 +560,73 @@ cp "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
 
 #### начало создания скрипта удаления
-# Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
-lvm_volumes_str=""
-for volume in "${LVM_VOLUMES[@]}"; do
-    lvm_volumes_str+="    \"$volume\"\n"
-done
 
-# Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]="значения"
-btrfs_subvolumes_str=""
-for key in "${!BTRFS_SUBVOLUMES[@]}"; do
-    btrfs_subvolumes_str+="    [\"$key\"]=\"${BTRFS_SUBVOLUMES[$key]}\"\n"
-done
-
-# Переводим символы новой строки (\n) в литеральные символы, чтобы sed корректно обработал
-lvm_volumes_str=$(echo -e "$lvm_volumes_str")
-btrfs_subvolumes_str=$(echo -e "$btrfs_subvolumes_str")
-
-# Экранируем все слеши в переменных, чтобы корректно работать с sed
-lvm_volumes_str=$(echo "$lvm_volumes_str" | sed 's/\//\\\//g')
-btrfs_subvolumes_str=$(echo "$btrfs_subvolumes_str" | sed 's/\//\\\//g')
-
-# закоменчиваем старые значения
-case "$lvm_single_line" in
-    'false')
-        sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
-        ;;
-    'true')
-        sed -i 's/^LVM_VOLUMES=(/LVM_VOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
-        sed -i '/^LVM_VOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
-        ;;
-    *)
-        echo "Ошибка: неизвестное значение для lvm_single_line" >&2
-        exit 1
-        ;;
-esac
-
-case "$btrfs_single_line" in
-    'false')
-        sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
-        ;;
-    'true')
-        sed -i 's/^BTRFS_SUBVOLUMES=(/BTRFS_SUBVOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
-        sed -i '/^BTRFS_SUBVOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
-        ;;
-    *)
-        echo "Ошибка: неизвестное значение для btrfs_single_line" >&2
-        exit 1
-        ;;
-esac
-
-# Вставляем новые значения после строки ^LVM_VOLUMES=( 
-while IFS= read -r line; do
-    sed -i "/^LVM_VOLUMES=(/a \\
-$line" "$NEW_SCRIPT_4REMOVE"
-done <<< "$lvm_volumes_str"
-
-# Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=( 
-while IFS= read -r line; do
-    sed -i "/^BTRFS_SUBVOLUMES=(/a \\
-$line" "$NEW_SCRIPT_4REMOVE"
-done <<< "$btrfs_subvolumes_str"
-
-
-# выполняем замену в копии файла REMOVE_INSTALED_SYSTEM.sh
-sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_SCRIPT_4REMOVE"
-
+if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
+    # Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
+    lvm_volumes_str=""
+    for volume in "${LVM_VOLUMES[@]}"; do
+        lvm_volumes_str+="    \"$volume\"\n"
+    done
+    
+    # Записываем содержимое BTRFS_SUBVOLUMES в переменную в формате ["ключ"]="значения"
+    btrfs_subvolumes_str=""
+    for key in "${!BTRFS_SUBVOLUMES[@]}"; do
+        btrfs_subvolumes_str+="    [\"$key\"]=\"${BTRFS_SUBVOLUMES[$key]}\"\n"
+    done
+    
+    # Переводим символы новой строки (\n) в литеральные символы, чтобы sed корректно обработал
+    lvm_volumes_str=$(echo -e "$lvm_volumes_str")
+    btrfs_subvolumes_str=$(echo -e "$btrfs_subvolumes_str")
+    
+    # Экранируем все слеши в переменных, чтобы корректно работать с sed
+    lvm_volumes_str=$(echo "$lvm_volumes_str" | sed 's/\//\\\//g')
+    btrfs_subvolumes_str=$(echo "$btrfs_subvolumes_str" | sed 's/\//\\\//g')
+    
+    # закоменчиваем старые значения
+    case "$lvm_single_line" in
+        'false')
+            sed -i '/^LVM_VOLUMES=(/,/^)/ {/^LVM_VOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+            ;;
+        'true')
+            sed -i 's/^LVM_VOLUMES=(/LVM_VOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
+            sed -i '/^LVM_VOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
+            ;;
+        *)
+            echo "Ошибка: неизвестное значение для lvm_single_line" >&2
+            exit 1
+            ;;
+    esac
+    
+    case "$btrfs_single_line" in
+        'false')
+            sed -i '/^BTRFS_SUBVOLUMES=(/,/^)/ {/^BTRFS_SUBVOLUMES=(/!{/^)/!s/^/# /}}' "$NEW_SCRIPT_4REMOVE"
+            ;;
+        'true')
+            sed -i 's/^BTRFS_SUBVOLUMES=(/BTRFS_SUBVOLUMES=(#/' "$NEW_SCRIPT_4REMOVE"
+            sed -i '/^BTRFS_SUBVOLUMES=(#/a )' "$NEW_SCRIPT_4REMOVE"
+            ;;
+        *)
+            echo "Ошибка: неизвестное значение для btrfs_single_line" >&2
+            exit 1
+            ;;
+    esac
+    
+    # Вставляем новые значения после строки ^LVM_VOLUMES=( 
+    while IFS= read -r line; do
+        sed -i "/^LVM_VOLUMES=(/a \\
+    $line" "$NEW_SCRIPT_4REMOVE"
+    done <<< "$lvm_volumes_str"
+    
+    # Вставляем новые значения после строки ^BTRFS_SUBVOLUMES=( 
+    while IFS= read -r line; do
+        sed -i "/^BTRFS_SUBVOLUMES=(/a \\
+    $line" "$NEW_SCRIPT_4REMOVE"
+    done <<< "$btrfs_subvolumes_str"
+    
+    
+    # выполняем замену в копии файла REMOVE_INSTALED_SYSTEM.sh
+    sed -i "s/EFI_NOTE_TO_DELETE=\"\"/EFI_NOTE_TO_DELETE=\"$EFI_SYS_NAME\"/" "$NEW_SCRIPT_4REMOVE"
+fi
 #### конец создания скрипта удаления 
 
 ###################################################################
