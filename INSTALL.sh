@@ -2,7 +2,6 @@
 
 : <<'TODO'
 * протестировать опцию создания или не создания скрипта удаления
-* парсинг через python можно выделить в функцию, тогда нужно сделать аналогичную функцию в $CHROOT_SCRIPT
 * написать вспомогательный скрипт для сравнения файлов в архиве и в операционной системе
 * добавить переменные окружения для текстового редактора в текстовом режиме работы
 * выдавать предупреждение, когда мало свободного места в btrfs разделах, в которые добавляются новые сабволюмы
@@ -183,9 +182,29 @@ echo -e "${GREEN}Выбрано место установки: $INSTALL_LOCATION
 SETTINGS_ID=$(request_component_id "settings" "Введите ID настроек системы")
 echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
 
+parse_xml() {
+    local component=$1
+    local command=$2
+
+    case $component in
+        "driverspack")
+            python3 $XML_PARSER driverspack $DRIVERSPACK_ID $command
+            ;;
+        "softpack")
+            python3 $XML_PARSER softpack $SOFTPACK_ID $command
+            ;;
+        "install_location")
+            python3 $XML_PARSER install_location $INSTALL_LOCATION_ID $command
+            ;;
+        "settings")
+            python3 $XML_PARSER settings $SETTINGS_ID $command
+            ;;
+    esac
+
+}
 
 # откуда устанавливается система
-if [[ $(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_tweak_iso) == "true" ]]; then
+if [[ $(parse_xml install_location get_tweak_iso) == "true" ]]; then
     INSTALL_FROM="iso"
 else
     INSTALL_FROM="other_system"
@@ -202,8 +221,8 @@ fi
 
 # случаи для legacy будут добавлены потом
 
-EFI_DEV="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_efi_dev)"
-EFI_NEW_LOCATION="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_efi_new_location)"
+EFI_DEV="$(parse_xml install_location get_efi_dev)"
+EFI_NEW_LOCATION="$(parse_xml install_location get_efi_new_location)"
 
 
 : <<'COMMENT'
@@ -249,15 +268,15 @@ COMMENT
 # C именем new_point+число
 # корневой каталог должен быть первым, а вложенные быть после родительских
 # получаем количество точек монтирования
-ALL_NEW_POINTS_COUNT="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_amount_of_new_mountpoints)"
-ALL_EXTRA_POINTS_COUNT="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_amount_of_extra_mountpoints)"
+ALL_NEW_POINTS_COUNT="$(parse_xml install_location get_amount_of_new_mountpoints)"
+ALL_EXTRA_POINTS_COUNT="$(parse_xml install_location get_amount_of_extra_mountpoints)"
 # создаём массивы для новых точек монтирования
 for ((i=0; i<ALL_NEW_POINTS_COUNT; i++)); do
-    declare -A new_point$i="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_new_mountpoint $i)"
+    declare -A new_point$i="$(parse_xml install_location get_new_mountpoint $i)"
 done
 # создаём массивы для дополнительных точек монтирования
 for ((i=0; i<ALL_EXTRA_POINTS_COUNT; i++)); do
-    declare -A extra_point$i="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_extra_mountpoint $i)"
+    declare -A extra_point$i="$(parse_xml install_location get_extra_mountpoint $i)"
 done
 
 
@@ -272,7 +291,7 @@ done
 
 
 #получаем список пакетов для pacstrap
-SOFT_PACK1="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_pkgs_pacstrap)"
+SOFT_PACK1="$(parse_xml softpack get_pkgs_pacstrap)"
 
 #===============конец настроек=============================================================
 
@@ -286,7 +305,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 # Показываем пользователю список записей EFI
 efibootmgr
 
-EFI_SYS_NAME="$(python3 $XML_PARSER install_location $INSTALL_LOCATION_ID get_efi_bootlabel)"
+EFI_SYS_NAME="$(parse_xml install_location get_efi_bootlabel)"
 
 # Проверяем уникальность имени и предлагаем варианты
 while true; do
@@ -921,7 +940,7 @@ cp $SCRIPT_DIR/$XML_PARSER $INST_DIR
 cp $SCRIPT_DIR/$XML_FILE $INST_DIR
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
-ARCHIVES_4HOME="$(python3 $XML_PARSER softpack $SOFTPACK_ID get_archs4home)"
+ARCHIVES_4HOME="$(parse_xml softpack get_archs4home)"
 
 #копирование и распоковка архивов с файлами для домашнего каталога (будут распаковываны в chroot'е)
 for archive in $ARCHIVES_4HOME; do
