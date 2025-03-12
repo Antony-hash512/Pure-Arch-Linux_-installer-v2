@@ -857,6 +857,17 @@ pacstrap $INST_DIR $SOFT_PACK1
 # Генерация fstab
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
+#если массив CRYPT_VOLUMES существует
+if [[ -v CRYPT_VOLUMES[@] ]]; then
+    for ((i=0; i<${#CRYPT_VOLUMES[@]}; i++)); do
+        lv_name="${CRYPT_VOLUMES[i]}"
+        #Настройка зашифрованного раздела
+        echo "cryptroot UUID=$(blkid -s UUID -o value $lv_name) none luks" >> $INST_DIR/etc/crypttab
+        echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$lv_name:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+
+    done
+fi
+
 
 #копирование дополнительного скрипта, для выполнения внутри системы (должен быть в одном каталоге с этим)
 cp $SCRIPT_DIR/run_inside_chroot.sh $INST_DIR
@@ -884,13 +895,6 @@ rm $INST_DIR/components.xml
 
 #если массив CRYPT_VOLUMES существует
 if [[ -v CRYPT_VOLUMES[@] ]]; then
-    for ((i=0; i<${#CRYPT_VOLUMES[@]}; i++)); do
-        lv_name="${CRYPT_VOLUMES[i]}"
-        #Настройка зашифрованного раздела
-        echo "cryptroot UUID=$(blkid -s UUID -o value $lv_name) none luks" >> $INST_DIR/etc/crypttab
-        echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$lv_name:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
-
-    done
     #проходим по массиву CRYPT_VOLUMES в обратном порядке и закрываем зашифрованные тома
     for ((i=${#CRYPT_VOLUMES[@]}-1; i>=0; i--)); do
         lv_name="${CRYPT_VOLUMES[i]}"
