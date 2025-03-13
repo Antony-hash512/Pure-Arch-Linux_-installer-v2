@@ -493,13 +493,20 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             echo "Список существующих подтомов в $btrfs_device:"
             echo "$btrfs_subvolumes_str"
 
-            #проверяем, что нет уже такого сабтома
+            #проверяем, что нет такого сабтома
             if echo "$btrfs_subvolumes_str" | grep -w -q "$subvol_name"; then
                 echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_device" >&2
                 exit 1
             else
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
+            
+            #свободное место в разделе:
+            #sudo btrfs filesystem usage -h {ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]} | grep min | awk '{print $3}
+            #гарантированно доступное свободное место в разделе:
+            #sudo btrfs filesystem usage -h {ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]} | grep min | awk '{print $5}
+
+
            
             if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
                 if [[ -v BTRFS_SUBVOLUMES["$btrfs_device"] ]]; then
