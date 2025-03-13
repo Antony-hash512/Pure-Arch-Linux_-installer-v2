@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- возможное содержимое softpack/sofpack_tweaks: openbox hyperland multilibs paru flatpack downgrade swap createroot zsh fish-->
+<!-- ВАЖНО: если есть графическая среда, то вместо пакета vim нужно установливать пакет gvim, который конфликтует в с пакетом vim,
+но тоже содержит команду vim, чтобы в консольном vim работал общесистемный буфер обмена в эмуляторе терминала -->
 <componets>
 <driverspacks>
 	<driverspack name="intel_cpu_gpu" description="Графика и проц от интел">
