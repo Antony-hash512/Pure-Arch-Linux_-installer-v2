@@ -185,7 +185,7 @@ echo -e "${GREEN}Выбраны настройки: $SETTINGS_ID${NC}"
 parse_xml() {
     local component=$1
     local command=$2
-
+    local optional_args=("${@:3}")
     case $component in
         "driverspack")
             python3 $XML_PARSER driverspack $DRIVERSPACK_ID $command
@@ -194,7 +194,7 @@ parse_xml() {
             python3 $XML_PARSER softpack $SOFTPACK_ID $command
             ;;
         "install_location")
-            python3 $XML_PARSER install_location $INSTALL_LOCATION_ID $command
+            python3 $XML_PARSER install_location $INSTALL_LOCATION_ID $command "${optional_args[@]}"
             ;;
         "settings")
             python3 $XML_PARSER settings $SETTINGS_ID $command
@@ -211,7 +211,7 @@ else
 fi
 
 # Запрашиваем у пользователя, нужно ли создавать скрипт удаления
-echo -e "Создать скрипт для удаления установленной системы в каталоге ${ORANGE}${AUTODIR}${NC}? (Y/n)"
+echo -e "Создать скрипт для удаления установленной системы в каталоге ${MAGENTA}${AUTODIR}${NC}? (Y/n)"
 read -r CREATE_REMOVE_SCRIPT
 if [[ -z "$CREATE_REMOVE_SCRIPT" || "$CREATE_REMOVE_SCRIPT" =~ ^[Yy]$ ]]; then
     DONT_CREATE_NEW_REMOVE_SCRIPT=false
