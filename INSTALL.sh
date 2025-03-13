@@ -572,19 +572,19 @@ if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
 fi
 
 
-printf "\n\n\n"
+printf "\n\n"
 echo -e "Точки монтирования и опции шифрования должны быть настроены путём редактирования файла ${BOLD}$XML_FILE${NC}"
 echo "Корневой каталог должен быть первым, а вложенные быть после родительских"
 read -p "Enter - продолжить; ctrl+C - прервать"
-echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
-INSTALLATION_NAME="$INSTALL_LOCATION_ID"
-NEW_SCRIPT_4REMOVE="$SCRIPT_DIR/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALLATION_NAME}_$(date +%Y-%m-%d_%H-%M).sh"
-cp "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
 
 
 #### начало создания скрипта удаления
 
 if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
+    echo "Будет создана дополнительна копия скрипта удаления системы, настроенная на удаление данной установки"
+    NEW_SCRIPT_4REMOVE="$SCRIPT_DIR/autocreated_scripts/REMOVE_INSTALED_SYSTEM_${INSTALL_LOCATION_ID}_$(date +%Y-%m-%d_%H-%M).sh"
+    cp "$SCRIPT_DIR/REMOVE_INSTALED_SYSTEM.sh" "$NEW_SCRIPT_4REMOVE"
+
     # Создаём строки для LVM_VOLUMES и BTRFS_SUBVOLUMES
     lvm_volumes_str=""
     for volume in "${LVM_VOLUMES[@]}"; do
