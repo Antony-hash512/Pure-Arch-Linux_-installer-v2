@@ -513,7 +513,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             
 
             #гарантированно доступное свободное место в разделе:
-            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min | awk '{print $5}')
+            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${current_row["mount_point"]}" | grep Free | grep min | awk '{print $5}')
 
             # Извлекаем числовую часть (40)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/([0-9]+)[^0-9].*/\1/')
