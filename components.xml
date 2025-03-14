@@ -32,7 +32,7 @@
 		<softpack_tweaks>hyrpland userdirs multilibs paru flatpack fish</softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux-zen linux-zen-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc lf ranger man-db less links wget curl git gitu htop 7zip unrar rsync lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl git gitu htop 7zip unrar rsync lvm2 cryptsetup</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
@@ -73,7 +73,7 @@
 		<softpack_tweaks>hyrpland userdirs multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc lf ranger man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay</bundle>
@@ -103,7 +103,7 @@
 		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc lf ranger man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
@@ -134,7 +134,7 @@
 		<softpack_tweaks>openbox multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc lf ranger man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
@@ -162,7 +162,7 @@
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc lf ranger man-db less links wget curl git gitu htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl git gitu htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
 			<bundle>nvim nano vim micro diffutils</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
 			<bundle>base-devel rust cmake</bundle>
@@ -181,7 +181,7 @@
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc lf ranger man-db less htop lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less htop lvm2 cryptsetup</bundle>
 			<bundle>nvim nano vim micro</bundle>
 			<bundle>ntfs-3g dosfstools os-prober</bundle>
 		</pakages>

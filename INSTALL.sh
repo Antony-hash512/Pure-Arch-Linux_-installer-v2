@@ -507,9 +507,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             #гарантированно доступное свободное место в разделе:
             BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min)
 
-            # Извлекаем числовую часть (40)
+            # Извлекаем числовую часть (40.87)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: ([0-9]+(\.[0-9]+)?)\s*[A-Za-z]+.*/\1/')
-            #получаем целое число
+            #получаем целое число ()
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER_INTEGER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_NUMBER" | sed -E 's/^([0-9]+)(\.[0-9]+)?$/\1/')
             # Извлекаем буквенную часть (GiB)
             BTRFS_FREE_SPACE_AVAILABLE_UNIT=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: [0-9.]+\s*([A-Za-z]+).*/\1/')
