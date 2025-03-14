@@ -510,7 +510,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             # Извлекаем числовую часть (40)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: ([0-9]+(\.[0-9]+)?)\s*[A-Za-z]+.*/\1/')
             #получаем целое число
-            BTRFS_FREE_SPACE_AVAILABLE_NUMBER_INTEGER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_NUMBER" | sed -E 's/^([0-9]+)\..*/\1/')
+            BTRFS_FREE_SPACE_AVAILABLE_NUMBER_INTEGER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_NUMBER" | sed -E 's/^([0-9]+)(\.[0-9]+)?$/\1/')
             # Извлекаем буквенную часть (GiB)
             BTRFS_FREE_SPACE_AVAILABLE_UNIT=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: [0-9.]+\s*([A-Za-z]+).*/\1/')
 
@@ -521,8 +521,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
             #если буквенная часть это B,K или M выходим с ошибкой
             if [[ "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "B" || "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "K" || "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "M" ]]; then
-                echo -e "${RED}Ошибка: Рекомендуется проверить свободное место в разделе $btrfs_device: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT (меньше 1 гигабайта)${NC}" >&2
-                ask_user_to_exit "Рекомендуется выйти, чтобы проверить свободное место (y/n)"
+                echo -e "${RED}Предупреждение: Рекомендуется проверить свободное место в разделе $btrfs_device: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT (меньше 1 гигабайта !!! это всё равно что 0 !!!)${NC}" >&2
+                ask_user_to_exit "Рекомендуется выйти, чтобы проверить свободное место"
             elif [[ "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "G" ]]; then
                     if [[ "${current_row["mount_point"]}" == "/" ]]; then
                     BTRFS_FREE_SPACE_REQUIRED=40
@@ -530,8 +530,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                     BTRFS_FREE_SPACE_REQUIRED=5
                 fi
                 if [[ "$BTRFS_FREE_SPACE_AVAILABLE_NUMBER_INTEGER" -lt "$BTRFS_FREE_SPACE_REQUIRED" ]]; then
-                    echo -e "${RED}Ошибка: Рекомендуется проверить свободное место в разделе $btrfs_device: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT (меньше $BTRFS_FREE_SPACE_REQUIRED гигабайт)${NC}" >&2
-                    ask_user_to_exit "Хотите выйти, чтобы проверить свободное место? (y/n)"
+                    echo -e "${RED}Предупреждение: Рекомендуется проверить свободное место в разделе $btrfs_device: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT (меньше $BTRFS_FREE_SPACE_REQUIRED гигабайт)${NC}" >&2
+                    ask_user_to_exit "Хотите выйти, чтобы проверить свободное место?"
                 fi
             fi
 
