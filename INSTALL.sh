@@ -3,7 +3,6 @@
 : <<'TODO'
 * написать код для всех случаев с lvm, btrfs и опций шифрования
 * написать код для создания новых lvm и/или btrfs разделов (зашифрованных или нет)
-* выдавать предупреждение, когда мало свободного места в btrfs разделах, в которые добавляются новые сабволюмы
 * добавить проверку хука при установке шифрования до установки системы
 * добавить копирование и распакову архивов для root
 * снабдить скрипт более подробными комментариями
@@ -71,7 +70,7 @@ echo "перед использованием скрипта также долж
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 
-pacman -Syu
+pacman -Sy
 packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
 
 for pkg in "${packages[@]}"; do
@@ -500,18 +499,18 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
             echo -e "${YELLOW}Отладочная информация о разделе:${NC}"
-            TEST1=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min)
+            TEST1=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}")
             echo "$TEST1"
             read -p "Enter - продолжить; ctrl+C - прервать"
 
             #гарантированно доступное свободное место в разделе:
-            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min | awk '{print $5}')
+            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min)
 
             # Извлекаем числовую часть (40)
-            BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/([0-9]+)[^0-9].*/\1/')
+            BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: ([0-9]+(\.[0-9]+)?)\s*[A-Za-z]+.*/\1/')
 
             # Извлекаем буквенную часть (GiB)
-            BTRFS_FREE_SPACE_AVAILABLE_UNIT=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/[0-9]+([A-Za-z]+).*/\1/')
+            BTRFS_FREE_SPACE_AVAILABLE_UNIT=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: [0-9.]+\s*([A-Za-z]+).*/\1/')
 
             # Извлекаем первую букву единицы измерения (G)
             BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_UNIT" | cut -c1)
