@@ -123,6 +123,16 @@ convert_to_bytes() {
     esac
 }
 
+ask_user_to_exit() {
+    local question=$1
+    #local error_message=$2
+    echo "$question (y/n)"
+    read -r exit_choice
+    if [[ "$exit_choice" == "y" || "$exit_choice" == "Y" ]]; then
+        exit 1
+    fi
+}
+
 # Функция для запроса ID компонента у пользователя
 request_component_id() {
     local component_type=$1
@@ -501,10 +511,9 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
             
-            #свободное место в разделе:
-            #sudo btrfs filesystem usage -h {ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]} | grep min | awk '{print $3}
+
             #гарантированно доступное свободное место в разделе:
-            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep min | awk '{print $5}')
+            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min | awk '{print $5}')
 
             # Извлекаем числовую часть (40)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/([0-9]+)[^0-9].*/\1/')
@@ -515,12 +524,22 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             # Извлекаем первую букву единицы измерения (G)
             BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_UNIT" | cut -c1)
 
-            #echo "Доступное место: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT" 
+            echo "Гарантированно доступное свободное место: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT"
 
-            if [[ "${current_row["mount_point"]}" == "/" ]]; then
-                BTRFS_FREE_SPACE_REQUIRED=40
-            else
-                BTRFS_FREE_SPACE_REQUIRED=10
+            #если буквенная часть это B,K или M выходим с ошибкой
+            if [[ "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "B" || "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "K" || "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "M" ]]; then
+                echo "Ошибка: Недостаточное свободное место в разделе $btrfs_device (меньше 1 гигабайта)" >&2
+                ask_user_to_exit "Рекомендуется выйти, чтобы проверить свободное место (y/n)"
+            elif [[ "$BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER" == "G" ]]; then
+                    if [[ "${current_row["mount_point"]}" == "/" ]]; then
+                    BTRFS_FREE_SPACE_REQUIRED=40
+                else
+                    BTRFS_FREE_SPACE_REQUIRED=5
+                fi
+                if [[ "$BTRFS_FREE_SPACE_AVAILABLE_NUMBER" -lt "$BTRFS_FREE_SPACE_REQUIRED" ]]; then
+                    echo "Ошибка: Недостаточное свободное место в разделе $btrfs_device (меньше $BTRFS_FREE_SPACE_REQUIRED гигабайт)" >&2
+                    ask_user_to_exit "Хотите выйти, чтобы проверить свободное место? (y/n)"
+                fi
             fi
 
            
