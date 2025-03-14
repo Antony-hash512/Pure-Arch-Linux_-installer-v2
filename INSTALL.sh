@@ -71,20 +71,7 @@ echo "перед использованием скрипта также долж
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 
-# Скачивание нужных для установки пакетов
-echo "Вы хотите обновить всю вашу систему загруженную в оперативную память из установочного диска перед установкой новой системы или установить только необходимые пакеты?"
-echo "речь идёт о обновлении системы загруженную в оперативную память из установочного диска, именно эти обновления не сохранятся после перезагрузки"
-echo "в установлиемой же системе будут в любом случае скачаны последние версии пакетов даже если предлагаемые сейчас обновления будут пропущены"
-echo -e "Введите ${YELLOW}skip${NC}, чтобы установить только необходимые пакеты не обновляя систему в оперативной памяти или просто Enter - обновить систему"
-read UPDATE_SYSTEM
-if [[ $UPDATE_SYSTEM == "skip" ]]; then
-    echo "Полное обновление всей системы пропущено"
-    echo "Будет выполнено только обновление базы данных пакетов перед установкой необходимых компонентов"
-    pacman -Sy
-else
-    echo "Обновление системы"
-    pacman -Syu
-fi
+pacman -Syu
 packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
 
 for pkg in "${packages[@]}"; do
@@ -310,6 +297,7 @@ timedatectl set-ntp true
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 # Показываем пользователю список записей EFI
+echo -e "${YELLOW}Список записей EFI:${NC}"
 efibootmgr
 
 EFI_SYS_NAME="$(parse_xml install_location get_efi_bootlabel)"
@@ -317,16 +305,16 @@ EFI_SYS_NAME="$(parse_xml install_location get_efi_bootlabel)"
 # Проверяем уникальность имени и предлагаем варианты
 while true; do
     if efibootmgr | grep -q "$EFI_SYS_NAME"; then
-        echo "Загрузчик с именем $EFI_SYS_NAME уже существует."
+        echo -e "${RED}Загрузчик с именем ${MAGENTA}$EFI_SYS_NAME${RED} уже существует.${NC}"
         read -p "Хотите перезаписать существующий загрузчик? (type YES using Capital letters): " overwrite
         if [[ $overwrite =~ ^YES$ ]]; then
-            echo "Будет выполнена перезапись существующего загрузчика."
+            echo -e "${GREEN}Будет выполнена перезапись существующего загрузчика.${NC}"
             break
         else
             read -p "Введите другое имя загрузчика в EFI-разделе: " EFI_SYS_NAME
         fi
     else
-        echo "Имя загрузчика $EFI_SYS_NAME уникально и будет использовано."
+        echo -e "${GREEN}Имя загрузчика ${MAGENTA}$EFI_SYS_NAME${GREEN} уникально и будет использовано.${NC}"
         break
     fi
 done
@@ -349,13 +337,14 @@ echo -e "${YELLOW}список точек монтирования:${NC}"
 for item in "${ALL_NEW_POINTS[@]}"; do
     echo "$item"
 done
-echo -e "${YELLOW}список дополнительных точек монтирования:${NC}"
-for item in "${ALL_EXTRA_POINTS[@]}"; do
-    echo "$item"
-done
+if [[ "${#ALL_EXTRA_POINTS[@]}" -gt 0 ]]; then
+    echo -e "${YELLOW}список дополнительных точек монтирования:${NC}"
+    for item in "${ALL_EXTRA_POINTS[@]}"; do
+        echo "$item"
+    done
+fi
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk
-echo "разделы должны быть созданы заранее вручную, автоматически создаются только тома на них"
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 
@@ -511,7 +500,8 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
             echo -e "${YELLOW}Отладочная информация о разделе:${NC}"
-            echo $(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}")
+            TEST1=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min)
+            echo "$TEST1"
             read -p "Enter - продолжить; ctrl+C - прервать"
 
             #гарантированно доступное свободное место в разделе:
