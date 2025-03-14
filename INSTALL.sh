@@ -504,8 +504,24 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             #свободное место в разделе:
             #sudo btrfs filesystem usage -h {ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]} | grep min | awk '{print $3}
             #гарантированно доступное свободное место в разделе:
-            #sudo btrfs filesystem usage -h {ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]} | grep min | awk '{print $5}
+            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep min | awk '{print $5}')
 
+            # Извлекаем числовую часть (40)
+            BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/([0-9]+)[^0-9].*/\1/')
+
+            # Извлекаем буквенную часть (GiB)
+            BTRFS_FREE_SPACE_AVAILABLE_UNIT=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/[0-9]+([A-Za-z]+).*/\1/')
+
+            # Извлекаем первую букву единицы измерения (G)
+            BTRFS_FREE_SPACE_AVAILABLE_UNIT_FIRST_LETTER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_UNIT" | cut -c1)
+
+            #echo "Доступное место: $BTRFS_FREE_SPACE_AVAILABLE_NUMBER $BTRFS_FREE_SPACE_AVAILABLE_UNIT" 
+
+            if [[ "${current_row["mount_point"]}" == "/" ]]; then
+                BTRFS_FREE_SPACE_REQUIRED=40
+            else
+                BTRFS_FREE_SPACE_REQUIRED=10
+            fi
 
            
             if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
