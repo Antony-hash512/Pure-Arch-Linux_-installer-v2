@@ -510,10 +510,12 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             else
                 echo "имя подтома $subvol_name уникально и будет использовано"
             fi
-            
+            echo -e "${YELLOW}Отладочная информация о разделе:${NC}"
+            echo $(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}")
+            read -p "Enter - продолжить; ctrl+C - прервать"
 
             #гарантированно доступное свободное место в разделе:
-            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${current_row["mount_point"]}" | grep Free | grep min | awk '{print $5}')
+            BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA=$(sudo btrfs filesystem usage -h "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}" | grep Free | grep min | awk '{print $5}')
 
             # Извлекаем числовую часть (40)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/([0-9]+)[^0-9].*/\1/')
@@ -545,7 +547,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
            
             if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
                 if [[ -v BTRFS_SUBVOLUMES["$btrfs_device"] ]]; then
-                    BTRFS_SUBVOLUMES["$btrfs_device"]+=" $subvol_name"
+                    BTRFS_SUBVOLUMES["$btrfs_device"]+="$subvol_name"
                 else
                     BTRFS_SUBVOLUMES["$btrfs_device"]="$subvol_name"
                 fi
