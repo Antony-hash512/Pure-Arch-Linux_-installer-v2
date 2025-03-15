@@ -432,7 +432,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
             ext4_path=${current_row["name"]}
             echo "Путь к разделу с ext4: $ext4_path"
             ;;
-        "new_subvol_in_btrfs")
+        "new_subvol_in_btrfs"|"new_subvol_in_btrfs_in_lvm")
             subvol_name="${names[0]}"
             btrfs_device="${names[1]}"
             echo "Имя субтома Btrfs: $subvol_name"
@@ -448,46 +448,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
                 mount "$btrfs_device" "$CURRENT_BTRFS_MOUNTPOINT"
             fi
 
-
-
             # выводим список сабволюмов
-            btrfs_subvolumes_str=$(echo "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}"| xargs -I {} sudo btrfs subvolume list {})           
-            echo "Список существующих подтомов в $btrfs_device:"
-            echo "$btrfs_subvolumes_str"
-            #проверяем, что нет уже такого сабтома
-            if echo "$btrfs_subvolumes_str" | grep -w -q "$subvol_name"; then
-                echo "Ошибка: Подтом с именем $subvol_name уже существует в $btrfs_device" >&2
-                exit 1
-            else
-                echo "имя подтома $subvol_name уникально и будет использовано"
-            fi
-           
-            if [[ "$DONT_CREATE_NEW_REMOVE_SCRIPT" == "false" ]]; then
-                if [[ -v BTRFS_SUBVOLUMES["$btrfs_device"] ]]; then
-                    BTRFS_SUBVOLUMES["$btrfs_device"]+=" $subvol_name"
-                else
-                    BTRFS_SUBVOLUMES["$btrfs_device"]="$subvol_name"
-                fi
-            fi
-            
-            ;;
-        "new_subvol_in_btrfs_in_lvm")
-            subvol_name="${names[0]}"
-            lv_name="${names[1]}"
-            btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже
-            echo "Имя субтома Btrfs: $subvol_name"
-            echo "Логический том LVM (btrfs): $lv_name"
-            #проверяем что этого раздела нет в массиве
-            if [[ ! -v ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"] ]]; then
-                #получаем имя точки монтирования используя время unix и случайное число
-                CURRENT_BTRFS_MOUNTPOINT="/mnt/btrfs_root_$(date +%s)_$RANDOM"
-                ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]="$CURRENT_BTRFS_MOUNTPOINT"
-                #создаём каталог для точки монтирования
-                mkdir -p "$CURRENT_BTRFS_MOUNTPOINT"    
-                #монтируем раздел
-                mount "$btrfs_device" "$CURRENT_BTRFS_MOUNTPOINT"
-            fi
-
             btrfs_subvolumes_str=$(echo "${ALL_ROOT_BTRFS_MOUNTPOINTS["$btrfs_device"]}"| xargs -I {} sudo btrfs subvolume list {})           
             echo "Список существующих подтомов в $btrfs_device:"
             echo "$btrfs_subvolumes_str"
