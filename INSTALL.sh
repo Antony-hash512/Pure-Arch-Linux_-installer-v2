@@ -470,7 +470,7 @@ for row in "${ALL_NEW_POINTS[@]}"; do
 
             # Извлекаем числовую часть (40.87)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: ([0-9]+(\.[0-9]+)?)\s*[A-Za-z]+.*/\1/')
-            #получаем целое число ()
+            #получаем целое число (40)
             BTRFS_FREE_SPACE_AVAILABLE_NUMBER_INTEGER=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_NUMBER" | sed -E 's/^([0-9]+)(\.[0-9]+)?$/\1/')
             # Извлекаем буквенную часть (GiB)
             BTRFS_FREE_SPACE_AVAILABLE_UNIT=$(echo "$BTRFS_FREE_SPACE_AVAILABLE_RAW_DATA" | sed -E 's/.*min: [0-9.]+\s*([A-Za-z]+).*/\1/')
