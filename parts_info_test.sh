@@ -24,6 +24,17 @@ NC='\033[0m'
 #файл с xml-данными
 XML_PARSER="get_data_from_components_xml.py"
 
+# Функция для замены переносов строк на запятую
+one_line() {
+    # Получаем данные из первого аргумента
+    local input_data="$1"
+    
+    # Заменяем переносы строк на запятую
+    echo "$input_data" | tr '\n' ',' | sed 's/,$//'
+}
+
+
+
 
 request_component_id() {
     local component_type=$1
@@ -174,10 +185,6 @@ lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
 #lvs -o vg_name,lv_name,lv_size,lv_attr
 
 
-#создаём временный файл и сохраняем имя в переменную
-LSBLK_RAW_INFO=$(mktemp)
-#записываем содержимое во временный файл
-lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS > $LSBLK_RAW_INFO
 
 #получаем информацию содержащуюся в xml-файле
 NEW_MOUNTPOINTS_AMOUNT=$( parse_xml "install_location" "get_amount_of_new_mountpoints")
@@ -208,33 +215,13 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     read -r -a names <<< "${name//_in_/ }"
     echo -e "${YELLOW}Точка монтирования $row:${NC} $mount_point $type $crypt_mode $name"
     echo "Тип монтирования: $type"
-    case "$crypt_mode" in
-        "none"|"none_in_none")    
-        case "$type" in
-            "format_ext4")
-                :
-                ;;
-            "new_subvol_in_btrfs")
-                :
-                ;;
-            "new_subvol_in_btrfs_in_lvm")
-                :
-                ;;
-            "new_ext4_in_lvm")
-                :
-                ;;
-        esac
-            ;;
-        *)
-            echo -e "${RED}Данный функционал пока не реализован: $crypt_mode${NC}"
-            ;;
-    esac
 done
 
 
 read -p "Нажмите Enter для продолжения"
 
 echo ""
+
 
 print_all_btrfs_devices() {
     #проходим по содержимому нового вывода команды lsblk посторочно в цикле
@@ -268,29 +255,123 @@ print_all_btrfs_subvolumes() {
     done
 }
 
-echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
-print_all_btrfs_subvolumes
+#echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
+#print_all_btrfs_subvolumes
+#read -p "Нажмите Enter для продолжения"
+#echo ""
 
-
-read -p "Нажмите Enter для продолжения"
-
-echo ""
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
 echo -e "${GRAY}${ITALIC}${UNDERLINE}В процессе разработки...${NC}"
 
-#можено переделать на последовательные правки файла, а потом его отображение
-#нужно подогранить новый ражел по максимальной длине строки
+#можно переделать на последовательные правки файла, а потом его отображение
+#нужно подогнать новый раздел по максимальной длине строки
 
-#выводим первую строку из временного файла дописав в конец строки символы "INSTALL_INFO"
-sed -n '1p' $LSBLK_RAW_INFO | sed 's/$/  INSTALL_INFO/'
+#создаём временный файл и сохраняем имя в переменную
+LSBLK_RAW_INFO=$(mktemp)
+LSBLK_RAW_INFO_UPDATED=$(mktemp)
+#записываем содержимое во временный файл
+#RM или RO - нужно дописать в конец строки чтобы при добавлении дополнительного параметра всё было выровнено по правому краю
+lsblk -o NAME,TYPE,FSTYPE,SIZE,RM,RO > $LSBLK_RAW_INFO
 
-#проходимся по содержимому временного файла начиная со второй строки
-sed -n '2,$p' $LSBLK_RAW_INFO | while IFS= read -r line; do
-    #выводим строку
-    echo "$line"
+#определяем длину строки в файле
+LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
+
+#записываем первую строку с добавочным текстом (если нужен) во второй временный файл
+#echo "$(head -n 1 $LSBLK_RAW_INFO) SUBVOLUMES" > $LSBLK_RAW_INFO_UPDATED
+echo "$(head -n 1 $LSBLK_RAW_INFO)" > $LSBLK_RAW_INFO_UPDATED
+
+
+#проходися по файлу начиная со второй строки в цикле
+while IFS= read -r line; do
+    #дублируем строку как есть до изменения
+    line_orig="$line"
+    #заменяем '│ ' на '│·' чтобы избежать ошибочного разбиения на слова
+    line=$(echo "$line" | sed 's/│ /│·/g')
+    if [[ "$(echo "$line" | awk '{print $3}')" == "btrfs" ]]; then
+        # Полностью новый подход, сохраняющий форматирование
+        # Сначала найдем позицию слова "btrfs" в строке
+        POSITION=$(echo -n "$line_orig" | grep -bo "btrfs" | cut -d':' -f1)
+        if [ -n "$POSITION" ]; then
+            # Разделяем строку на часть до btrfs и после
+            PREFIX=$(echo -n "$line_orig" | cut -c1-$POSITION)
+            SUFFIX=$(echo -n "$line_orig" | cut -c$((POSITION+5))-)
+            # Собираем строку с цветным форматированием
+            line_colored="${PREFIX}${CYAN}btrfs${NC}${SUFFIX}"
+        else
+            # Если по какой-то причине не найдено слово btrfs, оставляем строку как есть
+            line_colored="$line_orig"
+        fi
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+        
+        #получаем полное имя устройства
+        device_basename=$(echo "$line" | awk '{print $1}')
+        #удаляем любые символы отображающие древовидную структуру из начала строки
+        device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
+        if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
+            device_fullname="/dev/mapper/$device_basename"
+        elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
+            device_fullname="/dev/$device_basename"
+        fi
+        #используем функцию get_btrfs_subvolumes
+        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов
+        if [[ -z "$(get_btrfs_subvolumes "$device_fullname")" ]]; then
+            echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        else
+            #выводим сабволюмы, используем echo чтобы отобразить их в одной строке, если их несколько
+            echo -e "${YELLOW}Сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        fi
+    else
+        echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
+    fi
+done < <(sed '1d' $LSBLK_RAW_INFO)
+
+# Обновляем первый временный файл и обнуляем второй
+cp $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
+
+
+
+#выводим содержимое временного файла
+cat $LSBLK_RAW_INFO
+
+
+
+#в певую строку файла дописываем текст "INSTALL_INFO"
+#sed -i '1s/^/INSTALL_INFO\n/' $LSBLK_RAW_INFO
+
+#добляем на разметку список изменений, которые планируется произвести
+for row in "${NEW_MOUNTPOINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    mount_point=${current_row["mount_point"]}
+    type=${current_row["type"]}
+    #преобразуем строку type в массив с разделителем "_in_"
+    read -r -a types <<< "${type//_in_/ }"
+    crypt_mode=${current_row["crypt_mode"]}
+    name=${current_row["name"]}
+    #преобразуем строку name в массив с разделителем "_in_"
+    read -r -a names <<< "${name//_in_/ }"
+
+    case "$crypt_mode" in
+        "none"|"none_in_none")    
+        case "$type" in
+            "format_ext4")
+                :
+                ;;
+            "new_subvol_in_btrfs")
+                :
+                ;;
+            "new_subvol_in_btrfs_in_lvm")
+                :
+                ;;
+            "new_ext4_in_lvm")
+                :
+                ;;
+        esac
+            ;;
+        *)
+            echo -e "${RED}Данный функционал пока не реализован: $crypt_mode${NC}"
+            ;;
+    esac
 done
-
-
 
 echo ""
 read -p "Нажмите Enter для продолжения"
@@ -303,7 +384,7 @@ for mountpoint in "${SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT[@]}"; do
 done
 #удаляем временные файлы
 rm -f $LSBLK_RAW_INFO
-
+rm -f $LSBLK_RAW_INFO_UPDATED
 exit 0
 
 
