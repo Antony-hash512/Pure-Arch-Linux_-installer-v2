@@ -294,7 +294,8 @@ while IFS= read -r line; do
         if [ -n "$POSITION" ]; then
             # Разделяем строку на часть до btrfs и после
             PREFIX=$(echo -n "$line_orig" | cut -c1-$POSITION)
-            SUFFIX=$(echo -n "$line_orig" | cut -c$((POSITION+5))-)
+            # Длина слова "btrfs" равна 5, поэтому берём POSITION+5 для конца слова
+            SUFFIX=$(echo -n "$line_orig" | cut -c$((POSITION+5+1))-)
             # Собираем строку с цветным форматированием
             line_colored="${PREFIX}${CYAN}btrfs${NC}${SUFFIX}"
         else
@@ -318,7 +319,7 @@ while IFS= read -r line; do
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
             #выводим сабволюмы, используем echo чтобы отобразить их в одной строке, если их несколько
-            echo -e "${YELLOW}Сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            echo -e "!${YELLOW}Сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
         fi
     else
         echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
