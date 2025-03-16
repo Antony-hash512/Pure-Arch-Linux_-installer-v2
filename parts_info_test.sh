@@ -1,5 +1,11 @@
 #!/bin/bash
 
+: << 'TODO'
+* обдумать каким способом лучше добавить отображение информации о запланируемой установке: 
+    в каких циклах это делать или в отдельных функциях и т.п.
+
+TODO
+
 #проверяем на права суперпользователя
 if [[ "$EUID" -ne 0 ]]; then
     echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
@@ -330,7 +336,7 @@ while IFS= read -r line; do
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
             #выводим сабволюмы, используем echo чтобы отобразить их в одной строке, если их несколько
-            echo -e "!${YELLOW}Сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            echo -e "!${YELLOW}Имеющиеся сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
         fi
     else
         echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
