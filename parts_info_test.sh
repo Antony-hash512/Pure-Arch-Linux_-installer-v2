@@ -33,8 +33,31 @@ one_line() {
     echo "$input_data" | tr '\n' ',' | sed 's/,$//'
 }
 
-
-
+# Функция для окрашивания указанного текста в строке
+color_text_in_string() {
+    local original_string="$1"    # Исходная строка
+    local text_to_color="$2"      # Текст, который нужно окрасить
+    local color_code="$3"         # Код цвета для окрашивания
+    
+    # Находим позицию текста в строке
+    local position=$(echo -n "$original_string" | grep -bo "$text_to_color" | cut -d':' -f1)
+    
+    # Если текст найден
+    if [ -n "$position" ]; then
+        # Получаем длину текста
+        local text_length=${#text_to_color}
+        
+        # Разделяем строку на части до и после окрашиваемого текста
+        local prefix=$(echo -n "$original_string" | cut -c1-$position)
+        local suffix=$(echo -n "$original_string" | cut -c$((position+text_length+1))-)
+        
+        # Возвращаем строку с окрашенным текстом
+        echo "${prefix}${color_code}${text_to_color}${NC}${suffix}"
+    else
+        # Возвращаем исходную строку, если текст не найден
+        echo "$original_string"
+    fi
+}
 
 request_component_id() {
     local component_type=$1
@@ -288,20 +311,8 @@ while IFS= read -r line; do
     #заменяем '│ ' на '│·' чтобы избежать ошибочного разбиения на слова
     line=$(echo "$line" | sed 's/│ /│·/g')
     if [[ "$(echo "$line" | awk '{print $3}')" == "btrfs" ]]; then
-        # Полностью новый подход, сохраняющий форматирование
-        # Сначала найдем позицию слова "btrfs" в строке
-        POSITION=$(echo -n "$line_orig" | grep -bo "btrfs" | cut -d':' -f1)
-        if [ -n "$POSITION" ]; then
-            # Разделяем строку на часть до btrfs и после
-            PREFIX=$(echo -n "$line_orig" | cut -c1-$POSITION)
-            # Длина слова "btrfs" равна 5, поэтому берём POSITION+5 для конца слова
-            SUFFIX=$(echo -n "$line_orig" | cut -c$((POSITION+5+1))-)
-            # Собираем строку с цветным форматированием
-            line_colored="${PREFIX}${CYAN}btrfs${NC}${SUFFIX}"
-        else
-            # Если по какой-то причине не найдено слово btrfs, оставляем строку как есть
-            line_colored="$line_orig"
-        fi
+        # Используем функцию для окрашивания слова "btrfs"
+        line_colored=$(color_text_in_string "$line_orig" "btrfs" "$CYAN")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
         
         #получаем полное имя устройства
