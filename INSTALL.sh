@@ -16,6 +16,12 @@
 TODO
 #=======================================================================================
 
+#проверяем на права суперпользователя
+if [[ "$EUID" -ne 0 ]]; then
+    echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
+    exit 1
+fi
+
 echo "Bash version: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
 echo ""
 if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then

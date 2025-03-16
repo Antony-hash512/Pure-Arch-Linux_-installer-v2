@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#проверяем на права суперпользователя
+if [[ "$EUID" -ne 0 ]]; then
+    echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
+    exit 1
+fi
+
 #цветные переменные
 RED='\033[31m'
 GREEN='\033[32m'
@@ -7,6 +13,12 @@ YELLOW='\033[33m'
 PURPLE='\033[35m'
 BLUE='\033[34m'
 MAGENTA='\033[35m'
+CYAN='\033[36m'
+GRAY='\033[90m'
+BOLD='\033[1m'
+ITALIC='\033[3m'
+UNDERLINE='\033[4m'
+ORANGE='\033[38;5;208m'
 NC='\033[0m'
 
 #файл с xml-данными
@@ -152,19 +164,18 @@ get_btrfs_subvolumes() {
     #получаем точку монтирования для устройства
     local btrfs_mountpoint=$(get_btrfs_mountpoint "$btrfs_device")
 
-    local subvolumes="$(sudo btrfs subvolume list "$btrfs_mountpoint" | grep 'level 5 path' | sed -E 's/.*level 5 path[[:space:]]+([^[:space:]]+).*/\1/')"
+    local subvolumes="$(btrfs subvolume list "$btrfs_mountpoint" | grep 'level 5 path' | sed -E 's/.*level 5 path[[:space:]]+([^[:space:]]+).*/\1/')"
     echo "$subvolumes"
 }
 
-
+echo -e "${CYAN}Общая информация:${NC}"
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
 #lvs -o vg_name,lv_name,lv_size,lv_attr
 
 
 #создаём временный файл и сохраняем имя в переменную
-LSBLK_RAW_INFO="/tmp/lsblk_before_install.txt"
-touch $LSBLK_RAW_INFO
+LSBLK_RAW_INFO=$(mktemp)
 #записываем содержимое во временный файл
 lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS > $LSBLK_RAW_INFO
 
@@ -223,6 +234,8 @@ done
 
 read -p "Нажмите Enter для продолжения"
 
+echo ""
+
 print_all_btrfs_devices() {
     #проходим по содержимому нового вывода команды lsblk посторочно в цикле
     while IFS= read -r line; do
@@ -233,6 +246,7 @@ print_all_btrfs_devices() {
             echo "/dev/$(echo "$line" | awk '{print $3}')"
         fi
     done < <(lsblk -l -n -o FSTYPE,TYPE,NAME)
+    echo ""
 }
 
 #print_all_btrfs_devices
@@ -243,18 +257,42 @@ print_all_btrfs_subvolumes() {
         #выводим подсводы для каждого устройства
         echo -e "${YELLOW}Сабволюмы для устройства $device:${NC}"
         #используем функцию get_btrfs_subvolumes
-        get_btrfs_subvolumes "$device"
+        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов
+        if [[ -z "$(get_btrfs_subvolumes "$device")" ]]; then
+            echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device нет сабволюмов${NC}"
+        else
+            #выводим сабволюмы
+            get_btrfs_subvolumes "$device"
+        fi
+        echo ""
     done
 }
 
+echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
 print_all_btrfs_subvolumes
 
 
 read -p "Нажмите Enter для продолжения"
+
+echo ""
+echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
+echo -e "${GRAY}${ITALIC}${UNDERLINE}В процессе разработки...${NC}"
+
+
+
+
+
+echo ""
+read -p "Нажмите Enter для продолжения"
+
+
+
 #размонтируем временные точки монтирования btrfs
 for mountpoint in "${SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT[@]}"; do
     umount "$mountpoint"
 done
+#удаляем временные файлы
+rm -f $LSBLK_RAW_INFO
 
 exit 0
 
