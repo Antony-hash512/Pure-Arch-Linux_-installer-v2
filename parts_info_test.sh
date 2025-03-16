@@ -137,7 +137,7 @@ get_btrfs_mountpoint() {
                 echo -e "${RED}Устройство $btrfs_device не смонтировалось${NC}" >&2
                 exit 1
             fi
-        elif
+        else
             #получаем точку монтирования для устройства (первую попавшуюся, если их несколько)
             btrfs_mountpoint=$(findmnt -l -n -o TARGET "$btrfs_device" | sed -n '1p')
         fi
@@ -223,8 +223,34 @@ done
 
 read -p "Нажмите Enter для продолжения"
 
+print_all_btrfs_devices() {
+    #проходим по содержимому нового вывода команды lsblk посторочно в цикле
+    while IFS= read -r line; do
+        #если первое слово в строке - btrfs, то выводим второе имя с добавлением нужного префикса перед ним
+        if [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+lvm ]]; then
+            echo "/dev/mapper/$(echo "$line" | awk '{print $3}')"
+        elif [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+part ]]; then
+            echo "/dev/$(echo "$line" | awk '{print $3}')"
+        fi
+    done < <(lsblk -l -n -o FSTYPE,TYPE,NAME)
+}
+
+#print_all_btrfs_devices
+
+print_all_btrfs_subvolumes() {
+    #проходмся по выводу функции print_all_btrfs_devices
+    for device in $(print_all_btrfs_devices); do
+        #выводим подсводы для каждого устройства
+        echo -e "${YELLOW}Сабволюмы для устройства $device:${NC}"
+        #используем функцию get_btrfs_subvolumes
+        get_btrfs_subvolumes "$device"
+    done
+}
+
+print_all_btrfs_subvolumes
 
 
+read -p "Нажмите Enter для продолжения"
 #размонтируем временные точки монтирования btrfs
 for mountpoint in "${SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT[@]}"; do
     umount "$mountpoint"
