@@ -79,70 +79,81 @@ parse_xml() {
 
 }
 
+get_device_basename4lsblk() {
+    local device=$1
+    # Определяем формат устройства btrfs
+    local device_format=""
+    
+    # Проверяем формат устройства: /dev/name, /dev/mapper/vgname-name или /dev/vgname/name
+    if [[ "$device" =~ ^/dev/[a-zA-Z0-9]+$ ]]; then
+        # Формат /dev/name (например, /dev/sda1)
+        device_format="standard"
+    elif [[ "$device" =~ ^/dev/mapper/[a-zA-Z0-9_]+-[a-zA-Z0-9_]+$ ]]; then
+        # Формат /dev/mapper/vgname-name (LVM через mapper)
+        device_format="mapper"
+    elif [[ "$device" =~ ^/dev/[a-zA-Z0-9_]+/[a-zA-Z0-9_]+$ ]]; then
+        # Формат /dev/vgname/name (LVM через vgname)
+        device_format="vgpath"
+    else
+        # Неизвестный формат
+        echo -e "${RED}Устройство $device имеет неизвестный формат${NC}" >&2
+        return
+    fi
+    case "$device_format" in
+        "standard"|"mapper")
+            device_basename=$(basename "$device")
+            ;;
+        "vgpath")
+            #приводим к формату, который используется в lsblk
+            device_vgname=$(echo "$device" | awk -F'/' '{print $3}')
+            device_lvname=$(echo "$device" | awk -F'/' '{print $4}')
+            device_basename="$device_vgname-$device_lvname"
+            ;;
+    esac
+    echo "$device_basename"
+}
+
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
 #массив котырый будет содержать временные точки монтирования btrfs подлежащие размонтированию в конце работы скрипта
 declare -a SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT
+
 get_btrfs_mountpoint() {
     local btrfs_device=$1 #требуется указать полный путь к устройству
     local btrfs_mountpoint=""
-    # Определяем формат устройства btrfs
-    local btrfs_format=""
     
-    # Проверяем формат устройства: /dev/name, /dev/mapper/vgname-name или /dev/vgname/name
-    if [[ "$btrfs_device" =~ ^/dev/[a-zA-Z0-9]+$ ]]; then
-        # Формат /dev/name (например, /dev/sda1)
-        btrfs_format="standard"
-    elif [[ "$btrfs_device" =~ ^/dev/mapper/[a-zA-Z0-9_]+-[a-zA-Z0-9_]+$ ]]; then
-        # Формат /dev/mapper/vgname-name (LVM через mapper)
-        btrfs_format="mapper"
-    elif [[ "$btrfs_device" =~ ^/dev/[a-zA-Z0-9_]+/[a-zA-Z0-9_]+$ ]]; then
-        # Формат /dev/vgname/name (LVM через vgname)
-        btrfs_format="vgpath"
+    #проверяем есть ли запись в массиве ALL_BTRFS_MOUNTPOINTS
+    if [[ -n "${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}" ]]; then
+        btrfs_mountpoint="${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
     else
-        # Неизвестный формат
-        echo -e "${RED}Устройство $btrfs_device имеет неизвестный формат${NC}" > &2
-        return
+        #при помощи команды findmnt проверяем, существует ли хотя бы одна точка монтирования для данного устройства
+        if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
+            #создаём временный каталог
+            btrfs_mountpoint=$(mktemp -d)
+            #монтируем устройство в временный каталог
+            mount "$btrfs_device" "$btrfs_mountpoint"
+            #проверяем, что устройство успешно смонтировалось
+            if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
+                echo -e "${RED}Устройство $btrfs_device не смонтировалось${NC}" >&2
+                exit 1
+            fi
+        elif
+            #получаем точку монтирования для устройства (первую попавшуюся, если их несколько)
+            btrfs_mountpoint=$(findmnt -l -n -o TARGET "$btrfs_device" | sed -n '1p')
+        fi
+        #добавляем точку монтирования в массив ALL_BTRFS_MOUNTPOINTS
+        ALL_BTRFS_MOUNTPOINTS[$btrfs_device]="$btrfs_mountpoint"
     fi
-
-
-    
-    case "$btrfs_format" in
-        "standard"|"mapper")
-            btrfs_dev_basename=$(basename "$btrfs_device")
-            ;;
-        "vgpath")
-            #приводим к формату, который используется в lsblk
-            btrfs_dev_vgname=$(echo "$btrfs_device" | awk -F'/' '{print $3}')
-            btrfs_dev_lvname=$(echo "$btrfs_device" | awk -F'/' '{print $4}')
-            btrfs_dev_basename="$btrfs_dev_vgname-$btrfs_dev_lvname"
-            ;;
-    esac
-    
-    #TODO: реализовать парсинг lsblk
-    
-     
-    
-    
-    #проверяем, что устройство является btrfs
-
-    # if ! lsblk -l -o NAME,FSTYPE | grep "$btrfs_dev_basename" | awk '{print $2}' | grep -q "btrfs"; then
-        #echo -e "${RED}Устройство $btrfs_device не является btrfs${NC}" > &2
-        #return
-    #fi
-    ##проверяем, существует ли точка монтирования для данного устройства
-    #if ! lsblk -l -o NAME,MOUNTPOINTS | grep "$btrfs_dev_basename" | awk '{print $2}' | grep -q "/"; then
-        #echo -e "${RED}Точка монтирования для устройства $btrfs_device не найдена${NC}" > &2
-        #return
-    #fi
-    ##local btrfs_mountpoint=$(lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS | grep "$btrfs_device" | awk '{print $6}')
-    #ALL_BTRFS_MOUNTPOINTS[$btrfs_mountpoint]=$btrfs_mountpoint
+    echo "$btrfs_mountpoint"
 }
 
 get_btrfs_subvolumes() {
     local btrfs_device=$1
     #получаем точку монтирования для устройства
     local btrfs_mountpoint=$(get_btrfs_mountpoint "$btrfs_device")
+
+    local subvolumes="$(sudo btrfs subvolume list "$btrfs_mountpoint" | grep 'level 5 path' | sed -E 's/.*level 5 path[[:space:]]+([^[:space:]]+).*/\1/')"
+    echo "$subvolumes"
 }
 
 
