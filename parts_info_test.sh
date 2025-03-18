@@ -1,10 +1,28 @@
 #!/bin/bash
 
 : << 'TODO'
-* обдумать каким способом лучше добавить отображение информации о запланируемой установке: 
-    в каких циклах это делать или в отдельных функциях и т.п.
-
++ внедрить проверку на то, что имена новых btrfs сабволюмов не совпадают с именами существующих
++ внедрить отображение о планируемых новых разделах lvm
++ внедрить проверку на то, что имена новых lvm томов не совпадают с именами существующих
++ проверять свободное место на диске
++ проверять что все прописанные ext4, lvm, btrfs умеются в разметке
++ проверять что все прописанные имена устройств существуют
 TODO
+
+# создаём ассоциативный массив problems для возможного запланированного выхода 
+declare -A problems
+#вносим значения в массив (пустая строка - означает, что проблемы нет)
+problems["no_free_space"]=""
+problems["btrfs_subvolume_name_already_exists"]=""
+problems["lvm_logical_volume_name_already_exists"]=""
+problems["btrfs_device_not_found"]=""
+problems["lvm_group_not_found"]=""
+problems["ext4_device_not_found"]=""
+problems["syntax_problem_in_xml_file"]=""
+
+#флаг для запланрованного выхода из скрипта
+exit_and_show_problems_flag=0
+
 
 #проверяем на права суперпользователя
 if [[ "$EUID" -ne 0 ]]; then
@@ -19,12 +37,90 @@ YELLOW='\033[33m'
 PURPLE='\033[35m'
 BLUE='\033[34m'
 MAGENTA='\033[35m'
+LIGHT_PURPLE='\033[95m'
 CYAN='\033[36m'
 GRAY='\033[90m'
 BOLD='\033[1m'
 ITALIC='\033[3m'
 UNDERLINE='\033[4m'
 ORANGE='\033[38;5;208m'
+
+# Добавление недостающих базовых цветов
+BLACK='\033[30m'
+WHITE='\033[37m'
+LIGHT_WHITE='\033[97m'
+
+# Дополнительные стилевые коды
+BLINK='\033[5m'          # Мигающий текст (поддерживается не всеми терминалами)
+REVERSE='\033[7m'        # Инверсия цветов фона и текста
+HIDDEN='\033[8m'         # Скрытый текст
+STRIKETHROUGH='\033[9m'  # Зачеркнутый текст (поддерживается не всеми терминалами)
+DOUBLE_UNDERLINE='\033[21m' # Двойное подчеркивание (поддерживается не всеми терминалами)
+
+# Коды сброса определенных атрибутов
+RESET_BOLD='\033[22m'    # Сброс жирного/тусклого текста
+RESET_ITALIC='\033[23m'  # Сброс курсива
+RESET_UNDERLINE='\033[24m' # Сброс подчеркивания
+RESET_BLINK='\033[25m'   # Сброс мигания
+RESET_REVERSE='\033[27m' # Сброс инверсии
+RESET_HIDDEN='\033[28m'  # Сброс скрытого текста
+RESET_STRIKETHROUGH='\033[29m' # Сброс зачеркивания
+
+# True Color (24-bit) примеры
+# Формат: \033[38;2;R;G;Bm для текста, \033[48;2;R;G;Bm для фона
+TRUE_RED='\033[38;2;255;0;0m'
+TRUE_GREEN='\033[38;2;0;255;0m'
+TRUE_BLUE='\033[38;2;0;0;255m'
+TRUE_YELLOW='\033[38;2;255;255;0m'
+TRUE_PURPLE='\033[38;2;128;0;128m'
+TRUE_ORANGE='\033[38;2;255;165;0m'
+TRUE_PINK='\033[38;2;255;192;203m'
+
+# Фоновые True Color примеры
+BG_TRUE_RED='\033[48;2;255;0;0m'
+BG_TRUE_GREEN='\033[48;2;0;255;0m'
+BG_TRUE_BLUE='\033[48;2;0;0;255m'
+BG_TRUE_YELLOW='\033[48;2;255;255;0m'
+
+# Популярные комбинации (примеры)
+BOLD_RED='\033[1;31m'
+ITALIC_BLUE='\033[3;34m'
+UNDERLINE_GREEN='\033[4;32m'
+BOLD_UNDERLINE='\033[1;4m'
+BOLD_RED_BG_YELLOW='\033[1;31;43m'
+
+# Яркие версии стандартных цветов
+LIGHT_RED='\033[91m'
+LIGHT_GREEN='\033[92m'
+LIGHT_YELLOW='\033[93m'
+LIGHT_BLUE='\033[94m'
+LIGHT_CYAN='\033[96m'
+# Дополнительные цвета из 256-цветной палитры
+PINK='\033[38;5;213m'
+LIME='\033[38;5;119m'
+TEAL='\033[38;5;23m'
+GOLD='\033[38;5;220m'
+BROWN='\033[38;5;130m'
+TURQUOISE='\033[38;5;45m'
+# Фоновые цвета
+BG_RED='\033[41m'
+BG_GREEN='\033[42m'
+BG_YELLOW='\033[43m'
+BG_BLUE='\033[44m'
+BG_MAGENTA='\033[45m'
+BG_CYAN='\033[46m'
+BG_WHITE='\033[47m'
+BG_BLACK='\033[40m'
+
+# Фоновые яркие цвета
+BG_LIGHT_BLACK='\033[100m'
+BG_LIGHT_RED='\033[101m'
+BG_LIGHT_GREEN='\033[102m'
+BG_LIGHT_YELLOW='\033[103m'
+BG_LIGHT_BLUE='\033[104m'
+BG_LIGHT_MAGENTA='\033[105m'
+BG_LIGHT_CYAN='\033[106m'
+BG_LIGHT_WHITE='\033[107m'
 NC='\033[0m'
 
 #файл с xml-данными
@@ -37,6 +133,19 @@ one_line() {
     
     # Заменяем переносы строк на запятую
     echo "$input_data" | tr '\n' ',' | sed 's/,$//'
+}
+
+convert_mapper_format_to_real_format_for_device() {
+    local device=$1
+    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        #получаем имя группы (убрав лишние символы пробелов и табуляций)
+        vg_name=$(lvs --noheading -o vg_name $device | tr -d ' ')
+        lv_name=$(lvs --noheading -o lv_name $device | tr -d ' ')
+        echo "/dev/$vg_name/$lv_name"
+    else
+        echo "$device"
+    fi
 }
 
 # Функция для окрашивания указанного текста в строке
@@ -208,6 +317,12 @@ get_btrfs_subvolumes() {
     echo "$subvolumes"
 }
 
+make_pause() {
+    echo ""
+    read -p "Нажмите Enter для продолжения"
+    echo ""
+}
+
 echo -e "${CYAN}Общая информация:${NC}"
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
@@ -247,9 +362,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
 done
 
 
-read -p "Нажмите Enter для продолжения"
+make_pause
 
-echo ""
 
 
 print_all_btrfs_devices() {
@@ -284,13 +398,65 @@ print_all_btrfs_subvolumes() {
     done
 }
 
+# Функция для получения имени группы томов, если устройство является физическим томом LVM
+get_vg_name_for_pv() {
+    local device_name=$1  # Полный путь к устройству
+    local vg_name=""
+    
+    # Проверяем, является ли устройство физическим томом LVM
+    if pvs "$device_name" &>/dev/null; then
+        # Получаем имя группы томов для данного физического тома
+        vg_name=$(pvs --noheadings -o vg_name "$device_name" | tr -d ' ')
+        
+        # Проверяем, не пустое ли имя группы томов
+        if [[ -z "$vg_name" || "$vg_name" == "" ]]; then
+            echo -e "${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}"
+        else
+            echo "$vg_name"
+        fi
+    else
+        echo -e "${RED}Устройство $device_name не является физическим томом LVM${NC}"
+    fi
+}
+
+
+
+get_new_btrfs_subvolumes_for_device() {
+    #проходимся по всем точкам монтирования
+    local device=$1
+    local output=""
+    device=$(convert_mapper_format_to_real_format_for_device "$device")
+    for row in "${NEW_MOUNTPOINTS[@]}"; do
+        declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+        mount_point=${current_row["mount_point"]}
+        type=${current_row["type"]}
+        #преобразуем строку type в массив с разделителем "_in_"
+        read -r -a types <<< "${type//_in_/ }"
+        crypt_mode=${current_row["crypt_mode"]}
+        name=${current_row["name"]}
+        #преобразуем строку name в массив с разделителем "_in_"
+        read -r -a names <<< "${name//_in_/ }"
+        #если тип монтирования - new_subvol_in_btrfs_in_lvm или new_subvol_in_btrfs
+        if [[ "$type" == "new_subvol_in_btrfs_in_lvm" || "$type" == "new_subvol_in_btrfs" ]]; then
+            #приводим девайсы к единому формату
+            names[1]=$(convert_mapper_format_to_real_format_for_device "${names[1]}")
+            #если имя устройства совпадает с именем устройства в массиве names[1], то добавляем в output
+            if [[ "$device" == "${names[1]}" ]]; then
+                output="$output${GREEN}+ ${names[0]} -> $mount_point${NC};"
+            fi
+        fi
+    done
+    echo -e "$output"
+
+}
+
 #echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
 #print_all_btrfs_subvolumes
 #read -p "Нажмите Enter для продолжения"
 #echo ""
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
-echo -e "${GRAY}${ITALIC}${UNDERLINE}В процессе разработки...${NC}"
+echo -e "${GRAY}${ITALIC}${UNDERLINE}Построение информации...${NC}"
 
 #можно переделать на последовательные правки файла, а потом его отображение
 #нужно подогнать новый раздел по максимальной длине строки
@@ -300,7 +466,7 @@ LSBLK_RAW_INFO=$(mktemp)
 LSBLK_RAW_INFO_UPDATED=$(mktemp)
 #записываем содержимое во временный файл
 #RM или RO - нужно дописать в конец строки чтобы при добавлении дополнительного параметра всё было выровнено по правому краю
-lsblk -o NAME,TYPE,FSTYPE,SIZE,RM,RO > $LSBLK_RAW_INFO
+lsblk -o NAME,TYPE,FSTYPE,SIZE,RM,RO,ROTA > $LSBLK_RAW_INFO
 
 #определяем длину строки в файле
 LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
@@ -321,10 +487,11 @@ while IFS= read -r line; do
         line_colored=$(color_text_in_string "$line_orig" "btrfs" "$CYAN")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
         
-        #получаем полное имя устройства
+        #получаем базовое имя устройства
         device_basename=$(echo "$line" | awk '{print $1}')
         #удаляем любые символы отображающие древовидную структуру из начала строки
         device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
+        #определяем полное имя устройства
         if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
             device_fullname="/dev/mapper/$device_basename"
         elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
@@ -336,25 +503,47 @@ while IFS= read -r line; do
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
             #выводим сабволюмы, используем echo чтобы отобразить их в одной строке, если их несколько
-            echo -e "!${YELLOW}Имеющиеся сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            echo -e "!${BOLD}Имеющиеся сабволюмы:${NC} ${CYAN}$(one_line "$(get_btrfs_subvolumes "$device_fullname")")${NC}" >> $LSBLK_RAW_INFO_UPDATED
         fi
+        new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device "$device_fullname")
+        #если полученная строка не пустая, то выводим её
+        if [[ -n "$new_btrfs_subvolumes_string" ]]; then
+            echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+        fi
+
+    elif [[ "$(echo "$line" | awk '{print $3}')" == "LVM2_member" ]]; then
+        #окрашиваем находку
+        line_colored=$(color_text_in_string "$line_orig" "LVM2_member" "$YELLOW")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+        #получаем базовое имя устройства
+        device_basename=$(echo "$line" | awk '{print $1}')
+        #удаляем любые символы отображающие древовидную структуру из начала строки
+        device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
+        #определяем полное имя устройства
+        device_fullname="/dev/$device_basename"
+        #получаем имя группы томов
+        vg_name=$(get_vg_name_for_pv "$device_fullname")
+        echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
+    elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
+        #окрашиваем находку
+        line_colored=$(color_text_in_string "$line_orig" "ext4" "$LIGHT_PURPLE")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+    elif [[ "$(echo "$line" | awk '{print $3}')" == "crypto_LUKS" ]]; then
+        #окрашиваем находку
+        line_colored=$(color_text_in_string "$line_orig" "crypto_LUKS" "$LIGHT_BLUE")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
     else
+        #пишем строку как есть
         echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
     fi
 done < <(sed '1d' $LSBLK_RAW_INFO)
 
 # Обновляем первый временный файл и обнуляем второй
 cp $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
-
-
-
 #выводим содержимое временного файла
 cat $LSBLK_RAW_INFO
 
 
-
-#в певую строку файла дописываем текст "INSTALL_INFO"
-#sed -i '1s/^/INSTALL_INFO\n/' $LSBLK_RAW_INFO
 
 #добляем на разметку список изменений, которые планируется произвести
 for row in "${NEW_MOUNTPOINTS[@]}"; do
@@ -391,10 +580,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     esac
 done
 
-echo ""
-read -p "Нажмите Enter для продолжения"
-
-
+make_pause
 
 #размонтируем временные точки монтирования btrfs
 for mountpoint in "${SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT[@]}"; do
