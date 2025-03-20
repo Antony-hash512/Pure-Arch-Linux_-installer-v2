@@ -283,7 +283,6 @@ get_vg_name_for_pv() {
         
         # Проверяем, не пустое ли имя группы томов
         if [[ -z "$vg_name" || "$vg_name" == "" ]]; then
-            #echo -e "${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}"
             echo ""
         else
             echo "$vg_name"
