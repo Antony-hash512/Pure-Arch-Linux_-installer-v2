@@ -280,9 +280,9 @@
 		<mountpoints>
 			<point type="new">
 				<location>/</location>
-				<way>new_ext4_in_lvm</way>
+				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/mainvg/fedora39</names>
+				<names>@arch_gnome77_in_/dev/mainvg/mikro_testbox</names>
 				<size>20G</size>
 			</point>
 			<point type="new">
