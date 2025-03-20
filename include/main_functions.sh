@@ -94,7 +94,9 @@ one_line_with_commas() {
     echo "$input_data" | tr '\n' ',' | sed 's/,$//'
 }
 
-convert_mapper_format_to_real_format_for_device() {
+# Функция для преобразования формата mapper в реальный формат
+# Работает только для устройств, которые существуют
+convert_mapper_format_to_real_format_with_lvs() {
     local device=$1
     #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
     if [[ "$device" =~ ^/dev/mapper/ ]]; then
@@ -105,6 +107,30 @@ convert_mapper_format_to_real_format_for_device() {
     else
         echo "$device"
     fi
+}
+
+# Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
+# Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
+# Но работает также для устройств, которые существуют, поэтому подходит для полноценной замены функции convert_mapper_format_to_real_format_for_device 
+convert_mapper_format_to_real_format_with_regex() {
+    local device=$1
+    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        device_basename=$(basename "$device")
+        # Регулярное выражение для извлечения имен групп томов и логических томов
+        vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
+        lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
+        echo "/dev/$vg_name/$lv_name"
+    else
+        echo "$device"
+    fi
+}
+# Функция для преобразования формата mapper в реальный формат
+# Заглушка для замены старого варианта функции на более быструю реализацию
+convert_mapper_format_to_real_format_for_device() {
+    local device=$1
+    output=$(convert_mapper_format_to_real_format_with_regex "$device")
+    echo "$output"
 }
 
 # Функция для окрашивания указанного текста в строке
@@ -297,3 +323,29 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
 
 }
 
+get_new_lvm_volumes_for_group_with_their_mount_points() {
+    local vg_name=$1
+    local output=""
+    for row in "${NEW_MOUNTPOINTS[@]}"; do
+        declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+        mount_point=${current_row["mount_point"]}
+        type=${current_row["type"]}
+        #преобразуем строку type в массив с разделителем "_in_"
+        read -r -a types <<< "${type//_in_/ }"
+        crypt_mode=${current_row["crypt_mode"]}
+        name=${current_row["name"]}
+        #преобразуем имя устройства в реальный формат
+        name=$(convert_mapper_format_to_real_format_with_regex "$name")
+        #получаем имя группы томов из имени устройства используя регулярное выражение
+        current_vg_name=$(echo "$name" | sed -E 's|/dev/([^/]+)/[^/]+$|\1|')
+        #если тип монтирования - new_ext4_in_lvm
+        if [[ "$type" == "new_ext4_in_lvm" ]]; then
+            #если группы томов совпадают, то добавляем в output
+            if [[ "$vg_name" == "$current_vg_name" ]]; then
+                current_basename=$(echo "$name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
+                output="$output ${current_basename}->$mount_point"
+            fi
+        fi
+    done
+    echo -e "$output"
+}

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 : << 'TODO'
-+ внедрить отображение о планируемых новых разделах lvm
-+ внедрить проверку на то, что имена новых lvm томов не совпадают с именами существующих
++ протестировать проверку на то, что имена новых lvm томов не совпадают с именами существующих
 + проверять свободное место на диске
 + проверять что все прописанные ext4, lvm, btrfs имеются в разметке
 + отображать в разметке случаи с шифрованием
++ доработать функцию для преобразования из формата mapper, чтобы она корректно работала, когда в именах есть -
 TODO
 
 #проверяем на права суперпользователя
@@ -196,7 +196,28 @@ while IFS= read -r line; do
         vg_name=$(get_vg_name_for_pv "$device_fullname")
         echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
         
-        
+
+        new_lvm_volumes_string=$(get_new_lvm_volumes_for_group_with_their_mount_points "$vg_name")
+        #получаем массив из строки
+        read -r -a new_lvm_volumes <<< "$new_lvm_volumes_string"
+
+        existing_lvm_volumes_string=$(one_line "$(lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
+        #получаем массив из строки
+        read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
+
+        for new_lvm_volume in "${new_lvm_volumes[@]}"; do
+            for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
+                if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||')" == "$existing_lvm_volume" ]]; then
+                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $new_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                    problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов"
+                    exit_and_show_problems_flag=1
+                fi
+            done
+        done
+        #если полученная строка не пустая, то проверяем, есть ли в ней новые тома
+        if [[ -n "$new_lvm_volumes_string" ]]; then
+            echo -e "!${BOLD}Планируемые изменения:${NC} ${GREEN}$new_lvm_volumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        fi
 
 
     elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then

@@ -23,3 +23,8 @@ sed -i '1s/^/INSTALL_INFO\n/' $LSBLK_RAW_INFO
 sudo vgs -o ljdlfj
 ```
 получить справку о все доступных параметрах
+
+```bash
+ sudo lvs mainvg --noheading -o lv_name
+```
+получить все логические тома в указанной группе
