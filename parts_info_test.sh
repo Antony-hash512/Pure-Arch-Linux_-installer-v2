@@ -8,6 +8,12 @@
 + отображать в разметке случаи с шифрованием
 TODO
 
+#проверяем на права суперпользователя
+if [[ "$EUID" -ne 0 ]]; then
+    echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
+    exit 1
+fi
+
 # Подключаем файл с цветовыми переменными
 source include/colors.sh
 
@@ -42,14 +48,6 @@ problems["syntax_problem_in_xml_file"]=""
 #флаг для запланрованного выхода из скрипта
 exit_and_show_problems_flag=0
 
-
-#проверяем на права суперпользователя
-if [[ "$EUID" -ne 0 ]]; then
-    echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
-    exit 1
-fi
-
-
 # Выбор места установки
 #INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
 INSTALL_LOCATION_ID="main_nvidia_gnome"
@@ -62,12 +60,9 @@ declare -A ALL_BTRFS_MOUNTPOINTS
 declare -a SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT
 
 
-
 echo -e "${CYAN}Общая информация:${NC}"
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
-#lvs -o vg_name,lv_name,lv_size,lv_attr
-
 
 
 #получаем информацию содержащуюся в xml-файле
@@ -104,22 +99,14 @@ done
 
 make_pause
 #print_all_btrfs_devices
-
-
-
-
 #echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
 #print_all_btrfs_subvolumes
-#read -p "Нажмите Enter для продолжения"
-#echo ""
+#make_pause
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
 echo -e "${GRAY}${ITALIC}${UNDERLINE}Построение информации...${NC}"
 
-#можно переделать на последовательные правки файла, а потом его отображение
-#нужно подогнать новый раздел по максимальной длине строки
-
-#создаём временный файл и сохраняем имя в переменную
+#создаём временные файлы и сохраняем имя в переменные
 LSBLK_RAW_INFO=$(mktemp)
 LSBLK_RAW_INFO_UPDATED=$(mktemp)
 #записываем содержимое во временный файл
@@ -130,7 +117,6 @@ lsblk -o NAME,TYPE,FSTYPE,SIZE,RM,RO,ROTA > $LSBLK_RAW_INFO
 LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
 
 #записываем первую строку с добавочным текстом (если нужен) во второй временный файл
-#echo "$(head -n 1 $LSBLK_RAW_INFO) SUBVOLUMES" > $LSBLK_RAW_INFO_UPDATED
 echo "$(head -n 1 $LSBLK_RAW_INFO)" > $LSBLK_RAW_INFO_UPDATED
 
 
@@ -209,6 +195,10 @@ while IFS= read -r line; do
         #получаем имя группы томов
         vg_name=$(get_vg_name_for_pv "$device_fullname")
         echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        
+        
+
+
     elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
         #окрашиваем находку
         line_colored=$(color_text_in_string "$line_orig" "ext4" "$LIGHT_PURPLE")
