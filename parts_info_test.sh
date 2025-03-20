@@ -1,7 +1,8 @@
 #!/bin/bash
 
 : << 'TODO'
-+ исправить ошибку при которой повтор сабволюма засчитывается даже если он на другом томе
++ отбражать новые тома или сабволюмы на ранее пустых разделах
++ можно добавить знак "+" перед новыми томами или сабволюмами (нужно учесть в регексах)
 + проверять свободное место на диске
 + проверять что все прописанные ext4, lvm, btrfs имеются в разметке
 + отображать в разметке случаи с шифрованием
@@ -142,7 +143,7 @@ while IFS= read -r line; do
             device_fullname="/dev/$device_basename"
         fi
         #используем функцию get_btrfs_subvolumes
-        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов
+        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
         if [[ -z "$(get_btrfs_subvolumes "$device_fullname")" ]]; then
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
@@ -151,35 +152,36 @@ while IFS= read -r line; do
             read -r -a existing_subvolumes <<< "$existing_subvolumes_string"
             #выводим сабволюмы, используем функцию one_line чтобы отобразить их в одной строке, если их несколько
             echo -e "!${BOLD}Имеющиеся сабволюмы:${NC} ${CYAN}$existing_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
-        fi
-        new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
-        #получаем массив из строки
-        read -r -a new_btrfs_subvolumes <<< "$new_btrfs_subvolumes_string"
-        #если полученная строка не пустая, то проверяем, есть ли в ней новые сабволюмы
-        if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
-            #echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
-            the_same_flag=0
-            for subvolume_with_mount_point in "${new_btrfs_subvolumes[@]}"; do
-                #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
-                for existing_subvolume in "${existing_subvolumes[@]}"; do
-                    if [[ "$(echo "$subvolume_with_mount_point" | sed 's|->/.*$||')" == "$existing_subvolume" ]]; then
-                        the_same_flag=1
-                        #окрашиваем в красный
-                        new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
-                    fi
+        
+            new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
+            #получаем массив из строки
+            read -r -a new_btrfs_subvolumes <<< "$new_btrfs_subvolumes_string"
+            #если полученная строка не пустая, то проверяем, есть ли в ней новые сабволюмы
+            if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
+                #echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+                the_same_flag=0
+                for subvolume_with_mount_point in "${new_btrfs_subvolumes[@]}"; do
+                    #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
+                    for existing_subvolume in "${existing_subvolumes[@]}"; do
+                        if [[ "$(echo "$subvolume_with_mount_point" | sed 's|->/.*$||')" == "$existing_subvolume" ]]; then
+                            the_same_flag=1
+                            #окрашиваем в красный
+                            new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
+                        fi
+                    done
                 done
-            done
-            #если the_same_flag равен 1, то выводим сообщение об ошибке
-            if [[ "$the_same_flag" == 1 ]]; then
-                echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюмы которые планируется создать уже существуют на устройстве,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
-                exit_and_show_problems_flag=1
-            elif [[ "$the_same_flag" == 0 ]]; then
-                #окрашиваем в зеленый
-                new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
-            fi
+                #если the_same_flag равен 1, то выводим сообщение об ошибке
+                if [[ "$the_same_flag" == 1 ]]; then
+                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюмы которые планируется создать уже существуют на устройстве,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                    problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
+                    exit_and_show_problems_flag=1
+                elif [[ "$the_same_flag" == 0 ]]; then
+                    #окрашиваем в зеленый
+                    new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
+                fi
             
-            echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+            fi
         fi
 
     elif [[ "$(echo "$line" | awk '{print $3}')" == "LVM2_member" ]]; then
