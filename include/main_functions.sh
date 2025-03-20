@@ -290,6 +290,7 @@ get_vg_name_for_pv() {
         fi
     else
         echo -e "${RED}Устройство $device_name не является физическим томом LVM${NC}" >&2
+        exit 1
     fi
 }
 

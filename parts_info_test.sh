@@ -1,7 +1,7 @@
 #!/bin/bash
 
 : << 'TODO'
-+ протестировать проверку на то, что имена новых lvm томов не совпадают с именами существующих
++ протестировать добавление сабволюмов в mikro_testbox
 + проверять свободное место на диске
 + проверять что все прописанные ext4, lvm, btrfs имеются в разметке
 + отображать в разметке случаи с шифрованием
@@ -194,6 +194,7 @@ while IFS= read -r line; do
         device_fullname="/dev/$device_basename"
         #получаем имя группы томов
         vg_name=$(get_vg_name_for_pv "$device_fullname")
+        #если том не принадлежит ни одной группе томов, нет смысла делать дальнейшие проверки
         if [[ -z "$vg_name" ]]; then
             echo -e "!${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
@@ -214,7 +215,7 @@ while IFS= read -r line; do
                 for new_lvm_volume in "${new_lvm_volumes[@]}"; do
                     for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
                         if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||')" == "$existing_lvm_volume" ]]; then
-                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $new_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
                             the_same_flag=1
                             new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")
                         fi

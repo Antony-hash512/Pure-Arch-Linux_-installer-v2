@@ -282,7 +282,7 @@
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/mainvg/gnome_root</names>
+				<names>/dev/mainvg/fedora39</names>
 				<size>20G</size>
 			</point>
 			<point type="new">
