@@ -10,26 +10,9 @@ XML_PARSER="get_data_from_components_xml.py"
 #первым делом устанавливаем python3 в новую систему т.к. нужен для продолжения парсинга xml-файла
 pacman -Syu python3 --noconfirm
 
-parse_xml() {
-    local component=$1
-    local command=$2
 
-    case $component in
-        "driverspack")
-            python3 $XML_PARSER driverspack $DRIVERSPACK_ID $command
-            ;;
-        "softpack")
-            python3 $XML_PARSER softpack $SOFTPACK_ID $command
-            ;;
-        "install_location")
-            python3 $XML_PARSER install_location $INSTALL_LOCATION_ID $command
-            ;;
-        "settings")
-            python3 $XML_PARSER settings $SETTINGS_ID $command
-            ;;
-    esac
+source include/shared_functions.sh
 
-}
 
 DRIVERS_PACK="$(parse_xml driverspack get_pkgs_pacman)"
 SOFT_PACK2="$(parse_xml softpack get_pkgs_pacman)"
