@@ -280,15 +280,17 @@
 		<mountpoints>
 			<point type="new">
 				<location>/</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
+				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_gnome_in_/dev/mainvg/gigabox</names>
+				<names>/dev/mainvg/gnome_root</names>
+				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
+				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@homes_in_/dev/mainvg/gigabox</names>
+				<names>/dev/mainvg/gnome_home</names>
+				<size>5G</size>
 			</point>
 		</mountpoints>
 		<hostname>katana</hostname>
@@ -296,7 +298,7 @@
 		<useruid>1000</useruid>
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
 		<efi>
-			<bootlabel>ArchGnomeNotCrypted</bootlabel>
+			<bootlabel>ArchGnomeNotCrypted2</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
 			<new_location>/boot/efi</new_location>
 		</efi>
