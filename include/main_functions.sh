@@ -283,12 +283,13 @@ get_vg_name_for_pv() {
         
         # Проверяем, не пустое ли имя группы томов
         if [[ -z "$vg_name" || "$vg_name" == "" ]]; then
-            echo -e "${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}"
+            #echo -e "${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}"
+            echo ""
         else
             echo "$vg_name"
         fi
     else
-        echo -e "${RED}Устройство $device_name не является физическим томом LVM${NC}"
+        echo -e "${RED}Устройство $device_name не является физическим томом LVM${NC}" >&2
     fi
 }
 

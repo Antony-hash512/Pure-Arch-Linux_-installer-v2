@@ -194,31 +194,42 @@ while IFS= read -r line; do
         device_fullname="/dev/$device_basename"
         #получаем имя группы томов
         vg_name=$(get_vg_name_for_pv "$device_fullname")
-        echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        if [[ -z "$vg_name" ]]; then
+            echo -e "!${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        else
+            echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
         
 
-        new_lvm_volumes_string=$(get_new_lvm_volumes_for_group_with_their_mount_points "$vg_name")
-        #получаем массив из строки
-        read -r -a new_lvm_volumes <<< "$new_lvm_volumes_string"
+            new_lvm_volumes_string=$(get_new_lvm_volumes_for_group_with_their_mount_points "$vg_name")
+            #получаем массив из строки
+            read -r -a new_lvm_volumes <<< "$new_lvm_volumes_string"
+        
+            existing_lvm_volumes_string=$(one_line "$(lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
 
-        existing_lvm_volumes_string=$(one_line "$(lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
-        #получаем массив из строки
-        read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
+            #получаем массив из строки
+            read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
+            if [[ -n "$new_lvm_volumes_string" ]]; then 
+                the_same_flag=0
 
-        for new_lvm_volume in "${new_lvm_volumes[@]}"; do
-            for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
-                if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||')" == "$existing_lvm_volume" ]]; then
-                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $new_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                    problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов"
+                for new_lvm_volume in "${new_lvm_volumes[@]}"; do
+                    for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
+                        if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||')" == "$existing_lvm_volume" ]]; then
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $new_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                            the_same_flag=1
+                            new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")
+                        fi
+                    done
+                done
+                if [[ "$the_same_flag" == 0 ]]; then
+                    new_lvm_volumes_string="${GREEN}${new_lvm_volumes_string}${NC}"
+                elif [[ "$the_same_flag" == 1 ]]; then
+                    problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов lvm"
                     exit_and_show_problems_flag=1
                 fi
-            done
-        done
-        #если полученная строка не пустая, то проверяем, есть ли в ней новые тома
-        if [[ -n "$new_lvm_volumes_string" ]]; then
-            echo -e "!${BOLD}Планируемые изменения:${NC} ${GREEN}$new_lvm_volumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
-        fi
 
+                echo -e "!${BOLD}Планируемые изменения:${NC} $new_lvm_volumes_string" >> $LSBLK_RAW_INFO_UPDATED
+            fi
+        fi
 
     elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
         #окрашиваем находку
