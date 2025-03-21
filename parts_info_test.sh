@@ -1,8 +1,6 @@
 #!/bin/bash
 
 : << 'TODO'
-+ отбражать новые тома или сабволюмы на ранее пустых разделах
-+ можно добавить знак "+" перед новыми томами или сабволюмами (нужно учесть в регексах)
 + проверять свободное место на диске
 + проверять что все прописанные ext4, lvm, btrfs имеются в разметке
 + отображать в разметке случаи с шифрованием
@@ -67,22 +65,21 @@ lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
 
 
 #получаем информацию содержащуюся в xml-файле
-NEW_MOUNTPOINTS_AMOUNT=$( parse_xml "install_location" "get_amount_of_new_mountpoints")
+NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
 echo -e "${YELLOW}Количество новых точек монтирования:${NC} $NEW_MOUNTPOINTS_AMOUNT"
 
 #создаём массив для хранения информации о новых точках монтирования
 declare -a NEW_MOUNTPOINTS
 
 for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
-    NEW_MOUNTPOINT=$( parse_xml "install_location" "get_new_mountpoint" "$i")
-    #echo "$NEW_MOUNTPOINT"
+    NEW_MOUNTPOINT=$(parse_xml "install_location" "get_new_mountpoint" "$i")
     CURRENT_POINT_NAME="new_point$i"
     declare -A "$CURRENT_POINT_NAME"
     #получаем ассоциативный массив из строки
     eval "$CURRENT_POINT_NAME=$NEW_MOUNTPOINT"
     NEW_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
 done
-
+# вывод полученной информации на экран
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
     mount_point=${current_row["mount_point"]}
@@ -146,24 +143,29 @@ while IFS= read -r line; do
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
         if [[ -z "$(get_btrfs_subvolumes "$device_fullname")" ]]; then
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            #получаем строку с планируемыми изменениями
+            new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
+            #если полученная строка не пустая то выводим сообщение о планируемых изменениях
+            if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
+                echo -e "!${BOLD}Планируемые изменения:${NC} ${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            fi
         else
             existing_subvolumes_string=$(one_line "$(get_btrfs_subvolumes "$device_fullname")")
             #получаем массив из строки
             read -r -a existing_subvolumes <<< "$existing_subvolumes_string"
             #выводим сабволюмы, используем функцию one_line чтобы отобразить их в одной строке, если их несколько
             echo -e "!${BOLD}Имеющиеся сабволюмы:${NC} ${CYAN}$existing_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
-        
+            #получаем строку с планируемыми изменениями
             new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
             #получаем массив из строки
             read -r -a new_btrfs_subvolumes <<< "$new_btrfs_subvolumes_string"
-            #если полученная строка не пустая, то проверяем, есть ли в ней новые сабволюмы
+            #если полученная строка не пустая, то проверяем, есть ли в ней уже существующие сабволюмы
             if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
-                #echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
                 the_same_flag=0
                 for subvolume_with_mount_point in "${new_btrfs_subvolumes[@]}"; do
                     #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
                     for existing_subvolume in "${existing_subvolumes[@]}"; do
-                        if [[ "$(echo "$subvolume_with_mount_point" | sed 's|->/.*$||')" == "$existing_subvolume" ]]; then
+                        if [[ "$(echo "$subvolume_with_mount_point" | sed 's|->/.*$||' | sed 's|^+||')" == "$existing_subvolume" ]]; then
                             the_same_flag=1
                             #окрашиваем в красный
                             new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
@@ -216,7 +218,7 @@ while IFS= read -r line; do
 
                 for new_lvm_volume in "${new_lvm_volumes[@]}"; do
                     for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
-                        if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||')" == "$existing_lvm_volume" ]]; then
+                        if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||' | sed 's|^+||')" == "$existing_lvm_volume" ]]; then
                             echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
                             the_same_flag=1
                             new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")

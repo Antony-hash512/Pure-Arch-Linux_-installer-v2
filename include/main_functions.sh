@@ -316,7 +316,7 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
             names[1]=$(convert_mapper_format_to_real_format_for_device "${names[1]}")
             #если имя устройства совпадает с именем устройства в массиве names[1], то добавляем в output
             if [[ "$device" == "${names[1]}" ]]; then
-                output="$output ${names[0]}->$mount_point"
+                output="$output +${names[0]}->$mount_point"
             fi
         fi
     done
@@ -344,7 +344,7 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
             #если группы томов совпадают, то добавляем в output
             if [[ "$vg_name" == "$current_vg_name" ]]; then
                 current_basename=$(echo "$name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
-                output="$output ${current_basename}->$mount_point"
+                output="$output +${current_basename}->$mount_point"
             fi
         fi
     done
