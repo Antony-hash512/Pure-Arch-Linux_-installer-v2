@@ -161,6 +161,10 @@ while IFS= read -r line; do
             device_fullname="/dev/mapper/$device_basename"
         elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
             device_fullname="/dev/$device_basename"
+        elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+            :
+            #device_fullname=
+            #сюда нужно добавить определние имени устройства
         fi
         #используем функцию get_btrfs_subvolumes
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
