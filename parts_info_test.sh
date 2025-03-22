@@ -87,7 +87,7 @@ lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
 NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
 echo -e "${YELLOW}Количество новых точек монтирования:${NC} $NEW_MOUNTPOINTS_AMOUNT"
 
-#создаём массив для хранения информации о новых точках монтирования
+#создаём массив для хранения имен новых точек монтирования
 declare -a NEW_MOUNTPOINTS
 
 for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
@@ -275,41 +275,6 @@ cp $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 cat $LSBLK_RAW_INFO
 
 
-
-#добляем на разметку список изменений, которые планируется произвести
-for row in "${NEW_MOUNTPOINTS[@]}"; do
-    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
-    mount_point=${current_row["mount_point"]}
-    type=${current_row["type"]}
-    #преобразуем строку type в массив с разделителем "_in_"
-    read -r -a types <<< "${type//_in_/ }"
-    crypt_mode=${current_row["crypt_mode"]}
-    name=${current_row["name"]}
-    #преобразуем строку name в массив с разделителем "_in_"
-    read -r -a names <<< "${name//_in_/ }"
-
-    case "$crypt_mode" in
-        "none"|"none_in_none")    
-        case "$type" in
-            "format_ext4")
-                :
-                ;;
-            "new_subvol_in_btrfs")
-                :
-                ;;
-            "new_subvol_in_btrfs_in_lvm")
-                :
-                ;;
-            "new_ext4_in_lvm")
-                :
-                ;;
-        esac
-            ;;
-        *)
-            echo -e "${RED}Данный функционал пока не реализован: $crypt_mode${NC}"
-            ;;
-    esac
-done
 
 make_pause
 
