@@ -472,34 +472,9 @@ create_btrfs_dummy_device() {
     export DUMMY_IMG="$img_file"
     export DUMMY_LOOP="$loop_dev"
 
-
-
     # Возврат пути к loop-устройству
     echo "$loop_dev"
 }
 
-cleanup_dummy_device() {
-    # Если loop-устройство задано и существует
-    if [[ -n "$DUMMY_LOOP" ]]; then
-        # Попробовать найти точку монтирования через /proc/self/mounts
-        local mount_point
-        mount_point=$(awk -v dev="$DUMMY_LOOP" '$1 == dev {print $2}' /proc/self/mounts)
-
-        if [[ -n "$mount_point" ]]; then
-            echo "→ Размонтирование $mount_point" > /dev/tty
-            umount "$mount_point" 2>/dev/tty
-            rmdir "$mount_point" 2>/dev/tty
-        fi
-
-        echo "→ Отключение $DUMMY_LOOP" > /dev/tty
-        losetup -d "$DUMMY_LOOP" 2>/dev/tty
-    fi
-
-    # Удаление файла-образа
-    if [[ -n "$DUMMY_IMG" && -f "$DUMMY_IMG" ]]; then
-        echo "→ Удаление файла $DUMMY_IMG" > /dev/tty
-        rm -f "$DUMMY_IMG" 2>/dev/tty 
-    fi
-}
 
 

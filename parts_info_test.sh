@@ -1,7 +1,6 @@
 #!/bin/bash
 
 : << 'TODO'
-+ добавить случаи для открытых crypt, например crypt btrfs
 + изменить формат xml-файла добавив новые way для криптоконтейнеров
 + продумать разметку диска для тестов на виртуалке
 + проверять свободное место на диске
@@ -32,7 +31,7 @@ export TB=1099511627776  # 1024^4
 export PB=1125899906842624  # 1024^5
 export EB=1152921504606846976  # 1024^6
 
-# Стоковые константы
+# Строковые константы
 export AUTODIR="autocreated_scripts"
 export XML_FILE="components.xml"
 export XML_PARSER="get_data_from_components_xml.py"
@@ -161,11 +160,11 @@ while IFS= read -r line; do
             device_fullname="/dev/mapper/$device_basename"
         elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
             device_fullname="/dev/$device_basename"
-        #elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
-            :
-            #device_fullname=
+        elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+            device_fullname=/dev/mapper/$device_basename
             #сюда нужно добавить определние имени устройства
         else
+            #фича, которая скорее всего не понадобится, но ввыедена для доп. подстраховки
             if [[ -z "$dummy_dev" || ! -b "$dummy_dev" ]]; then
                 dummy_dev=$(create_btrfs_dummy_device 128M)
             fi
@@ -228,7 +227,11 @@ while IFS= read -r line; do
         #удаляем любые символы отображающие древовидную структуру из начала строки
         device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
         #определяем полное имя устройства
-        device_fullname="/dev/$device_basename"
+        if [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+            device_fullname="/dev/mapper/$device_basename"
+        else
+            device_fullname="/dev/$device_basename"
+        fi
         #получаем имя группы томов
         vg_name=$(get_vg_name_for_pv "$device_fullname")
         #если том не принадлежит ни одной группе томов, нет смысла делать дальнейшие проверки
