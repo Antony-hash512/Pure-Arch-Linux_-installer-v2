@@ -1,4 +1,64 @@
 #!/bin/bash
+#архиважная функция очистки для заворачивания в trap
+cleanup_all(){
+    #размонтируем временные точки монтирования btrfs
+    if [ -f /tmp/btrfs_temp_mounts.txt ]; then
+        echo -e "${CYAN}Список временных точек монтирования:${NC}"
+        cat /tmp/btrfs_temp_mounts.txt
+    
+        while read -r mountpoint; do
+            if [ -z "$mountpoint" ]; then
+                continue
+            fi
+        
+            echo -e "${GRAY}${ITALIC}${UNDERLINE}Размонтируем точку монтирования $mountpoint${NC}"
+            if umount "$mountpoint"; then
+                echo -e "${GREEN}Успешно размонтировано: $mountpoint${NC}"
+                # Удаляем временный каталог, если он был создан с помощью mktemp
+                if [[ "$mountpoint" == /tmp/tmp.* ]]; then
+                    rmdir "$mountpoint" 2>/dev/null
+                fi
+            else
+                echo -e "${RED}Ошибка при размонтировании: $mountpoint${NC}"
+                echo -e "${YELLOW}Попробуем принудительное размонтирование...${NC}"
+                if umount -f "$mountpoint"; then
+                    echo -e "${GREEN}Успешно размонтировано с флагом -f: $mountpoint${NC}"
+                    # Удаляем временный каталог, если он был создан с помощью mktemp
+                    if [[ "$mountpoint" == /tmp/tmp.* ]]; then
+                        rmdir "$mountpoint" 2>/dev/null
+                    fi
+                else
+                    echo -e "${RED}Не удалось размонтировать даже с флагом -f: $mountpoint${NC}"
+                    echo -e "${YELLOW}Проверьте, не используются ли файлы на этой точке монтирования.${NC}"
+                    lsof | grep "$mountpoint" || echo "Файлы не найдены в использовании"
+                fi
+            fi
+        done < /tmp/btrfs_temp_mounts.txt
+    
+        # Очищаем файл
+        > /tmp/btrfs_temp_mounts.txt
+    else
+        echo -e "${YELLOW}Нет временных точек монтирования для размонтирования${NC}"
+    fi
+    #cleanup_dummy_device
+    if [[ -n $dummy_dev ]]; then
+        #парсим имя файла из комманды
+        filename=$(losetup $dummy_dev | sed -n 's/.*(\(.*\))/\1/p')
+        losetup -d $dummy_dev
+
+        if [[ -f "$filename" ]]; then
+            echo "Удаляем файл: $filename"
+            rm -f "$filename"
+        else
+            echo -e "${RED}Ошибка: файл $filename не существует${NC}" >&2
+        fi
+    fi
+
+    #удаляем временные файлы
+    rm -f $LSBLK_RAW_INFO
+    rm -f $LSBLK_RAW_INFO_UPDATED
+}
+
 
 # Функция для проверки существования указанного install_location_id
 check_install_location_exists() {
@@ -392,3 +452,54 @@ safe_lvs() {
     unset LVM_SUPPRESS_FD_WARNINGS
     return $ret_val
 }
+
+create_btrfs_dummy_device() {
+    local size="${1:-100M}"                         # Размер по умолчанию
+    local img_file loop_dev
+
+    # Создание временного файла
+    img_file="$(mktemp --tmpdir=/tmp dummy.XXXXXX.img)"
+    fallocate -l "$size" "$img_file"
+
+    # Подключение loop-устройства
+    loop_dev=$(losetup -f)
+    losetup "$loop_dev" "$img_file"
+
+    # Форматирование в Btrfs с --mixed для экономии места
+    mkfs.btrfs -q -f --mixed "$loop_dev"
+
+    # Экспорт для последующего удаления
+    export DUMMY_IMG="$img_file"
+    export DUMMY_LOOP="$loop_dev"
+
+
+
+    # Возврат пути к loop-устройству
+    echo "$loop_dev"
+}
+
+cleanup_dummy_device() {
+    # Если loop-устройство задано и существует
+    if [[ -n "$DUMMY_LOOP" ]]; then
+        # Попробовать найти точку монтирования через /proc/self/mounts
+        local mount_point
+        mount_point=$(awk -v dev="$DUMMY_LOOP" '$1 == dev {print $2}' /proc/self/mounts)
+
+        if [[ -n "$mount_point" ]]; then
+            echo "→ Размонтирование $mount_point" > /dev/tty
+            umount "$mount_point" 2>/dev/tty
+            rmdir "$mount_point" 2>/dev/tty
+        fi
+
+        echo "→ Отключение $DUMMY_LOOP" > /dev/tty
+        losetup -d "$DUMMY_LOOP" 2>/dev/tty
+    fi
+
+    # Удаление файла-образа
+    if [[ -n "$DUMMY_IMG" && -f "$DUMMY_IMG" ]]; then
+        echo "→ Удаление файла $DUMMY_IMG" > /dev/tty
+        rm -f "$DUMMY_IMG" 2>/dev/tty 
+    fi
+}
+
+

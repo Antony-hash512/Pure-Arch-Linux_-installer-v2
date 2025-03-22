@@ -24,6 +24,7 @@ source include/colors.sh
 # Подключаем функции
 source include/main_functions.sh
 source include/shared_functions.sh
+trap 'cleanup_all' EXIT
 
 # Заранее вычисленные степени 1024
 export MB=1048576  # 1024^2
@@ -161,10 +162,16 @@ while IFS= read -r line; do
             device_fullname="/dev/mapper/$device_basename"
         elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
             device_fullname="/dev/$device_basename"
-        elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+        #elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
             :
             #device_fullname=
             #сюда нужно добавить определние имени устройства
+        else
+            if [[ -z "$dummy_dev" || ! -b "$dummy_dev" ]]; then
+                dummy_dev=$(create_btrfs_dummy_device 128M)
+            fi
+            device_fullname=$dummy_dev
+            echo -e "${RED} неизвестный тип раздела, используем временную заглушки, чтобы не возникло дополнительных ошибок${NC}" >&2
         fi
         #используем функцию get_btrfs_subvolumes
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
@@ -286,50 +293,6 @@ cat $LSBLK_RAW_INFO
 
 make_pause
 
-#размонтируем временные точки монтирования btrfs
-if [ -f /tmp/btrfs_temp_mounts.txt ]; then
-    echo -e "${CYAN}Список временных точек монтирования:${NC}"
-    cat /tmp/btrfs_temp_mounts.txt
-    
-    while read -r mountpoint; do
-        if [ -z "$mountpoint" ]; then
-            continue
-        fi
-        
-        echo -e "${GRAY}${ITALIC}${UNDERLINE}Размонтируем точку монтирования $mountpoint${NC}"
-        if umount "$mountpoint"; then
-            echo -e "${GREEN}Успешно размонтировано: $mountpoint${NC}"
-            # Удаляем временный каталог, если он был создан с помощью mktemp
-            if [[ "$mountpoint" == /tmp/tmp.* ]]; then
-                rmdir "$mountpoint" 2>/dev/null
-            fi
-        else
-            echo -e "${RED}Ошибка при размонтировании: $mountpoint${NC}"
-            echo -e "${YELLOW}Попробуем принудительное размонтирование...${NC}"
-            if umount -f "$mountpoint"; then
-                echo -e "${GREEN}Успешно размонтировано с флагом -f: $mountpoint${NC}"
-                # Удаляем временный каталог, если он был создан с помощью mktemp
-                if [[ "$mountpoint" == /tmp/tmp.* ]]; then
-                    rmdir "$mountpoint" 2>/dev/null
-                fi
-            else
-                echo -e "${RED}Не удалось размонтировать даже с флагом -f: $mountpoint${NC}"
-                echo -e "${YELLOW}Проверьте, не используются ли файлы на этой точке монтирования.${NC}"
-                lsof | grep "$mountpoint" || echo "Файлы не найдены в использовании"
-            fi
-        fi
-    done < /tmp/btrfs_temp_mounts.txt
-    
-    # Очищаем файл
-    > /tmp/btrfs_temp_mounts.txt
-else
-    echo -e "${YELLOW}Нет временных точек монтирования для размонтирования${NC}"
-fi
-
-#удаляем временные файлы
-rm -f $LSBLK_RAW_INFO
-rm -f $LSBLK_RAW_INFO_UPDATED
-exit 0
 
 
 
