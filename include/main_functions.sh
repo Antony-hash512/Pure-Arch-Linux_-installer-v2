@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Функция для проверки существования указанного install_location_id
+check_install_location_exists() {
+    local id="$1"
+    # Напрямую вызываем парсер, так как переданный ID не является текущим INSTALL_LOCATION_ID
+    if [[ -n "$(python3 $XML_PARSER install_location "$id" check_id_exists 2>/dev/null)" ]]; then
+        return 0  # ID существует
+    else
+        return 1  # ID не существует
+    fi
+}
+
 request_component_id() {
     local component_type=$1
     local prompt_text=$2
@@ -13,7 +24,7 @@ request_component_id() {
     done
     
     # Запрашиваем у пользователя ID компонента
-    read -p "${prompt_text}:" component_id
+    read -p "${prompt_text}: " component_id
     
     # Проверяем, существует ли компонент с указанным ID
     while true; do 
@@ -31,7 +42,7 @@ request_component_id() {
                 echo -e "  - ${GREEN}$id${NC}: $description" > /dev/tty
             done
             
-            read -p "${prompt_text}:" component_id
+            read -p "${prompt_text}: " component_id
         fi
     done
     
@@ -101,8 +112,8 @@ convert_mapper_format_to_real_format_with_lvs() {
     #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
     if [[ "$device" =~ ^/dev/mapper/ ]]; then
         #получаем имя группы (убрав лишние символы пробелов и табуляций)
-        vg_name=$(lvs --noheading -o vg_name $device | tr -d ' ')
-        lv_name=$(lvs --noheading -o lv_name $device | tr -d ' ')
+        vg_name=$(safe_lvs --noheading -o vg_name "$device" | tr -d ' ')
+        lv_name=$(safe_lvs --noheading -o lv_name "$device" | tr -d ' ')
         echo "/dev/$vg_name/$lv_name"
     else
         echo "$device"
@@ -284,9 +295,9 @@ get_vg_name_for_pv() {
     local vg_name=""
     
     # Проверяем, является ли устройство физическим томом LVM
-    if pvs "$device_name" &>/dev/null; then
+    if safe_pvs "$device_name" &>/dev/null; then
         # Получаем имя группы томов для данного физического тома
-        vg_name=$(pvs --noheadings -o vg_name "$device_name" | tr -d ' ')
+        vg_name=$(safe_pvs --noheadings -o vg_name "$device_name" | tr -d ' ')
         
         # Проверяем, не пустое ли имя группы томов
         if [[ -z "$vg_name" || "$vg_name" == "" ]]; then
@@ -356,4 +367,28 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
         fi
     done
     echo -e "$output"
+}
+
+# Безопасный вызов pvs без утечек дескрипторов
+safe_pvs() {
+    # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
+    export LVM_SUPPRESS_FD_WARNINGS=1
+    # Вызываем pvs с переданными аргументами
+    pvs "$@"
+    local ret_val=$?
+    # Снимаем переменную окружения
+    unset LVM_SUPPRESS_FD_WARNINGS
+    return $ret_val
+}
+
+# Безопасный вызов lvs без утечек дескрипторов
+safe_lvs() {
+    # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
+    export LVM_SUPPRESS_FD_WARNINGS=1
+    # Вызываем lvs с переданными аргументами
+    lvs "$@"
+    local ret_val=$?
+    # Снимаем переменную окружения
+    unset LVM_SUPPRESS_FD_WARNINGS
+    return $ret_val
 }

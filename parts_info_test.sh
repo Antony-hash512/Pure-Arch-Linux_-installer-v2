@@ -48,16 +48,6 @@ problems["syntax_problem_in_xml_file"]=""
 #флаг для запланрованного выхода из скрипта
 exit_and_show_problems_flag=0
 
-# Функция для проверки существования указанного install_location_id
-check_install_location_exists() {
-    local id="$1"
-    # Напрямую вызываем парсер, так как переданный ID не является текущим INSTALL_LOCATION_ID
-    if [[ -n "$(python3 $XML_PARSER install_location "$id" check_id_exists 2>/dev/null)" ]]; then
-        return 0  # ID существует
-    else
-        return 1  # ID не существует
-    fi
-}
 
 # Обработка аргументов командной строки
 INSTALL_LOCATION_ID=""
@@ -238,7 +228,7 @@ while IFS= read -r line; do
             #получаем массив из строки
             read -r -a new_lvm_volumes <<< "$new_lvm_volumes_string"
         
-            existing_lvm_volumes_string=$(one_line "$(lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
+            existing_lvm_volumes_string=$(one_line "$(safe_lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
 
             #получаем массив из строки
             read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
