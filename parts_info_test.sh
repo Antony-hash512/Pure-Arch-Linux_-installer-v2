@@ -56,8 +56,6 @@ echo -e "${GREEN}Выбрано место установки: $INSTALL_LOCATION
 
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
-#массив котырый будет содержать временные точки монтирования btrfs подлежащие размонтированию в конце работы скрипта
-declare -a SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT
 
 
 echo -e "${CYAN}Общая информация:${NC}"
@@ -296,9 +294,45 @@ done
 make_pause
 
 #размонтируем временные точки монтирования btrfs
-for mountpoint in "${SOME_BTRFS_MOUNTPOINTS_TO_UNMOUNT[@]}"; do
-    umount "$mountpoint"
-done
+if [ -f /tmp/btrfs_temp_mounts.txt ]; then
+    echo -e "${CYAN}Список временных точек монтирования:${NC}"
+    cat /tmp/btrfs_temp_mounts.txt
+    
+    while read -r mountpoint; do
+        if [ -z "$mountpoint" ]; then
+            continue
+        fi
+        
+        echo -e "${GRAY}${ITALIC}${UNDERLINE}Размонтируем точку монтирования $mountpoint${NC}"
+        if umount "$mountpoint"; then
+            echo -e "${GREEN}Успешно размонтировано: $mountpoint${NC}"
+            # Удаляем временный каталог, если он был создан с помощью mktemp
+            if [[ "$mountpoint" == /tmp/tmp.* ]]; then
+                rmdir "$mountpoint" 2>/dev/null
+            fi
+        else
+            echo -e "${RED}Ошибка при размонтировании: $mountpoint${NC}"
+            echo -e "${YELLOW}Попробуем принудительное размонтирование...${NC}"
+            if umount -f "$mountpoint"; then
+                echo -e "${GREEN}Успешно размонтировано с флагом -f: $mountpoint${NC}"
+                # Удаляем временный каталог, если он был создан с помощью mktemp
+                if [[ "$mountpoint" == /tmp/tmp.* ]]; then
+                    rmdir "$mountpoint" 2>/dev/null
+                fi
+            else
+                echo -e "${RED}Не удалось размонтировать даже с флагом -f: $mountpoint${NC}"
+                echo -e "${YELLOW}Проверьте, не используются ли файлы на этой точке монтирования.${NC}"
+                lsof | grep "$mountpoint" || echo "Файлы не найдены в использовании"
+            fi
+        fi
+    done < /tmp/btrfs_temp_mounts.txt
+    
+    # Очищаем файл
+    > /tmp/btrfs_temp_mounts.txt
+else
+    echo -e "${YELLOW}Нет временных точек монтирования для размонтирования${NC}"
+fi
+
 #удаляем временные файлы
 rm -f $LSBLK_RAW_INFO
 rm -f $LSBLK_RAW_INFO_UPDATED

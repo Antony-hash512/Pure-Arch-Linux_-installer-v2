@@ -209,6 +209,13 @@ get_btrfs_mountpoint() {
             btrfs_mountpoint=$(mktemp -d)
             #монтируем устройство в временный каталог
             mount "$btrfs_device" "$btrfs_mountpoint"
+            
+            # Сохраняем точку монтирования в файле для последующего размонтирования
+            echo "$btrfs_mountpoint" >> /tmp/btrfs_temp_mounts.txt
+            
+            # Выводим сообщение в stderr, чтобы не влиять на вывод функции
+            echo -e "${GRAY}${ITALIC}Добавлена временная точка монтирования: $btrfs_mountpoint${NC}" >&2
+            
             #проверяем, что устройство успешно смонтировалось
             if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
                 echo -e "${RED}Устройство $btrfs_device не смонтировалось${NC}" >&2
