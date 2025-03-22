@@ -43,6 +43,46 @@ def main():
     command = sys.argv[3]
     optional_args = sys.argv[4:]
     
+    # Специальная обработка для команды check_id_exists
+    if command == 'check_id_exists':
+        # Парсим XML-файл
+        tree = ET.parse('components.xml')
+        root = tree.getroot()
+        
+        # Ищем компонент по типу и ID
+        component = None
+        
+        if component_type == 'driverspack' or component_type == 'driverspacks':
+            for comp in root.findall('driverspacks/driverspack'):
+                if comp.get('name') == component_id:
+                    component = comp
+                    break
+        elif component_type == 'softpack' or component_type == 'softpacks':
+            for comp in root.findall('softpacks/softpack'):
+                if comp.get('name') == component_id:
+                    component = comp
+                    break
+        elif component_type == 'install_location' or component_type == 'install_locations':
+            for comp in root.findall('install_locations/install_location'):
+                if comp.get('name') == component_id:
+                    component = comp
+                    break
+        elif component_type == 'settings' or component_type == 'settings_variants':
+            for comp in root.findall('settings_variants/settings'):
+                if comp.get('name') == component_id:
+                    component = comp
+                    break
+        else:
+            print("")
+            sys.exit(0)
+        
+        if component is not None:
+            print(component.get('name'))
+        else:
+            print("")
+        sys.exit(0)
+    
+    # Для остальных команд - стандартная обработка
     # Парсим XML-файл
     tree = ET.parse('components.xml')
     root = tree.getroot()

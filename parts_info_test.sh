@@ -48,11 +48,41 @@ problems["syntax_problem_in_xml_file"]=""
 #флаг для запланрованного выхода из скрипта
 exit_and_show_problems_flag=0
 
-# Выбор места установки
-#INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
-INSTALL_LOCATION_ID="main_nvidia_gnome"
-echo -e "${GREEN}Выбрано место установки: $INSTALL_LOCATION_ID${NC}"
+# Функция для проверки существования указанного install_location_id
+check_install_location_exists() {
+    local id="$1"
+    # Напрямую вызываем парсер, так как переданный ID не является текущим INSTALL_LOCATION_ID
+    if [[ -n "$(python3 $XML_PARSER install_location "$id" check_id_exists 2>/dev/null)" ]]; then
+        return 0  # ID существует
+    else
+        return 1  # ID не существует
+    fi
+}
 
+# Обработка аргументов командной строки
+INSTALL_LOCATION_ID=""
+while getopts "i:" opt; do
+  case $opt in
+    i)
+      # Проверяем существует ли указанное значение install_location
+      if check_install_location_exists "$OPTARG"; then
+        INSTALL_LOCATION_ID="$OPTARG"
+        echo -e "${GREEN}Используем указанное место установки: $INSTALL_LOCATION_ID${NC}"
+      else
+        echo -e "${RED}Указанное место установки '$OPTARG' не найдено${NC}"
+      fi
+      ;;
+    \?)
+      echo -e "${RED}Неверный параметр -$OPTARG${NC}" >&2
+      ;;
+  esac
+done
+
+# Если INSTALL_LOCATION_ID не был задан через ключ -i или указанное значение не найдено
+if [[ -z "$INSTALL_LOCATION_ID" ]]; then
+    # Выбор места установки
+    INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
+fi
 
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
