@@ -1,6 +1,7 @@
 #!/bin/bash
 
 : << 'TODO'
++ отмечать ext4, которые будут форматироваться
 + изменить формат xml-файла добавив новые way для криптоконтейнеров
 + продумать разметку диска для тестов на виртуалке
 + проверять свободное место на диске
@@ -179,7 +180,7 @@ while IFS= read -r line; do
             new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
             #если полученная строка не пустая то выводим сообщение о планируемых изменениях
             if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
-                echo -e "!${BOLD}Планируемые изменения:${NC} ${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
             fi
         else
             existing_subvolumes_string=$(one_line "$(get_btrfs_subvolumes "$device_fullname")")
@@ -214,7 +215,7 @@ while IFS= read -r line; do
                     new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
                 fi
             
-                echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
             fi
         fi
 
@@ -268,7 +269,7 @@ while IFS= read -r line; do
                     exit_and_show_problems_flag=1
                 fi
 
-                echo -e "!${BOLD}Планируемые изменения:${NC} $new_lvm_volumes_string" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_lvm_volumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
             fi
         fi
 
