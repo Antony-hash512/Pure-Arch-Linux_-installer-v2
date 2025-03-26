@@ -2,7 +2,10 @@
 
 : << 'TODO'
 + отмечать ext4, которые будут форматироваться
-+ изменить формат xml-файла добавив новые way для криптоконтейнеров
++ открывать крипто-контейнеры luks на этапе проверки (только необходимые для последующих действий)
++ добавить закрытие крипто-контейнеров luks в функции завёрнутой в trap
++ продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks
++ добавить функции с регексами для валидации данных из xml-файла
 + продумать разметку диска для тестов на виртуалке
 + проверять свободное место на диске
 + проверять что все прописанные ext4, lvm, btrfs имеются в разметке
@@ -81,6 +84,9 @@ fi
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
 
+#создаём ассоциативный массив, который будет хранить имена открытых крипто-контейнеров
+declare -A OPENED_CRYPT_CONTAINERS
+
 
 echo -e "${CYAN}Общая информация:${NC}"
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
@@ -115,6 +121,25 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     read -r -a names <<< "${name//_in_/ }"
     echo -e "${YELLOW}Точка монтирования $row:${NC} $mount_point $type $crypt_mode $name"
     echo "Тип монтирования: $type"
+    #на этом этап открываем крипто-контейнеры luks, если это требуется
+    #находим имя устройства
+    if [[ "$type" == *"btrfs"* ]]; then
+        device_name=${names[1]}
+    elif [[ "$type" == *"ext4"* ]]; then
+        device_name=${names[0]}
+    fi
+    echo -e "${GREEN}Имя устройства: $device_name${NC}"
+    current_row["device_name"]=$device_name
+    #если в строке crypt_mode содержится подстрока pwd или file, то открываем крипто-контейнер
+    if [[ "$crypt_mode" == *"pwd"* || "$crypt_mode" == *"file"* ]]; then
+        echo -e "${YELLOW}Открытие крипто-контейнера luks${NC}"
+        #создаём имя для открытого крипто-контейнера
+        opened_crypt_container_name="opened_crypt_container_from_$device_name"
+        #сохраняем имя в ассоциативный массив
+        OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
+        #открываем крипто-контейнер
+        cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"
+    fi
 done
 
 
