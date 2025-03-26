@@ -1,9 +1,9 @@
 #!/bin/bash
 
 : << 'TODO'
-+ отмечать ext4, которые будут форматироваться
 + открывать крипто-контейнеры luks на этапе проверки (только необходимые для последующих действий)
 + добавить закрытие крипто-контейнеров luks в функции завёрнутой в trap
++ вместо преобразования имени устройства в реальный формат нужно написать функции, которые будут через регулярки получать группу томов и имя устройства
 + продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks
 + добавить функции с регексами для валидации данных из xml-файла
 + продумать разметку диска для тестов на виртуалке
@@ -172,23 +172,31 @@ while IFS= read -r line; do
     line_orig="$line"
     #заменяем '│ ' на '│·' чтобы избежать ошибочного разбиения на слова
     line=$(echo "$line" | sed 's/│ /│·/g')
+    #получаем базовое имя устройства
+    device_basename=$(echo "$line" | awk '{print $1}')
+    #удаляем любые символы отображающие древовидную структуру из начала строки
+    device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
+    #определяем полное имя устройства
+    if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
+        device_fullname="/dev/mapper/$device_basename"
+    elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
+        device_fullname="/dev/$device_basename"
+    elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+        device_fullname=/dev/mapper/$device_basename
+    fi
+
     if [[ "$(echo "$line" | awk '{print $3}')" == "btrfs" ]]; then
         # Используем функцию для окрашивания слова "btrfs"
         line_colored=$(color_text_in_string "$line_orig" "btrfs" "$CYAN")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
-        
-        #получаем базовое имя устройства
-        device_basename=$(echo "$line" | awk '{print $1}')
-        #удаляем любые символы отображающие древовидную структуру из начала строки
-        device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
+
         #определяем полное имя устройства
         if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
-            device_fullname="/dev/mapper/$device_basename"
+            :
         elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
-            device_fullname="/dev/$device_basename"
+            :
         elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
-            device_fullname=/dev/mapper/$device_basename
-            #сюда нужно добавить определние имени устройства
+            :
         else
             #фича, которая скорее всего не понадобится, но ввыедена для доп. подстраховки
             if [[ -z "$dummy_dev" || ! -b "$dummy_dev" ]]; then
@@ -248,11 +256,6 @@ while IFS= read -r line; do
         #окрашиваем находку
         line_colored=$(color_text_in_string "$line_orig" "LVM2_member" "$YELLOW")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
-        #получаем базовое имя устройства
-        device_basename=$(echo "$line" | awk '{print $1}')
-        #удаляем любые символы отображающие древовидную структуру из начала строки
-        device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
-        #определяем полное имя устройства
         if [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
             device_fullname="/dev/mapper/$device_basename"
         else
@@ -300,7 +303,7 @@ while IFS= read -r line; do
 
     elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
         #окрашиваем находку
-        line_colored=$(color_text_in_string "$line_orig" "ext4" "$LIGHT_PURPLE")
+        line_colored=$(color_text_in_string "$line_orig" "ext4" "$PURPLE")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
     elif [[ "$(echo "$line" | awk '{print $3}')" == "crypto_LUKS" ]]; then
         #окрашиваем находку
@@ -309,6 +312,16 @@ while IFS= read -r line; do
     else
         #пишем строку как есть
         echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
+    fi
+    #т.к. в ext4 можно форматнуть любой раздел, эту проверку осуществляем вне предыдущего if
+    #проверяем, есть ли такой раздел в массиве NEW_MOUNTPOINTS
+    
+    #проверяем отмечен ли для форматирования через функцию check_ext4_partitions_to_format_with_their_mount_points
+    string_checker=$(check_ext4_partitions_to_format_with_their_mount_points "$device_fullname")
+    if [[ -n "$string_checker" ]]; then
+        echo -e "!${BOLD}Планируемые изменения:${NC} ${RED}$string_checker${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        echo -e "!${RED}Перед тем как продолжить, проверьте что на устройстве нет важных данных${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        echo -e "!${YELLOW}Если хотите прервать выполнение скрипта для перепроверки, нажмите ctrl+c${NC}" >> $LSBLK_RAW_INFO_UPDATED
     fi
 done < <(sed '1d' $LSBLK_RAW_INFO)
 

@@ -412,21 +412,46 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
         #преобразуем строку type в массив с разделителем "_in_"
         read -r -a types <<< "${type//_in_/ }"
         crypt_mode=${current_row["crypt_mode"]}
-        name=${current_row["name"]}
+        read -r -a names <<< "${current_row["name"]//_in_/ }"
         #преобразуем имя устройства в реальный формат
-        name=$(convert_mapper_format_to_real_format_with_regex "$name")
+        current_device_name=$(convert_mapper_format_to_real_format_with_regex "${names[0]}")
         #получаем имя группы томов из имени устройства используя регулярное выражение
-        current_vg_name=$(echo "$name" | sed -E 's|/dev/([^/]+)/[^/]+$|\1|')
+        current_vg_name=$(echo "$current_device_name" | sed -E 's|/dev/([^/]+)/[^/]+$|\1|')
         #если тип монтирования - new_ext4_in_lvm
         if [[ "$type" == "new_ext4_in_lvm" ]]; then
             #если группы томов совпадают, то добавляем в output
             if [[ "$vg_name" == "$current_vg_name" ]]; then
-                current_basename=$(echo "$name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
+                current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
                 output="$output +${current_basename}->$mount_point"
             fi
         fi
     done
     echo -e "$output"
+}
+
+check_ext4_partitions_to_format_with_their_mount_points() {
+    local device=$1
+    local output=""
+    for row in "${NEW_MOUNTPOINTS[@]}"; do
+        declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+        mount_point=${current_row["mount_point"]}
+        type=${current_row["type"]}
+        #преобразуем строку type в массив с разделителем "_in_"
+        read -r -a types <<< "${type//_in_/ }"
+        crypt_mode=${current_row["crypt_mode"]}
+        read -r -a names <<< "${current_row["name"]//_in_/ }"
+        #преобразуем имя устройства в реальный формат
+        current_device_name=${names[0]}
+        #если тип монтирования - new_ext4_in_lvm
+        if [[ "$type" == "format_ext4" ]]; then
+            #если имя устройства совпадает с именем устройства в массиве names[0], то добавляем в output
+            if [[ "$device" == "$current_device_name" ]]; then
+                #т.к. девайс только один, сразу присваиваем значение
+                output="${GREEN}${BLINK}${BOLD}$current_device_name${NC} ${RED}${UNDERLINE}планируется отформатировать${NC} ${GREEN}в ext4${NC} ${RED}${UNDERLINE}для монтирования в${NC} ${GREEN}${BLINK}${BOLD}$mount_point${NC}"
+            fi
+        fi
+    done
+    echo "$output"
 }
 
 # Безопасный вызов pvs без утечек дескрипторов
