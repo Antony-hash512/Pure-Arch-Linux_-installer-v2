@@ -1,8 +1,8 @@
 #!/bin/bash
 
 : << 'TODO'
-+ открывать крипто-контейнеры luks на этапе проверки (только необходимые для последующих действий)
-+ добавить закрытие крипто-контейнеров luks в функции завёрнутой в trap
++ проверить почему не отражается новые точки монтирования внутри крипто-контейнеров
++ универсеализировать открытие крипто-контейнеров
 + вместо преобразования имени устройства в реальный формат нужно написать функции, которые будут через регулярки получать группу томов и имя устройства
 + продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks
 + добавить функции с регексами для валидации данных из xml-файла
@@ -132,13 +132,18 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     current_row["device_name"]=$device_name
     #если в строке crypt_mode содержится подстрока pwd или file, то открываем крипто-контейнер
     if [[ "$crypt_mode" == *"pwd"* || "$crypt_mode" == *"file"* ]]; then
-        echo -e "${YELLOW}Открытие крипто-контейнера luks${NC}"
+        echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks${NC}"
         #создаём имя для открытого крипто-контейнера
-        opened_crypt_container_name="opened_crypt_container_from_$device_name"
+        opened_crypt_container_name="opened_crypt_container_from_$(basename "$device_name")"
+        
+        #открываем крипто-контейнер
+        #TODO: это в дальнейшем нужно будет заменить а более универсальный случай
+        #пока что для теста используем простое открытие по паролю
+        cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"
         #сохраняем имя в ассоциативный массив
         OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
-        #открываем крипто-контейнер
-        cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"
+        #дописываем поле для последующего быстрого доступа
+        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
     fi
 done
 

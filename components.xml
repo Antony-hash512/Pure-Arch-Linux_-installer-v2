@@ -316,9 +316,9 @@
 			</point>
 			<point type="new">
 				<location>/home</location>
-				<way>format_ext4</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/nvme0n1p5</names>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<names>@home_in_/dev/mainvg/bigbox</names>
 				<size>5G</size>
 			</point>
 		</mountpoints>

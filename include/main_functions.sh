@@ -57,6 +57,16 @@ cleanup_all(){
     #удаляем временные файлы
     rm -f $LSBLK_RAW_INFO
     rm -f $LSBLK_RAW_INFO_UPDATED
+
+    #закрываем открытые крипто-контейнеры с проверкой и выводом сообщений об успешном закрытии или ошибке
+    for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
+        cryptsetup luksClose "${OPENED_CRYPT_CONTAINERS[$device]}"
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Крипто-контейнер $device успешно закрыт${NC}"
+        else
+            echo -e "${RED}При попытке закрыть крипто-контейнер $device возникла ошибка${NC}" >&2
+        fi
+    done
 }
 
 
