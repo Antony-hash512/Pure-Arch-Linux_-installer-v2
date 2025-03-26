@@ -189,6 +189,37 @@ convert_mapper_format_to_real_format_with_lvs() {
         echo "$device"
     fi
 }
+# вместо функций convert_mapper* нужно перейти на get_vg_name_from_fulldevname и get_lv_name_from_fulldevname,
+# использующих регексы для извлечения имени группы томов и имени логического тома из полного имени устройства
+# нужно учитывать как варианты с /dev/mapper/ так и варианты без него
+get_vg_or_lv_name_from_fulldevname() {
+    local device=$1
+    local type=$2
+    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
+        lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
+    else
+        vg_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\1|')
+        lv_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\2|')
+    fi
+    case "$type" in
+        "vg") echo "$vg_name" ;;
+        "lv") echo "$lv_name" ;;
+        *) echo "Ошибка: неизвестный тип '$type'" >&2; exit 1 ;;
+    esac
+}
+
+get_lv_name_from_fulldevname() {
+    local device=$1
+    get_vg_or_lv_name_from_fulldevname "$device" "lv"
+}
+
+get_vg_name_from_fulldevname() {
+    local device=$1
+    get_vg_or_lv_name_from_fulldevname "$device" "vg"
+}
+
 
 # Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
 # Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
@@ -387,6 +418,8 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     #проходимся по всем точкам монтирования
     local device=$1
     local output=""
+    #именно на этом этапе возникает ошибка для крипто-контейнеров, поскольку они как и логические тома lvm-ов тоже
+    #находятся в каталоге /dev/mapper/ но имеют другой формат имени
     device=$(convert_mapper_format_to_real_format_for_device "$device")
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
