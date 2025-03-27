@@ -1,7 +1,7 @@
 #!/bin/bash
 
 : << 'TODO'
-+ исправить функцию get_new_btrfs_subvolumes_for_device_with_their_mount_points() для корректной работы с luks
++ исправить функцию get_new_btrfs_subvolumes_for_device_with_their_mount_points() для корректной работы с luks или сделать отдельную функцию для работы с luks
 + избавиться от вызовов функций convert_mapper_format_to_real_format_for_device и convert_mapper_format_to_real_format_with_regex
 + универсеализировать открытие крипто-контейнеров
 + продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks
@@ -143,7 +143,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
         #сохраняем имя в ассоциативный массив
         OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
         #дописываем поле для последующего быстрого доступа
-        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
+        current_row["$opened_crypt_container_name"]="$opened_crypt_container_name"
     fi
 done
 

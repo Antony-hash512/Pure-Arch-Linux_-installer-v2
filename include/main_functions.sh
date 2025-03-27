@@ -189,6 +189,48 @@ convert_mapper_format_to_real_format_with_lvs() {
         echo "$device"
     fi
 }
+
+# Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
+# Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
+# Но работает также для устройств, которые существуют, поэтому подходит для полноценной замены функции convert_mapper_format_to_real_format_for_device 
+convert_mapper_format_to_real_format_with_regex() {
+    local device=$1
+    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        device_basename=$(basename "$device")
+        # Регулярное выражение для извлечения имен групп томов и логических томов
+        vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
+        lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
+        echo "/dev/$vg_name/$lv_name"
+    else
+        echo "$device"
+    fi
+}
+# Функция для преобразования формата mapper в реальный формат
+# Заглушка для замены старого варианта функции на более быструю реализацию
+convert_mapper_format_to_real_format_for_device() {
+    local device=$1
+    output=$(convert_mapper_format_to_real_format_with_regex "$device")
+    echo "$output"
+}
+
+#функция для сравнения двух устройств, учитывающая особые случаи:
+#1. если устройства это логические тома lvm могут быть одинаковыми, но иметь разный формат имени: через mapper или через vgname
+#2. если если устройство это то что лежит в крипто-контейнере, то нужно сравнивать то что прописано в настройках
+# c именем устройства самого lusk, не рездела, который но открывает
+
+#compare_devices() {
+    #local device1=$1
+    #local device2=$2
+    #if [[ "$device1" == "$device2" ]]; then
+        #echo "true"
+    #else
+    
+#}
+
+
+
+
 # вместо функций convert_mapper* нужно перейти на get_vg_name_from_fulldevname и get_lv_name_from_fulldevname,
 # использующих регексы для извлечения имени группы томов и имени логического тома из полного имени устройства
 # нужно учитывать как варианты с /dev/mapper/ так и варианты без него
@@ -221,29 +263,6 @@ get_vg_name_from_fulldevname() {
 }
 
 
-# Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
-# Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
-# Но работает также для устройств, которые существуют, поэтому подходит для полноценной замены функции convert_mapper_format_to_real_format_for_device 
-convert_mapper_format_to_real_format_with_regex() {
-    local device=$1
-    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
-    if [[ "$device" =~ ^/dev/mapper/ ]]; then
-        device_basename=$(basename "$device")
-        # Регулярное выражение для извлечения имен групп томов и логических томов
-        vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
-        lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
-        echo "/dev/$vg_name/$lv_name"
-    else
-        echo "$device"
-    fi
-}
-# Функция для преобразования формата mapper в реальный формат
-# Заглушка для замены старого варианта функции на более быструю реализацию
-convert_mapper_format_to_real_format_for_device() {
-    local device=$1
-    output=$(convert_mapper_format_to_real_format_with_regex "$device")
-    echo "$output"
-}
 
 # Функция для окрашивания указанного текста в строке
 color_text_in_string() {
@@ -412,7 +431,7 @@ get_vg_name_for_pv() {
     fi
 }
 
-
+# Возможно, что для крипто-контейнеров имеет смысл насать альтернативные варианты этих функций
 
 get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     #проходимся по всем точкам монтирования
