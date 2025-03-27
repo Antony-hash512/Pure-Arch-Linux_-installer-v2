@@ -1,16 +1,18 @@
 #!/bin/bash
 
 : << 'TODO'
-+ исправить функцию get_new_btrfs_subvolumes_for_device_with_their_mount_points() для корректной работы с luks или сделать отдельную функцию для работы с luks
-+ избавиться от вызовов функций convert_mapper_format_to_real_format_for_device и convert_mapper_format_to_real_format_with_regex
++ закомментить не нужную фичу с заглушкой
++ создать группу томов и логический том lvm со знаком '-' в названии для тестирования работы с такими названиями
++ доработать функцию для преобразования из формата mapper(и get lv/vg), корректно работали, когда в именах lv или vg есть -
++ сделать ясным, что функции convert_mapper* предназначены только для lvm (переименовать или перейти на get lv/vg)
 + универсеализировать открытие крипто-контейнеров
-+ продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks
++ добавить и протестировать поддержку lvm'ом внутри luks
++ продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks (в течение трёх предоставляемых попыток)
 + добавить функции с регексами для валидации данных из xml-файла
 + продумать разметку диска для тестов на виртуалке
 + проверять свободное место на диске
 + проверять что все прописанные ext4, lvm, btrfs имеются в разметке
 + отображать в разметке случаи с шифрованием
-+ доработать функцию для преобразования из формата mapper, чтобы она корректно работала, когда в именах есть - (данная задача будет не актуальна, когда будет реализована другая функция)
 + добавить другие параметры для запуска (автовыбор других компонентов и альтернативный xml-файл)
 TODO
 
@@ -134,7 +136,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     if [[ "$crypt_mode" == *"pwd"* || "$crypt_mode" == *"file"* ]]; then
         echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks${NC}"
         #создаём имя для открытого крипто-контейнера
-        opened_crypt_container_name="opened_crypt_container_from_$(basename "$device_name")"
+        opened_crypt_container_name="opened_luks_$(basename "$device_name")_$(date +%s_%N)_$RANDOM"
         
         #открываем крипто-контейнер
         #TODO: это в дальнейшем нужно будет заменить а более универсальный случай
@@ -142,8 +144,10 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
         cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"
         #сохраняем имя в ассоциативный массив
         OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
-        #дописываем поле для последующего быстрого доступа
-        current_row["$opened_crypt_container_name"]="$opened_crypt_container_name"
+        #дописываем поля для последующего быстрого доступа
+        #т.к. в данной версии скрипта предполагается только не более одного luks на каждую точки монтирования, это ок
+        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
+        current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
     fi
 done
 
@@ -221,6 +225,7 @@ while IFS= read -r line; do
                 echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
             fi
         else
+            #получаем список существующих сабволюмов в формате в одну строку
             existing_subvolumes_string=$(one_line "$(get_btrfs_subvolumes "$device_fullname")")
             #получаем массив из строки
             read -r -a existing_subvolumes <<< "$existing_subvolumes_string"
@@ -272,17 +277,17 @@ while IFS= read -r line; do
         if [[ -z "$vg_name" ]]; then
             echo -e "!${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
+            #выводим имя группы томов
             echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
-        
-
+            #проверяем точки монтирования из xml-конфига
             new_lvm_volumes_string=$(get_new_lvm_volumes_for_group_with_their_mount_points "$vg_name")
             #получаем массив из строки
             read -r -a new_lvm_volumes <<< "$new_lvm_volumes_string"
-        
+            #поучаем список существующий логических томов с преобразованием в одну строку
             existing_lvm_volumes_string=$(one_line "$(safe_lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
-
             #получаем массив из строки
             read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
+            #проходимся по массивам для поиска совпадений
             if [[ -n "$new_lvm_volumes_string" ]]; then 
                 the_same_flag=0
 
@@ -308,7 +313,7 @@ while IFS= read -r line; do
 
     elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
         #окрашиваем находку
-        line_colored=$(color_text_in_string "$line_orig" "ext4" "$PURPLE")
+        line_colored=$(color_text_in_string "$line_orig" "ext4" "$BLUE")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
     elif [[ "$(echo "$line" | awk '{print $3}')" == "crypto_LUKS" ]]; then
         #окрашиваем находку

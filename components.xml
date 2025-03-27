@@ -311,16 +311,36 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_gnome_in_/dev/mainvg/mikro_testbox</names>
+				<names>@arch_megatest_in_/dev/mainvg/mikro_testbox</names>
 				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
-				<names>@home_in_/dev/mainvg/bigbox</names>
+				<names>@home_enc_megatest_in_/dev/mainvg/bigbox</names>
+			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<names>/dev/mainvg/boot_megatest</names>
 				<size>5G</size>
 			</point>
+			<!--point type="new">
+				<location>/mnt/test1</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<names>ext4test_in_/dev/mainvg/bigbox</names>
+				<size>5G</size>
+			</point>
+			<point type="new">
+				<location>/mnt/test2</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_pwd</crypt_mode>
+				<names>ext4test2_in_/dev/testvg/bigbox_in_/dev/nvme0n1p5</names>
+				<size>5G</size>
+			</point-->
 		</mountpoints>
 		<hostname>katana</hostname>
 		<username>fireice</username>

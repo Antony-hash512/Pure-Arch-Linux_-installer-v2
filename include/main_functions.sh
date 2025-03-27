@@ -193,6 +193,7 @@ convert_mapper_format_to_real_format_with_lvs() {
 # Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
 # Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
 # Но работает также для устройств, которые существуют, поэтому подходит для полноценной замены функции convert_mapper_format_to_real_format_for_device 
+# ВНИМАНИЕ !!! ДАННУЮ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ с /dev/mapper/* томами открытыми из luks 
 convert_mapper_format_to_real_format_with_regex() {
     local device=$1
     #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
@@ -237,8 +238,10 @@ convert_mapper_format_to_real_format_for_device() {
 get_vg_or_lv_name_from_fulldevname() {
     local device=$1
     local type=$2
-    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
+    #если в начале строки стоит /dev/mapper/
     if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        device_basename=$(basename "$device")
+        # Регулярное выражение для извлечения имен групп томов и логических томов
         vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
         lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
     else
@@ -254,12 +257,14 @@ get_vg_or_lv_name_from_fulldevname() {
 
 get_lv_name_from_fulldevname() {
     local device=$1
-    get_vg_or_lv_name_from_fulldevname "$device" "lv"
+    output=$(get_vg_or_lv_name_from_fulldevname "$device" "lv")
+    echo $output
 }
 
 get_vg_name_from_fulldevname() {
     local device=$1
-    get_vg_or_lv_name_from_fulldevname "$device" "vg"
+    output=$(get_vg_or_lv_name_from_fulldevname "$device" "vg")
+    echo $output
 }
 
 
@@ -431,7 +436,6 @@ get_vg_name_for_pv() {
     fi
 }
 
-# Возможно, что для крипто-контейнеров имеет смысл насать альтернативные варианты этих функций
 
 get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     #проходимся по всем точкам монтирования
@@ -439,27 +443,42 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     local output=""
     #именно на этом этапе возникает ошибка для крипто-контейнеров, поскольку они как и логические тома lvm-ов тоже
     #находятся в каталоге /dev/mapper/ но имеют другой формат имени
-    device=$(convert_mapper_format_to_real_format_for_device "$device")
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
-        mount_point=${current_row["mount_point"]}
         type=${current_row["type"]}
-        #преобразуем строку type в массив с разделителем "_in_"
-        read -r -a types <<< "${type//_in_/ }"
-        crypt_mode=${current_row["crypt_mode"]}
         name=${current_row["name"]}
         #преобразуем строку name в массив с разделителем "_in_"
         read -r -a names <<< "${name//_in_/ }"
+        mount_point=${current_row["mount_point"]}
+        crypt_mode=${current_row["crypt_mode"]}
+
+        if [[ "$crypt_mode" = *"file"* || "$crypt_mode" = *"pwd"* ]]; then
+            #echo "crypto container detected" > /dev/tty
+            current_check_device="${current_row["opened_crypt_container_fullname"]}"
+            #возращаем исходное значение функции которое точно не сломано функцией convert_mapper 
+            current_device=$device
+        else
+            current_check_device="${names[1]}"
+            #это на тот случай если пользователь пропишет имя устройства через mapper
+            current_check_device=$(convert_mapper_format_to_real_format_for_device "$current_check_device")
+            #помещено сюда, чтобы избежать преобразований для luks т.к. тогда случай с mapper будет разобран не правильно
+            current_device=$(convert_mapper_format_to_real_format_for_device "$device")
+        fi
+        
+        
         #если тип монтирования - new_subvol_in_btrfs_in_lvm или new_subvol_in_btrfs
         if [[ "$type" == "new_subvol_in_btrfs_in_lvm" || "$type" == "new_subvol_in_btrfs" ]]; then
+            #echo -e "${CYAN}Передано в функцию:${NC} $device" > /dev/tty
+            #echo -e "${BLUE}Получено из ассоциативного массива:${NC} $current_check_device" > /dev/tty
             #приводим девайсы к единому формату
-            names[1]=$(convert_mapper_format_to_real_format_for_device "${names[1]}")
+            #names[1]=$(convert_mapper_format_to_real_format_for_device "${names[1]}")
             #если имя устройства совпадает с именем устройства в массиве names[1], то добавляем в output
-            if [[ "$device" == "${names[1]}" ]]; then
+            if [[ "$current_device" == "$current_check_device" ]]; then
                 output="$output +${names[0]}->$mount_point"
             fi
         fi
     done
+    #echo "$output" > /dev/tty
     echo -e "$output"
 
 }
@@ -471,14 +490,14 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
         mount_point=${current_row["mount_point"]}
         type=${current_row["type"]}
-        #преобразуем строку type в массив с разделителем "_in_"
-        read -r -a types <<< "${type//_in_/ }"
         crypt_mode=${current_row["crypt_mode"]}
         read -r -a names <<< "${current_row["name"]//_in_/ }"
         #преобразуем имя устройства в реальный формат
-        current_device_name=$(convert_mapper_format_to_real_format_with_regex "${names[0]}")
+        #current_device_name=$(convert_mapper_format_to_real_format_with_regex "${names[0]}")
         #получаем имя группы томов из имени устройства используя регулярное выражение
-        current_vg_name=$(echo "$current_device_name" | sed -E 's|/dev/([^/]+)/[^/]+$|\1|')
+        #current_vg_name=$(echo "$current_device_name" | sed -E 's|/dev/([^/]+)/[^/]+$|\1|')
+        current_device_name=${names[0]}
+        current_vg_name=$(get_vg_name_from_fulldevname "$current_device_name")
         #если тип монтирования - new_ext4_in_lvm
         if [[ "$type" == "new_ext4_in_lvm" ]]; then
             #если группы томов совпадают, то добавляем в output
