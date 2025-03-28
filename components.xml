@@ -318,14 +318,14 @@
 				<location>/home</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/test-super-test/new-home</names>
+				<names>/dev/test-----super----test/new-home</names>
 				<size>5G</size>
 			</point>
 			<point type="new">
 				<location>/mnt/fld1</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@mntfld1_in_/dev/test-super-test/lv-vol-for-test</names>
+				<names>@mntfld1_in_/dev/test-----super----test/lv-vol-for-test</names>
 				<size>5G</size>
 			</point>
 			<point type="new">

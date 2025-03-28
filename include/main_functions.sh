@@ -177,24 +177,23 @@ one_line_with_commas() {
 
 # Функция для преобразования формата mapper в реальный формат
 # Работает только для устройств, которые существуют
-convert_mapper_format_to_real_format_with_lvs() {
-    local device=$1
-    #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
-    if [[ "$device" =~ ^/dev/mapper/ ]]; then
-        #получаем имя группы (убрав лишние символы пробелов и табуляций)
-        vg_name=$(safe_lvs --noheading -o vg_name "$device" | tr -d ' ')
-        lv_name=$(safe_lvs --noheading -o lv_name "$device" | tr -d ' ')
-        echo "/dev/$vg_name/$lv_name"
-    else
-        echo "$device"
-    fi
-}
+#standardize_lvm_format_oldversion() {
+    #local device=$1
+    ##если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
+    #if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        ##получаем имя группы (убрав лишние символы пробелов и табуляций)
+        #vg_name=$(safe_lvs --noheading -o vg_name "$device" | tr -d ' ')
+        #lv_name=$(safe_lvs --noheading -o lv_name "$device" | tr -d ' ')
+        #echo "/dev/$vg_name/$lv_name"
+    #else
+        #echo "$device"
+    #fi
+#}
 
 # Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
 # Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
-# Но работает также для устройств, которые существуют, поэтому подходит для полноценной замены функции convert_mapper_format_to_real_format_for_device 
-# ВНИМАНИЕ !!! ДАННУЮ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ с /dev/mapper/* томами открытыми из luks 
-convert_mapper_format_to_real_format_with_regex() {
+# ВНИМАНИЕ !!! ДАННУЮ ФУНКЦИЮ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ с /dev/mapper/* томами открытыми из luks, она только для логических томов lvm
+standardize_lvm_format() {
     local device=$1
     #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
     if [[ "$device" =~ ^/dev/mapper/ ]]; then
@@ -209,13 +208,6 @@ convert_mapper_format_to_real_format_with_regex() {
     else
         echo "$device"
     fi
-}
-# Функция для преобразования формата mapper в реальный формат
-# Заглушка для замены старого варианта функции на более быструю реализацию
-convert_mapper_format_to_real_format_for_device() {
-    local device=$1
-    output=$(convert_mapper_format_to_real_format_with_regex "$device")
-    echo "$output"
 }
 
 #функция для сравнения двух устройств, учитывающая особые случаи:
@@ -466,9 +458,9 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
         else
             current_check_device="${names[1]}"
             #это на тот случай если пользователь пропишет имя устройства через mapper
-            current_check_device=$(convert_mapper_format_to_real_format_for_device "$current_check_device")
+            current_check_device=$(standardize_lvm_format "$current_check_device")
             #помещено сюда, чтобы избежать преобразований для luks т.к. тогда случай с mapper будет разобран не правильно
-            current_device=$(convert_mapper_format_to_real_format_for_device "$device")
+            current_device=$(standardize_lvm_format "$device")
         fi
         
         
@@ -476,9 +468,7 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
         if [[ "$type" == "new_subvol_in_btrfs_in_lvm" || "$type" == "new_subvol_in_btrfs" ]]; then
             #echo -e "${CYAN}Передано в функцию:${NC} $device" > /dev/tty
             #echo -e "${BLUE}Получено из ассоциативного массива:${NC} $current_check_device" > /dev/tty
-            #приводим девайсы к единому формату
-            #names[1]=$(convert_mapper_format_to_real_format_for_device "${names[1]}")
-            #если имя устройства совпадает с именем устройства в массиве names[1], то добавляем в output
+            #если имя устройства совпадает с именем устройства в из xml-файла, то добавляем в output
             if [[ "$current_device" == "$current_check_device" ]]; then
                 output="$output +${names[0]}->$mount_point"
             fi
