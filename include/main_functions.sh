@@ -41,18 +41,18 @@ cleanup_all(){
         echo -e "${YELLOW}Нет временных точек монтирования для размонтирования${NC}"
     fi
     #cleanup_dummy_device
-    if [[ -n $dummy_dev ]]; then
-        #парсим имя файла из комманды
-        filename=$(losetup $dummy_dev | sed -n 's/.*(\(.*\))/\1/p')
-        losetup -d $dummy_dev
+    #if [[ -n $dummy_dev ]]; then
+        ##парсим имя файла из комманды
+        #filename=$(losetup $dummy_dev | sed -n 's/.*(\(.*\))/\1/p')
+        #losetup -d $dummy_dev
 
-        if [[ -f "$filename" ]]; then
-            echo "Удаляем файл: $filename"
-            rm -f "$filename"
-        else
-            echo -e "${RED}Ошибка: файл $filename не существует${NC}" >&2
-        fi
-    fi
+        #if [[ -f "$filename" ]]; then
+            #echo "Удаляем файл: $filename"
+            #rm -f "$filename"
+        #else
+            #echo -e "${RED}Ошибка: файл $filename не существует${NC}" >&2
+        #fi
+    #fi
 
     #удаляем временные файлы
     rm -f $LSBLK_RAW_INFO

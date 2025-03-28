@@ -200,20 +200,21 @@ while IFS= read -r line; do
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
 
         #определяем полное имя устройства (уже были получены ранее вне if)
-        if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
-            :
-        elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
-            :
-        elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
-            :
-        else
-            #фича, которая скорее всего не понадобится, но ввыедена для доп. подстраховки
-            if [[ -z "$dummy_dev" || ! -b "$dummy_dev" ]]; then
-                dummy_dev=$(create_btrfs_dummy_device 128M)
-            fi
-            device_fullname=$dummy_dev
-            echo -e "${RED} неизвестный тип раздела, используем временную заглушки, чтобы не возникло дополнительных ошибок${NC}" >&2
-        fi
+        #if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
+            #:
+        #elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
+            #:
+        #elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+            #:
+        #else
+            ##фича, которая скорее всего не понадобится, но ввыедена для доп. подстраховки
+            #if [[ -z "$dummy_dev" || ! -b "$dummy_dev" ]]; then
+                #dummy_dev=$(create_btrfs_dummy_device 128M)
+            #fi
+            #device_fullname=$dummy_dev
+            #echo -e "${RED} неизвестный тип раздела, используем временную заглушки, чтобы не возникло дополнительных ошибок${NC}" >&2
+        #fi
+
         #используем функцию get_btrfs_subvolumes
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
         if [[ -z "$(get_btrfs_subvolumes "$device_fullname")" ]]; then
