@@ -202,6 +202,9 @@ convert_mapper_format_to_real_format_with_regex() {
         # Регулярное выражение для извлечения имен групп томов и логических томов
         vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
         lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
+        #заменяем все двойные дефисы на один
+        vg_name=$(echo "$vg_name" | sed 's/--/-/g')
+        lv_name=$(echo "$lv_name" | sed 's/--/-/g')
         echo "/dev/$vg_name/$lv_name"
     else
         echo "$device"
@@ -244,6 +247,9 @@ get_vg_or_lv_name_from_fulldevname() {
         # Регулярное выражение для извлечения имен групп томов и логических томов
         vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
         lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
+        #заменяем все двойные дефисы на один
+        vg_name=$(echo "$vg_name" | sed 's/--/-/g')
+        lv_name=$(echo "$lv_name" | sed 's/--/-/g')
     else
         vg_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\1|')
         lv_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\2|')
