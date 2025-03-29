@@ -120,6 +120,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     read -r -a names <<< "${name//_in_/ }"
     echo -e "${YELLOW}Точка монтирования $row:${NC} $mount_point $type $crypt_mode $name"
     echo "Тип монтирования: $type"
+
+
     #на этом этап открываем крипто-контейнеры luks, если это требуется
     #находим имя устройства
     if [[ "$type" == *"btrfs"* ]]; then
