@@ -3,7 +3,6 @@
 : << 'TODO'
 + универсеализировать открытие крипто-контейнеров
 + добавить и протестировать поддержку lvm'ом внутри luks
-+ продумать поведение скрипта если пользователь не вводит правильную парольную фразу для luks (в течение трёх предоставляемых попыток)
 + добавить функции с регексами для валидации данных из xml-файла
 + продумать разметку диска для тестов на виртуалке
 + проверять свободное место на диске
@@ -25,6 +24,49 @@ source include/colors.sh
 source include/main_functions.sh
 source include/shared_functions.sh
 trap 'cleanup_all' EXIT
+
+open_crypt_container_by_pwd(){
+    local device_name="$1"
+    local opened_crypt_container_name="$2"
+
+    # Попытка открыть LUKS-контейнер с ограничением количества попыток
+    # все три попытки ввода пароля через cryptsetup luksOpen зачсываются за одну попытку
+    local max_attempts=1
+    local attempts=0
+    local success=false
+        
+    while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
+        ((attempts++))
+        echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
+            
+        if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
+            success=true
+            echo -e "${GREEN}Контейнер успешно открыт${NC}"
+        else
+            status=$?
+            if [ $attempts -lt $max_attempts ]; then
+                echo -e "${RED}Ошибка ($status): Не удалось открыть контейнер. Пожалуйста, попробуйте снова.${NC}"
+            else
+                echo -e "${RED}Превышено количество попыток ввода пароля.${NC}"
+            fi
+        fi
+    done
+        
+    # Проверяем, был ли успешно открыт контейнер
+    if [ "$success" = true ]; then
+        # сохраняем имя в ассоциативный массив
+        OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
+        # дописываем поля для последующего быстрого доступа
+        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
+        current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
+    else
+        # Если не удалось открыть контейнер после трех попыток, прерываем выполнение скрипта
+        echo -e "${RED}Не удалось открыть LUKS-контейнер $device_name после $max_attempts попыток.${NC}" >&2    
+        echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+        exit 1
+    fi
+
+}
 
 # Заранее вычисленные степени 1024
 export MB=1048576  # 1024^2
@@ -90,6 +132,7 @@ echo -e "${CYAN}Общая информация:${NC}"
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
 
+make_pause
 
 #получаем информацию содержащуюся в xml-файле
 NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
@@ -106,6 +149,7 @@ for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
     eval "$CURRENT_POINT_NAME=$NEW_MOUNTPOINT"
     NEW_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
 done
+
 # вывод полученной информации на экран
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -135,15 +179,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
         opened_crypt_container_name="opened_luks_$(basename "$device_name")_$(date +%s_%N)_$RANDOM"
         
         #открываем крипто-контейнер
-        #TODO: это в дальнейшем нужно будет заменить а более универсальный случай
-        #пока что для теста используем простое открытие по паролю
-        cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"
-        #сохраняем имя в ассоциативный массив
-        OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
-        #дописываем поля для последующего быстрого доступа
-        #т.к. в данной версии скрипта предполагается только не более одного luks на каждую точки монтирования, это ок
-        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
-        current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
+        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
     fi
 done
 
