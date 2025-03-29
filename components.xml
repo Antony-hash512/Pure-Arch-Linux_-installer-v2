@@ -335,20 +335,13 @@
 				<names>/dev/mainvg/boot_megatest</names>
 				<size>5G</size>
 			</point>
-			<!--point type="new">
-				<location>/mnt/test1</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>pwd_in_none</crypt_mode>
-				<names>ext4test_in_/dev/mainvg/bigbox</names>
-				<size>5G</size>
-			</point>
 			<point type="new">
-				<location>/mnt/test2</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_pwd</crypt_mode>
-				<names>ext4test2_in_/dev/testvg/bigbox_in_/dev/nvme0n1p5</names>
-				<size>5G</size>
-			</point-->
+				<location>/var/log</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<names>@varlog_in_/dev/mainvg/bigbox</names>
+				
+			</point>
 		</mountpoints>
 		<hostname>katana</hostname>
 		<username>fireice</username>
