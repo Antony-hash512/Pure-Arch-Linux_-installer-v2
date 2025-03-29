@@ -578,19 +578,183 @@ safe_lvs() {
     #echo "$loop_dev"
 #}
 
-open_crypt_container_by_pwd(){
+# Вспомогательная функция для сохранения информации об открытом контейнере
+save_crypt_container_info() {
+    local device_name="$1"
+    local opened_crypt_container_name="$2"
+    local key_file="$3"
+    
+    # Сохраняем имя в ассоциативный массив
+    OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
+    # Дописываем поля для последующего быстрого доступа
+    current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
+    current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
+    
+    # Если был передан файл-ключ, сохраняем и его
+    if [ -n "$key_file" ]; then
+        current_row["key_file"]="$key_file"
+    fi
+}
+
+# Функция для выбора действия пользователем
+ask_user_action() {
+    local prompt="$1"      # Текст приглашения
+    local options="$2"     # Варианты действий, разделенные '|'
+    local default_action="$3"  # Действие по умолчанию при некорректном вводе
+    
+    IFS='|' read -ra opt_array <<< "$options"
+    local num_options=${#opt_array[@]}
+    
+    echo -e "${YELLOW}$prompt${NC}"
+    for ((i=0; i<num_options; i++)); do
+        local idx=$((i+1))
+        if [[ "${opt_array[$i]}" == *"Прервать"* || "${opt_array[$i]}" == *"прервать"* ]]; then
+            echo -e "$idx. ${RED}${opt_array[$i]}${NC}"
+        else
+            echo -e "$idx. ${CYAN}${opt_array[$i]}${NC}"
+        fi
+    done
+    
+    read -p "Ваш выбор (1-$num_options): " choice
+    
+    if [[ $choice =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$num_options" ]; then
+        return $((choice-1))
+    else
+        echo -e "${RED}Некорректный ввод. $default_action${NC}"
+        # Возвращаем код для действия по умолчанию
+        if [[ "$default_action" == *"Выход"* || "$default_action" == *"выход"* ]]; then
+            exit 1
+        fi
+        return 255  # специальный код для обозначения некорректного ввода
+    fi
+}
+
+# Функция для выбора и проверки файла-ключа
+handle_keyfile_selection() {
+    local key_file="$1"
+    local action="$2"  # "open" или "create"
+    
+    # Если путь к файлу-ключу не задан
+    if [ -z "$key_file" ]; then
+        if [ "$action" = "open" ]; then
+            ask_user_action "Путь к файлу-ключу не задан. Выберите действие:" \
+                "Ввести путь к файлу-ключу|Использовать пароль вместо файла|Прервать выполнение скрипта" \
+                "Пожалуйста, выберите корректное действие."
+            
+            case $? in
+                0)  # Ввести путь
+                    read -p "Введите путь к файлу-ключу: " key_file
+                    ;;
+                1)  # Использовать пароль
+                    echo -e "${YELLOW}Переключение на ввод пароля...${NC}"
+                    return 1  # Специальный код для переключения на пароль
+                    ;;
+                2|255)  # Прервать скрипт или некорректный ввод
+                    echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                    exit 1
+                    ;;
+            esac
+        else  # action = "create"
+            ask_user_action "Путь к файлу-ключу не задан. Выберите действие:" \
+                "Ввести путь к файлу-ключу|Создать ключ в стандартном месте (текущий каталог)|Прервать выполнение скрипта" \
+                "Пожалуйста, выберите корректное действие."
+            
+            case $? in
+                0)  # Ввести путь
+                    read -p "Введите путь к файлу-ключу: " key_file
+                    ;;
+                1)  # Создать в стандартном месте
+                    key_file="./luks_key_$(date +%Y%m%d_%H%M%S).key"
+                    echo -e "${GREEN}Файл-ключ будет создан по пути: $key_file${NC}"
+                    ;;
+                2|255)  # Прервать скрипт или некорректный ввод
+                    echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                    exit 1
+                    ;;
+            esac
+        fi
+    fi
+    
+    # Проверка существования файла при открытии
+    if [ "$action" = "open" ] && [ ! -f "$key_file" ]; then
+        ask_user_action "Файл-ключ '$key_file' не существует. Выберите действие:" \
+            "Ввести другой путь к файлу-ключу|Использовать пароль вместо файла|Прервать выполнение скрипта" \
+            "Пожалуйста, выберите корректное действие."
+        
+        case $? in
+            0)  # Ввести другой путь
+                read -p "Введите путь к файлу-ключу: " new_key_file
+                key_file="$new_key_file"
+                # Рекурсивно проверяем новый путь
+                handle_keyfile_selection "$key_file" "$action"
+                return $?
+                ;;
+            1)  # Использовать пароль
+                echo -e "${YELLOW}Переключение на ввод пароля...${NC}"
+                return 1  # Специальный код для переключения на пароль
+                ;;
+            2|255)  # Прервать скрипт или некорректный ввод
+                echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                exit 1
+                ;;
+        esac
+    fi
+    
+    # Проверка существования файла при создании
+    if [ "$action" = "create" ] && [ -f "$key_file" ]; then
+        ask_user_action "Файл-ключ '$key_file' уже существует. Выберите действие:" \
+            "Использовать существующий файл-ключ|Создать резервную копию и пересоздать файл-ключ|Использовать другой путь для файла-ключа|Прервать выполнение скрипта" \
+            "Используем существующий файл-ключ."
+        
+        case $? in
+            0)  # Использовать существующий
+                echo -e "${GREEN}Используем существующий файл-ключ: $key_file${NC}"
+                ;;
+            1)  # Создать резервную копию и пересоздать
+                backup_file="${key_file}.bak.$(date +%Y%m%d_%H%M%S)"
+                if cp "$key_file" "$backup_file"; then
+                    echo -e "${GREEN}Создана резервная копия: $backup_file${NC}"
+                    rm -f "$key_file"
+                    echo -e "${YELLOW}Прежний файл-ключ удалён.${NC}"
+                else
+                    echo -e "${RED}Не удалось создать резервную копию. Выход.${NC}"
+                    exit 1
+                fi
+                ;;
+            2)  # Использовать другой путь
+                read -p "Введите новый путь к файлу-ключу: " new_key_file
+                key_file="$new_key_file"
+                # Рекурсивно проверяем новый путь
+                handle_keyfile_selection "$key_file" "$action"
+                return $?
+                ;;
+            3|255)  # Прервать скрипт или некорректный ввод
+                if [ $? -eq 255 ]; then
+                    echo -e "${GREEN}Используем существующий файл-ключ: $key_file${NC}"
+                else
+                    echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                    exit 1
+                fi
+                ;;
+        esac
+    fi
+    
+    echo "$key_file"
+    return 0
+}
+
+# Обновленная функция для открытия контейнера по паролю
+open_crypt_container_by_pwd() {
     local device_name="$1"
     local opened_crypt_container_name="$2"
 
-    # Попытка открыть LUKS-контейнер с ограничением количества попыток
-    # все три попытки ввода пароля через cryptsetup luksOpen засчитываются за одну попытку
-    local max_attempts=1
+    local max_attempts=3
     local attempts=0
     local success=false
         
     while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
         ((attempts++))
-        #echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
+        echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
             
         if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
             success=true
@@ -607,17 +771,242 @@ open_crypt_container_by_pwd(){
         
     # Проверяем, был ли успешно открыт контейнер
     if [ "$success" = true ]; then
-        # сохраняем имя в ассоциативный массив
-        OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
-        # дописываем поля для последующего быстрого доступа
-        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
-        current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
+        save_crypt_container_info "$device_name" "$opened_crypt_container_name"
+        return 0
     else
-        # Если не удалось открыть контейнер после трех попыток, прерываем выполнение скрипта
         echo -e "${RED}Не удалось открыть крипто-контейнер LUKS $device_name после $max_attempts попыток.${NC}" >&2    
         echo -e "${RED}Прерывание выполнения скрипта.${NC}"
         exit 1
     fi
+}
 
+# Обновленная функция для открытия контейнера по файлу-ключу
+open_crypt_container_by_file() {
+    local device_name="$1"
+    local opened_crypt_container_name="$2"
+    local key_file="$3"
+    local max_attempts=3
+    local attempts=0
+    local success=false
+    
+    # Обрабатываем выбор файла-ключа
+    key_file=$(handle_keyfile_selection "$key_file" "open")
+    if [ $? -eq 1 ]; then
+        # Переключение на пароль
+        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
+        return $?
+    fi
+    
+    # Пытаемся открыть LUKS-контейнер с помощью файла-ключа
+    while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
+        ((attempts++))
+        echo -e "${YELLOW}Попытка $attempts из $max_attempts. Открываем контейнер $device_name с помощью файла-ключа...${NC}"
+        
+        if cryptsetup luksOpen --key-file="$key_file" "$device_name" "$opened_crypt_container_name"; then
+            success=true
+            echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт с помощью файла-ключа${NC}"
+        else
+            status=$?
+            if [ $attempts -lt $max_attempts ]; then
+                ask_user_action "Ошибка ($status): Не удалось открыть крипто-контейнер LUKS с помощью файла-ключа. Выберите действие:" \
+                    "Попробовать снова с тем же файлом|Ввести другой путь к файлу-ключу|Использовать пароль вместо файла|Прервать выполнение скрипта" \
+                    "Попробуем ещё раз с тем же файлом."
+                
+                case $? in
+                    0)  # Продолжаем с тем же файлом
+                        ;;
+                    1)  # Другой путь к файлу
+                        read -p "Введите путь к файлу-ключу: " key_file
+                        if [ ! -f "$key_file" ]; then
+                            echo -e "${RED}Файл-ключ '$key_file' не существует.${NC}"
+                            continue
+                        fi
+                        ;;
+                    2)  # Использовать пароль
+                        echo -e "${YELLOW}Переключение на ввод пароля...${NC}"
+                        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
+                        return $?
+                        ;;
+                    3|255)  # Прервать или некорректный ввод
+                        if [ $? -eq 255 ]; then
+                            echo -e "${RED}Некорректный ввод. Попробуем ещё раз с тем же файлом.${NC}"
+                        else
+                            echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                            exit 1
+                        fi
+                        ;;
+                esac
+            else
+                echo -e "${RED}Превышено количество попыток открытия крипто-контейнера LUKS.${NC}" >&2
+            fi
+        fi
+    done
+    
+    # Проверяем, был ли успешно открыт контейнер
+    if [ "$success" = true ]; then
+        save_crypt_container_info "$device_name" "$opened_crypt_container_name" "$key_file"
+        return 0
+    else
+        echo -e "${RED}Не удалось открыть крипто-контейнер LUKS $device_name после $max_attempts попыток.${NC}" >&2    
+        echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+        exit 1
+    fi
+}
+
+# Функция для создания контейнера с новым файлом-ключом
+create_and_open_crypt_container_with_new_key_file() {
+    local device_name="$1"
+    local opened_crypt_container_name="$2"
+    local key_file="$3"
+    local key_size=4096  # Размер ключа по умолчанию в байтах
+    
+    # Обрабатываем выбор файла-ключа
+    key_file=$(handle_keyfile_selection "$key_file" "create")
+    
+    # Если файл не существует к этому моменту, создаём его
+    if [ ! -f "$key_file" ]; then
+        echo -e "${YELLOW}Создаём новый файл-ключ: $key_file${NC}"
+        
+        # Создаём каталог для ключа, если он не существует
+        key_dir=$(dirname "$key_file")
+        if [ ! -d "$key_dir" ]; then
+            mkdir -p "$key_dir" || {
+                echo -e "${RED}Не удалось создать каталог для ключа: $key_dir${NC}"
+                exit 1
+            }
+        fi
+        
+        # Генерируем случайный ключ
+        if ! dd if=/dev/urandom of="$key_file" bs=1 count=$key_size status=none; then
+            echo -e "${RED}Не удалось создать файл-ключ.${NC}"
+            exit 1
+        fi
+        
+        # Устанавливаем права доступа только для владельца
+        chmod 600 "$key_file" || {
+            echo -e "${RED}Не удалось установить права доступа для файла-ключа.${NC}"
+            exit 1
+        }
+        
+        echo -e "${GREEN}Файл-ключ успешно создан.${NC}"
+    fi
+    
+    # Создаём LUKS-контейнер с новым ключом
+    echo -e "${YELLOW}Создаём новый LUKS-контейнер на устройстве $device_name...${NC}"
+    if ! cryptsetup luksFormat --type luks2 --key-file="$key_file" "$device_name"; then
+        echo -e "${RED}Не удалось создать LUKS-контейнер. Выход.${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}LUKS-контейнер успешно создан.${NC}"
+    
+    # Открываем созданный контейнер
+    echo -e "${YELLOW}Открываем созданный LUKS-контейнер...${NC}"
+    if ! cryptsetup luksOpen --key-file="$key_file" "$device_name" "$opened_crypt_container_name"; then
+        echo -e "${RED}Не удалось открыть созданный LUKS-контейнер. Выход.${NC}"
+        exit 1
+    fi
+    
+    # Сохраняем информацию о контейнере
+    save_crypt_container_info "$device_name" "$opened_crypt_container_name" "$key_file"
+    
+    echo -e "${GREEN}LUKS-контейнер успешно создан и открыт с помощью файла-ключа.${NC}"
+    return 0
+}
+
+# Функция для создания контейнера с новым паролем
+create_and_open_crypt_container_with_new_pwd() {
+    local device_name="$1"
+    local opened_crypt_container_name="$2"
+    local success=false
+    local max_attempts=3
+    local attempts=0
+    
+    # Предупреждение пользователю
+    echo -e "${YELLOW}ВНИМАНИЕ: Будет создан новый LUKS-контейнер на устройстве $device_name.${NC}"
+    echo -e "${RED}Все данные на этом устройстве будут уничтожены!${NC}"
+    
+    ask_user_action "Вы уверены, что хотите продолжить?" \
+        "Да, создать новый LUKS-контейнер|Нет, прервать операцию" \
+        "Требуется подтверждение."
+    
+    case $? in
+        1|255)  # Пользователь отказался или некорректный ввод
+            echo -e "${YELLOW}Операция отменена пользователем.${NC}"
+            return 1
+            ;;
+    esac
+    
+    # Создаём LUKS-контейнер с новым паролем
+    echo -e "${YELLOW}Создаём новый LUKS-контейнер на устройстве $device_name...${NC}"
+    echo -e "${CYAN}Вам потребуется ввести пароль дважды для подтверждения.${NC}"
+    
+    # Пытаемся создать LUKS-контейнер с паролем
+    while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
+        ((attempts++))
+        if cryptsetup luksFormat --type luks2 --verify-passphrase "$device_name"; then
+            success=true
+            echo -e "${GREEN}LUKS-контейнер успешно создан.${NC}"
+        else
+            status=$?
+            if [ $attempts -lt $max_attempts ]; then
+                echo -e "${RED}Ошибка ($status) при создании LUKS-контейнера.${NC}"
+                
+                ask_user_action "Выберите действие:" \
+                    "Попробовать создать снова|Прервать выполнение скрипта" \
+                    "Попробуем ещё раз."
+                
+                case $? in
+                    1|255)  # Пользователь выбрал прервать или некорректный ввод
+                        if [ $? -eq 255 ]; then
+                            echo -e "${YELLOW}Попробуем ещё раз создать контейнер.${NC}"
+                        else
+                            echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                            exit 1
+                        fi
+                        ;;
+                esac
+            else
+                echo -e "${RED}Превышено количество попыток создания LUKS-контейнера.${NC}" >&2
+                echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                exit 1
+            fi
+        fi
+    done
+    
+    # Открываем созданный контейнер
+    echo -e "${YELLOW}Открываем созданный LUKS-контейнер...${NC}"
+    echo -e "${CYAN}Введите пароль, который вы только что установили.${NC}"
+    
+    # Сбрасываем счетчики для открытия
+    success=false
+    attempts=0
+    
+    # Пытаемся открыть созданный контейнер
+    while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
+        ((attempts++))
+        echo -e "${YELLOW}Попытка $attempts из $max_attempts открыть контейнер.${NC}"
+        
+        if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
+            success=true
+            echo -e "${GREEN}LUKS-контейнер успешно открыт.${NC}"
+        else
+            status=$?
+            if [ $attempts -lt $max_attempts ]; then
+                echo -e "${RED}Ошибка ($status): Не удалось открыть LUKS-контейнер. Пожалуйста, попробуйте снова.${NC}"
+            else
+                echo -e "${RED}Превышено количество попыток открытия LUKS-контейнера.${NC}" >&2
+                echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+                exit 1
+            fi
+        fi
+    done
+    
+    # Сохраняем информацию о контейнере
+    save_crypt_container_info "$device_name" "$opened_crypt_container_name"
+    
+    echo -e "${GREEN}LUKS-контейнер успешно создан и открыт с паролем.${NC}"
+    echo -e "${YELLOW}ВАЖНО: Запомните пароль! Без него вы не сможете получить доступ к данным.${NC}"
+    return 0
 }
 
