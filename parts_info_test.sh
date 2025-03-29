@@ -30,7 +30,8 @@ open_crypt_container_by_pwd(){
     local opened_crypt_container_name="$2"
 
     # Попытка открыть LUKS-контейнер с ограничением количества попыток
-    local max_attempts=3
+    # все три попытки ввода пароля через cryptsetup luksOpen зачсываются за одну попытку
+    local max_attempts=1
     local attempts=0
     local success=false
         
@@ -131,6 +132,7 @@ echo -e "${CYAN}Общая информация:${NC}"
 echo -e "${YELLOW}список разделов до начала установки:${NC}"
 lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
 
+make_pause
 
 #получаем информацию содержащуюся в xml-файле
 NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
@@ -147,6 +149,7 @@ for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
     eval "$CURRENT_POINT_NAME=$NEW_MOUNTPOINT"
     NEW_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
 done
+
 # вывод полученной информации на экран
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
