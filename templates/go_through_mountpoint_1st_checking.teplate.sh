@@ -119,4 +119,21 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     esac
     
 
+    #на этом этап открываем крипто-контейнеры luks, если это требуется
+    #находим имя устройства
+    if [[ "$type" == *"btrfs"* ]]; then
+        device_name=${names[1]}
+    elif [[ "$type" == *"ext4"* ]]; then
+        device_name=${names[0]}
+    fi
+    echo -e "${GREEN}Имя устройства: $device_name${NC}"
+    current_row["device_name"]=$device_name
+    #если в строке crypt_mode содержится подстрока pwd или file, то открываем крипто-контейнер
+    if [[ "$crypt_mode" == *"pwd"* || "$crypt_mode" == *"file"* ]]; then
+        echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks${NC}"
+        #создаём имя для открытого крипто-контейнера
+        opened_crypt_container_name="opened_luks_$(basename "$device_name")_$(date +%s_%N)_$RANDOM"
+        #открываем крипто-контейнер
+        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
+    fi
 done
