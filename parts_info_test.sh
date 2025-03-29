@@ -25,48 +25,6 @@ source include/main_functions.sh
 source include/shared_functions.sh
 trap 'cleanup_all' EXIT
 
-open_crypt_container_by_pwd(){
-    local device_name="$1"
-    local opened_crypt_container_name="$2"
-
-    # Попытка открыть LUKS-контейнер с ограничением количества попыток
-    # все три попытки ввода пароля через cryptsetup luksOpen зачсываются за одну попытку
-    local max_attempts=1
-    local attempts=0
-    local success=false
-        
-    while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
-        ((attempts++))
-        echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
-            
-        if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
-            success=true
-            echo -e "${GREEN}Контейнер успешно открыт${NC}"
-        else
-            status=$?
-            if [ $attempts -lt $max_attempts ]; then
-                echo -e "${RED}Ошибка ($status): Не удалось открыть контейнер. Пожалуйста, попробуйте снова.${NC}"
-            else
-                echo -e "${RED}Превышено количество попыток ввода пароля.${NC}"
-            fi
-        fi
-    done
-        
-    # Проверяем, был ли успешно открыт контейнер
-    if [ "$success" = true ]; then
-        # сохраняем имя в ассоциативный массив
-        OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
-        # дописываем поля для последующего быстрого доступа
-        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
-        current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
-    else
-        # Если не удалось открыть контейнер после трех попыток, прерываем выполнение скрипта
-        echo -e "${RED}Не удалось открыть LUKS-контейнер $device_name после $max_attempts попыток.${NC}" >&2    
-        echo -e "${RED}Прерывание выполнения скрипта.${NC}"
-        exit 1
-    fi
-
-}
 
 # Заранее вычисленные степени 1024
 export MB=1048576  # 1024^2
@@ -128,11 +86,10 @@ declare -A ALL_BTRFS_MOUNTPOINTS
 declare -A OPENED_CRYPT_CONTAINERS
 
 
-echo -e "${CYAN}Общая информация:${NC}"
-echo -e "${YELLOW}список разделов до начала установки:${NC}"
-lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
-
-make_pause
+#echo -e "${CYAN}Общая информация:${NC}"
+#echo -e "${YELLOW}список разделов до начала установки:${NC}"
+#lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
+#make_pause
 
 #получаем информацию содержащуюся в xml-файле
 NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
@@ -177,14 +134,13 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
         echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks${NC}"
         #создаём имя для открытого крипто-контейнера
         opened_crypt_container_name="opened_luks_$(basename "$device_name")_$(date +%s_%N)_$RANDOM"
-        
         #открываем крипто-контейнер
         open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
     fi
 done
 
 
-make_pause
+#make_pause
 #print_all_btrfs_devices
 #echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
 #print_all_btrfs_subvolumes

@@ -555,28 +555,69 @@ safe_lvs() {
     return $ret_val
 }
 
-create_btrfs_dummy_device() {
-    local size="${1:-100M}"                         # Размер по умолчанию
-    local img_file loop_dev
+#create_btrfs_dummy_device() {
+    #local size="${1:-100M}"                         # Размер по умолчанию
+    #local img_file loop_dev
 
-    # Создание временного файла
-    img_file="$(mktemp --tmpdir=/tmp dummy.XXXXXX.img)"
-    fallocate -l "$size" "$img_file"
+    ## Создание временного файла
+    #img_file="$(mktemp --tmpdir=/tmp dummy.XXXXXX.img)"
+    #fallocate -l "$size" "$img_file"
 
-    # Подключение loop-устройства
-    loop_dev=$(losetup -f)
-    losetup "$loop_dev" "$img_file"
+    ## Подключение loop-устройства
+    #loop_dev=$(losetup -f)
+    #losetup "$loop_dev" "$img_file"
 
-    # Форматирование в Btrfs с --mixed для экономии места
-    mkfs.btrfs -q -f --mixed "$loop_dev"
+    ## Форматирование в Btrfs с --mixed для экономии места
+    #mkfs.btrfs -q -f --mixed "$loop_dev"
 
-    # Экспорт для последующего удаления
-    export DUMMY_IMG="$img_file"
-    export DUMMY_LOOP="$loop_dev"
+    ## Экспорт для последующего удаления
+    #export DUMMY_IMG="$img_file"
+    #export DUMMY_LOOP="$loop_dev"
 
-    # Возврат пути к loop-устройству
-    echo "$loop_dev"
+    ## Возврат пути к loop-устройству
+    #echo "$loop_dev"
+#}
+
+open_crypt_container_by_pwd(){
+    local device_name="$1"
+    local opened_crypt_container_name="$2"
+
+    # Попытка открыть LUKS-контейнер с ограничением количества попыток
+    # все три попытки ввода пароля через cryptsetup luksOpen засчитываются за одну попытку
+    local max_attempts=1
+    local attempts=0
+    local success=false
+        
+    while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
+        ((attempts++))
+        #echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
+            
+        if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
+            success=true
+            echo -e "${GREEN}Контейнер успешно открыт${NC}"
+        else
+            status=$?
+            if [ $attempts -lt $max_attempts ]; then
+                echo -e "${RED}Ошибка ($status): Не удалось открыть контейнер. Пожалуйста, попробуйте снова.${NC}"
+            else
+                echo -e "${RED}Превышено количество попыток ввода пароля.${NC}"
+            fi
+        fi
+    done
+        
+    # Проверяем, был ли успешно открыт контейнер
+    if [ "$success" = true ]; then
+        # сохраняем имя в ассоциативный массив
+        OPENED_CRYPT_CONTAINERS["$device_name"]="$opened_crypt_container_name"
+        # дописываем поля для последующего быстрого доступа
+        current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
+        current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
+    else
+        # Если не удалось открыть контейнер после трех попыток, прерываем выполнение скрипта
+        echo -e "${RED}Не удалось открыть LUKS-контейнер $device_name после $max_attempts попыток.${NC}" >&2    
+        echo -e "${RED}Прерывание выполнения скрипта.${NC}"
+        exit 1
+    fi
+
 }
-
-
 
