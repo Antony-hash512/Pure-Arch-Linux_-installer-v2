@@ -107,7 +107,7 @@ for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
     NEW_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
 done
 
-# вывод полученной информации на экран
+# вывод полученной из xml-файла информации на экран и открытие крипто-контейнеров luks
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
     mount_point=${current_row["mount_point"]}
@@ -132,12 +132,16 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     echo -e "${GREEN}Имя устройства: $device_name${NC}"
     current_row["device_name"]=$device_name
     #если в строке crypt_mode содержится подстрока pwd или file, то открываем крипто-контейнер
-    if [[ "$crypt_mode" == *"pwd"* || "$crypt_mode" == *"file"* ]]; then
-        echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks${NC}"
-        #создаём имя для открытого крипто-контейнера
-        opened_crypt_container_name="opened_luks_$(basename "$device_name")_$(date +%s_%N)_$RANDOM"
+    if [[ "$crypt_mode" == *"pwd"* ]]; then
+        echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks с паролем${NC}"
         #открываем крипто-контейнер
-        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
+        open_crypt_container_by_pwd "$device_name"
+    elif [[ "$crypt_mode" == *"file"* ]]; then
+        echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks с файлом-ключом${NC}"
+        # Получаем путь к файлу-ключу из XML или используем значение по умолчанию
+        key_file=$(parse_xml "install_location" "get_key_file" "$row")
+        #открываем крипто-контейнер
+        open_crypt_container_by_file "$device_name" "$key_file"
     fi
 done
 

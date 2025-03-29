@@ -1,13 +1,14 @@
+#открываем крипто-контейнеры luks, чтобы потом отобразить результат
+
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    #получает короткие алиасы переменных и xml-файла
     mount_point=${current_row["mount_point"]}
     type=${current_row["type"]}
-
      # Разбивка строки с разделителем "_in_" и запись значений в переменные
     spaced_names="${current_row["name"]//_in_/ }"
     # Преобразуем строку в массив по пробелам
     read -r -a names <<< "$spaced_names"
-
     crypt_mode=${current_row["crypt_mode"]}
 
     echo -e "${YELLOW}Точка монтирования $row:${NC} $mount_point $type $crypt_mode $name"
@@ -118,7 +119,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             ;;
     esac
     
-
+    #последующие строки подлежат удалению, после правильного переноса данных
     #на этом этап открываем крипто-контейнеры luks, если это требуется
     #находим имя устройства
     if [[ "$type" == *"btrfs"* ]]; then
@@ -128,6 +129,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     fi
     echo -e "${GREEN}Имя устройства: $device_name${NC}"
     current_row["device_name"]=$device_name
+
     #если в строке crypt_mode содержится подстрока pwd или file, то открываем крипто-контейнер
     if [[ "$crypt_mode" == *"pwd"* || "$crypt_mode" == *"file"* ]]; then
         echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks${NC}"

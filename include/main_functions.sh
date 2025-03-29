@@ -743,11 +743,23 @@ handle_keyfile_selection() {
     return 0
 }
 
-# Обновленная функция для открытия контейнера по паролю
+# Функция для генерации уникального имени открытого LUKS-контейнера
+generate_crypt_container_name() {
+    local device_name="$1"
+    local basename=$(basename "$device_name") #basename работает с ещё не созданными устройствами, поэтому проблемы тут быть не должно
+    local timestamp=$(date +%s_%N)
+    local random=$RANDOM
+    
+    echo "opened_luks_${basename}_${timestamp}_${random}"
+}
+
+# Функция для открытия контейнера по паролю
 open_crypt_container_by_pwd() {
     local device_name="$1"
-    local opened_crypt_container_name="$2"
-
+    
+    # Генерируем имя контейнера с помощью новой функции
+    local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
+    
     local max_attempts=3
     local attempts=0
     local success=false
@@ -780,11 +792,14 @@ open_crypt_container_by_pwd() {
     fi
 }
 
-# Обновленная функция для открытия контейнера по файлу-ключу
+# Функция для открытия контейнера по файлу-ключу
 open_crypt_container_by_file() {
     local device_name="$1"
-    local opened_crypt_container_name="$2"
-    local key_file="$3"
+    local key_file="$2"
+    
+    # Генерируем имя контейнера с помощью новой функции
+    local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
+    
     local max_attempts=3
     local attempts=0
     local success=false
@@ -793,7 +808,7 @@ open_crypt_container_by_file() {
     key_file=$(handle_keyfile_selection "$key_file" "open")
     if [ $? -eq 1 ]; then
         # Переключение на пароль
-        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
+        open_crypt_container_by_pwd "$device_name"
         return $?
     fi
     
@@ -824,7 +839,7 @@ open_crypt_container_by_file() {
                         ;;
                     2)  # Использовать пароль
                         echo -e "${YELLOW}Переключение на ввод пароля...${NC}"
-                        open_crypt_container_by_pwd "$device_name" "$opened_crypt_container_name"
+                        open_crypt_container_by_pwd "$device_name"
                         return $?
                         ;;
                     3|255)  # Прервать или некорректный ввод
@@ -856,8 +871,11 @@ open_crypt_container_by_file() {
 # Функция для создания контейнера с новым файлом-ключом
 create_and_open_crypt_container_with_new_key_file() {
     local device_name="$1"
-    local opened_crypt_container_name="$2"
-    local key_file="$3"
+    local key_file="$2"
+    
+    # Генерируем имя контейнера с помощью новой функции
+    local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
+    
     local key_size=4096  # Размер ключа по умолчанию в байтах
     
     # Обрабатываем выбор файла-ключа
@@ -917,7 +935,10 @@ create_and_open_crypt_container_with_new_key_file() {
 # Функция для создания контейнера с новым паролем
 create_and_open_crypt_container_with_new_pwd() {
     local device_name="$1"
-    local opened_crypt_container_name="$2"
+    
+    # Генерируем имя контейнера с помощью новой функции
+    local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
+    
     local success=false
     local max_attempts=3
     local attempts=0
