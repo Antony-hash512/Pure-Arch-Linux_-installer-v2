@@ -594,13 +594,13 @@ open_crypt_container_by_pwd(){
             
         if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
             success=true
-            echo -e "${GREEN}Контейнер успешно открыт${NC}"
+            echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт${NC}"
         else
             status=$?
             if [ $attempts -lt $max_attempts ]; then
-                echo -e "${RED}Ошибка ($status): Не удалось открыть контейнер. Пожалуйста, попробуйте снова.${NC}"
+                echo -e "${RED}Ошибка ($status): Не удалось открыть крипто-контейнер LUKS. Пожалуйста, попробуйте снова.${NC}"
             else
-                echo -e "${RED}Превышено количество попыток ввода пароля.${NC}"
+                echo -e "${RED}Превышено количество попыток открытия крипто-контейнера LUKS.${NC}" >&2
             fi
         fi
     done
@@ -614,7 +614,7 @@ open_crypt_container_by_pwd(){
         current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
     else
         # Если не удалось открыть контейнер после трех попыток, прерываем выполнение скрипта
-        echo -e "${RED}Не удалось открыть LUKS-контейнер $device_name после $max_attempts попыток.${NC}" >&2    
+        echo -e "${RED}Не удалось открыть крипто-контейнер LUKS $device_name после $max_attempts попыток.${NC}" >&2    
         echo -e "${RED}Прерывание выполнения скрипта.${NC}"
         exit 1
     fi

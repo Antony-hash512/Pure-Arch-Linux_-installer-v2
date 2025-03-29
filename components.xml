@@ -322,12 +322,12 @@
 				<size>5G</size>
 			</point>
 
-			<point type="new">
+			<!--point type="new">
 				<location>/var/log</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
 				<names>@varlog_in_/dev/mainvg/bigbox</names>	
-			</point>
+			</point-->
 			<!-- ошибочная разметка для тестирования-->
 			<!--point type="new">
 				<location>/mnt/test1</location>
