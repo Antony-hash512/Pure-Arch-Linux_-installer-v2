@@ -297,18 +297,26 @@ color_text_in_string() {
 
 get_device_basename4lsblk() {
     local device=$1
-    # Определяем формат устройства btrfs
+    # Определяем формат устройства
     local device_format=""
     
+    # Проверяем специальный случай для LUKS устройств
+    if [[ "$device" =~ ^/dev/mapper/opened_luks_ ]]; then
+        # LUKS устройство
+        device_basename=$(basename "$device")
+        echo "$device_basename"
+        return
+    fi
+    
     # Проверяем формат устройства: /dev/name, /dev/mapper/vgname-name или /dev/vgname/name
-    if [[ "$device" =~ ^/dev/[a-zA-Z0-9]+$ ]]; then
+    if [[ "$device" =~ ^/dev/[a-zA-Z0-9\.\+_-]+$ ]]; then
         # Формат /dev/name (например, /dev/sda1)
         device_format="standard"
-    elif [[ "$device" =~ ^/dev/mapper/[a-zA-Z0-9_]+-[a-zA-Z0-9_]+$ ]]; then
+    elif [[ "$device" =~ ^/dev/mapper/[a-zA-Z0-9\.\+_-]+$ ]]; then
         # Формат /dev/mapper/vgname-name (LVM через mapper)
         device_format="mapper"
-    elif [[ "$device" =~ ^/dev/[a-zA-Z0-9_]+/[a-zA-Z0-9_]+$ ]]; then
-        # Формат /dev/vgname/name (LVM через vgname)
+    elif [[ "$device" =~ ^/dev/[a-zA-Z0-9\.\+_-]+/[a-zA-Z0-9\.\+_-]+$ ]]; then
+        # Формат /dev/vgname/name (LVM через vgpath)
         device_format="vgpath"
     else
         # Неизвестный формат
@@ -323,7 +331,12 @@ get_device_basename4lsblk() {
             #приводим к формату, который используется в lsblk
             device_vgname=$(echo "$device" | awk -F'/' '{print $3}')
             device_lvname=$(echo "$device" | awk -F'/' '{print $4}')
-            device_basename="$device_vgname-$device_lvname"
+            
+            # Заменяем дефисы на двойные дефисы в именах vg и lv
+            device_vgname="${device_vgname//-/--}"
+            device_lvname="${device_lvname//-/--}"
+            
+            device_basename="${device_vgname}-${device_lvname}"
             ;;
     esac
     echo "$device_basename"
