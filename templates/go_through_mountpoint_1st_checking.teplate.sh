@@ -6,51 +6,9 @@
 
 # ассоциативный массив, который хранит строки с описанием запланированных изменений
 declare -A pending_commands_description
-#будет использоваться в качестве ключа что-то вроде: nvme0n1p42 для партишнов или vgname-lvname для lvm
-#в качестве значения будет строка с описанием запланированных изменений
+#будет использоваться в качестве ключа результат возврата функции get_device_basename4lsblk
+#чтобы легко было найти в выхлопе lsblk и отобразить для пользователя все запланированные изменения
 
-#нужно сделать функцию для получения такой штуки из полного имени устройства
-#например, из /dev/nvme0n1p42 получить nvme0n1p42
-#например, из /dev/mapper/vgname-lvname получить vgname-lvname
-#из /dev/vgname/lvname получить vgname-lvname
-#из /dev/vg-name/lv-name получить vg--name-lv--name
-#из /dev/mapper/opened_luks_basename_838798_83 получить opened_luks_basename_838798_83
-
-#реализуем функцию для получения такой штуки из полного имени устройства
-#которая будет использоваться в lsblk
-get_device_basename4lsblk() {
-    local device=$1
-    # Определяем формат устройства btrfs
-    local device_format=""
-    
-    # Проверяем формат устройства: /dev/name, /dev/mapper/vgname-name или /dev/vgname/name
-    if [[ "$device" =~ ^/dev/[a-zA-Z0-9]+$ ]]; then
-        # Формат /dev/name (например, /dev/sda1)
-        device_format="standard"
-    elif [[ "$device" =~ ^/dev/mapper/[a-zA-Z0-9_]+-[a-zA-Z0-9_]+$ ]]; then
-        # Формат /dev/mapper/vgname-name (LVM через mapper)
-        device_format="mapper"
-    elif [[ "$device" =~ ^/dev/[a-zA-Z0-9_]+/[a-zA-Z0-9_]+$ ]]; then
-        # Формат /dev/vgname/name (LVM через vgname)
-        device_format="vgpath"
-    else
-        # Неизвестный формат
-        echo -e "${RED}Устройство $device имеет неизвестный формат${NC}" >&2
-        return
-    fi
-    case "$device_format" in
-        "standard"|"mapper")
-            device_basename=$(basename "$device")
-            ;;
-        "vgpath")
-            #приводим к формату, который используется в lsblk
-            device_vgname=$(echo "$device" | awk -F'/' '{print $3}')
-            device_lvname=$(echo "$device" | awk -F'/' '{print $4}')
-            device_basename="$device_vgname-$device_lvname"
-            ;;
-    esac
-    echo "$device_basename"
-}
 
 
 
@@ -82,6 +40,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
         "format_ext4")
             #в данном случае задан только партишн, который будет форматироваться
             ext4_partition=${current_row["name"]}
+            basename_of_ext4_partition=$(get_device_basename4lsblk "$ext4_partition")
             case "$crypt_mode" in
                 "none")
                     current_row["device_for_operations"]=$ext4_partition
@@ -100,7 +59,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     # в дальнейшем будет обязательная проверка на такое значение и в случае совпадения,
                     # буду выполнены все необходимые операции включая присвоение в это поле девайса для операций
                     # ввиде свежесозданого и открытого luks'а
-                    pending_commands_description["$ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точек монтирования $mount_point"
+                    pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точек монтирования $mount_point"
                     current_row["pending_commands"]=$(
                     cat <<'EOF'
                     ext4_partition=${current_row["name"]};
@@ -117,7 +76,7 @@ EOF
                     #сохраняем открытый крипто-контейнер в качестве девайса для операций
                     #current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                     current_row["device_for_operations"]="i'm not ready yet"
-                    pending_commands_description["$ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точек монтирования $mount_point"
+                    pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точек монтирования $mount_point"
                     current_row["pending_commands"]=$(
                     cat <<'EOF'
                     ext4_partition=${current_row["name"]};
