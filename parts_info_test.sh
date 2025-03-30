@@ -1,7 +1,6 @@
 #!/bin/bash
 
 : << 'TODO'
-+ проверить функцию get_device_basename4lsblk и обновить её при необходимости
 + завершить черновик templates/go_through_mountpoint_1st_checking.teplate.sh
 + внедрить наработки написанные в черновике templates/go_through_mountpoint_1st_checking.teplate.sh в протестировать их работу
 + добавить функции с регексами для валидации данных из xml-файла
