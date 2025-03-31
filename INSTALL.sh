@@ -65,7 +65,7 @@ read -p "Enter - продолжить; ctrl+C - прервать"
 
 
 pacman -Sy
-packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
+packages=("arch-install-scripts" "terminus-font" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
