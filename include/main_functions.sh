@@ -210,26 +210,8 @@ standardize_lvm_format() {
     fi
 }
 
-#функция для сравнения двух устройств, учитывающая особые случаи:
-#1. если устройства это логические тома lvm могут быть одинаковыми, но иметь разный формат имени: через mapper или через vgname
-#2. если если устройство это то что лежит в крипто-контейнере, то нужно сравнивать то что прописано в настройках
-# c именем устройства самого lusk, не рездела, который но открывает
-
-#compare_devices() {
-    #local device1=$1
-    #local device2=$2
-    #if [[ "$device1" == "$device2" ]]; then
-        #echo "true"
-    #else
-    
-#}
 
 
-
-
-# вместо функций convert_mapper* нужно перейти на get_vg_name_from_fulldevname и get_lv_name_from_fulldevname,
-# использующих регексы для извлечения имени группы томов и имени логического тома из полного имени устройства
-# нужно учитывать как варианты с /dev/mapper/ так и варианты без него
 get_vg_or_lv_name_from_fulldevname() {
     local device=$1
     local type=$2
@@ -255,15 +237,44 @@ get_vg_or_lv_name_from_fulldevname() {
 
 get_lv_name_from_fulldevname() {
     local device=$1
-    output=$(get_vg_or_lv_name_from_fulldevname "$device" "lv")
-    echo $output
+    #если в начале строки стоит /dev/mapper/
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        device_basename=$(basename "$device")
+        # Регулярное выражение для извлечения имен групп томов и логических томов
+        lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
+        #заменяем все двойные дефисы на один
+        lv_name=$(echo "$lv_name" | sed 's/--/-/g')
+    else
+        lv_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\2|')
+    fi
+    echo $lv_name
 }
 
 get_vg_name_from_fulldevname() {
     local device=$1
-    output=$(get_vg_or_lv_name_from_fulldevname "$device" "vg")
-    echo $output
+    #если в начале строки стоит /dev/mapper/
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        device_basename=$(basename "$device")
+        # Регулярное выражение для извлечения имен групп томов и логических томов
+        vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
+        #заменяем все двойные дефисы на один
+        vg_name=$(echo "$vg_name" | sed 's/--/-/g')
+    else
+        vg_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\1|')
+    fi
+    echo $vg_name
 }
+#get_lv_name_from_fulldevname() {
+    #local device=$1
+    #output=$(get_vg_or_lv_name_from_fulldevname "$device" "lv")
+    #echo $output
+#}
+
+#get_vg_name_from_fulldevname() {
+    #local device=$1
+    #output=$(get_vg_or_lv_name_from_fulldevname "$device" "vg")
+    #echo $output
+#}
 
 
 
@@ -773,7 +784,7 @@ open_crypt_container_by_pwd() {
     # Генерируем имя контейнера с помощью новой функции
     local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
     
-    local max_attempts=3
+    local max_attempts=1
     local attempts=0
     local success=false
         
@@ -813,7 +824,7 @@ open_crypt_container_by_file() {
     # Генерируем имя контейнера с помощью новой функции
     local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
     
-    local max_attempts=3
+    local max_attempts=1
     local attempts=0
     local success=false
     
@@ -953,7 +964,7 @@ create_and_open_crypt_container_with_new_pwd() {
     local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
     
     local success=false
-    local max_attempts=3
+    local max_attempts=1
     local attempts=0
     
     # Предупреждение пользователю

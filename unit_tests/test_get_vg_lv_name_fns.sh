@@ -26,12 +26,12 @@ run_test() {
     
     if [[ "$result" == "$expected" ]]; then
         echo -e "${GREEN}УСПЕХ${NC}: $test_name"
-        echo "  Инпут: '$input'"
+        echo "  Входные данные: '$input'"
         echo "  Ожидалось: '$expected'"
         echo "  Получено:  '$result'"
     else
         echo -e "${RED}ОШИБКА${NC}: $test_name"
-        echo "  Инпут: '$input'"
+        echo "  Входные данные: '$input'"
         echo "  Ожидалось: '$expected'"
         echo "  Получено:  '$result'"
     fi
