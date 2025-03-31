@@ -23,10 +23,12 @@ run_test() {
         echo -e "${GREEN}УСПЕХ${NC}: $test_name"
         echo "  Ожидалось: '$expected'"
         echo "  Получено:  '$result'"
+        echo "  Входные данные: '$input'"
     else
         echo -e "${RED}ОШИБКА${NC}: $test_name"
         echo "  Ожидалось: '$expected'"
         echo "  Получено:  '$result'"
+        echo "  Входные данные: '$input'"
     fi
 }
 
@@ -41,6 +43,6 @@ run_test "Формат mapper с подчеркиваниями" "/dev/mapper/vg
 echo -e "\nТестирование нестандартных имен LVM устройств:"
 run_test "Формат mapper с точками" "/dev/mapper/vg.name-lv.name" "/dev/vg.name/lv.name"
 run_test "Формат mapper с плюсами" "/dev/mapper/vg+name-lv+name" "/dev/vg+name/lv+name"
-run_test "Формат mapper с комбинированными символами" "/dev/mapper/vg_name.test-lv-name+test" "/dev/vg_name.test/lv-name+test"
+run_test "Формат mapper с комбинированными символами" "/dev/mapper/vg_name.test-lv--name+test" "/dev/vg_name.test/lv-name+test"
 
 echo -e "\nВсе тесты выполнены." 

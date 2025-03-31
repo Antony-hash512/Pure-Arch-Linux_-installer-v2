@@ -1,7 +1,6 @@
 #!/bin/bash
 
 : << 'TODO'
-+ протестировать функции + поправить тесты при необходимости
 + завершить черновик templates/go_through_mountpoint_1st_checking.teplate.sh
 + внедрить наработки написанные в черновике templates/go_through_mountpoint_1st_checking.teplate.sh в протестировать их работу
 + добавить функции с регексами для валидации данных из xml-файла
