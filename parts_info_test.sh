@@ -2,8 +2,6 @@
 
 : << 'TODO'
 + протестировать функции + поправить тесты при необходимости
-+ модифицировать функции, get_lv_name_from_fulldevname и get_vg_name_from_fulldevname чтобы
-  работали не через заглушку, провести тесты до и после модификации
 + завершить черновик templates/go_through_mountpoint_1st_checking.teplate.sh
 + внедрить наработки написанные в черновике templates/go_through_mountpoint_1st_checking.teplate.sh в протестировать их работу
 + добавить функции с регексами для валидации данных из xml-файла

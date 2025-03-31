@@ -73,4 +73,29 @@ run_test "Окрашивание отсутствующего текста" \
          "$TEST_COLOR" \
          "Этот текст не содержит искомого слова"
 
+# Добавляем тесты с латинскими символами
+run_test "Окрашивание латинского слова в середине строки" \
+         "This is a test string for verification" \
+         "test" \
+         "$TEST_COLOR" \
+         "This is a ${TEST_COLOR}test${NC} string for verification"
+
+run_test "Окрашивание латинского слова в начале строки" \
+         "First word should be colored" \
+         "First" \
+         "$TEST_COLOR" \
+         "${TEST_COLOR}First${NC} word should be colored"
+
+run_test "Окрашивание латинского слова в конце строки" \
+         "The last word should be colored" \
+         "colored" \
+         "$TEST_COLOR" \
+         "The last word should be ${TEST_COLOR}colored${NC}"
+
+run_test "Окрашивание латинской фразы" \
+         "This phrase of several words should be colored entirely" \
+         "phrase of several words" \
+         "$TEST_COLOR" \
+         "This ${TEST_COLOR}phrase of several words${NC} should be colored entirely"
+
 echo -e "\nВсе тесты выполнены." 

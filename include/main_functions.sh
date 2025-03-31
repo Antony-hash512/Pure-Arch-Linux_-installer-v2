@@ -275,34 +275,56 @@ get_vg_name_from_fulldevname() {
     #output=$(get_vg_or_lv_name_from_fulldevname "$device" "vg")
     #echo $output
 #}
-
-
-
-# Функция для окрашивания указанного текста в строке
 color_text_in_string() {
     local original_string="$1"    # Исходная строка
     local text_to_color="$2"      # Текст, который нужно окрасить
     local color_code="$3"         # Код цвета для окрашивания
-    
-    # Находим позицию текста в строке
-    local position=$(echo -n "$original_string" | grep -bo "$text_to_color" | cut -d':' -f1)
-    
-    # Если текст найден
-    if [ -n "$position" ]; then
-        # Получаем длину текста
-        local text_length=${#text_to_color}
-        
-        # Разделяем строку на части до и после окрашиваемого текста
-        local prefix=$(echo -n "$original_string" | cut -c1-$position)
-        local suffix=$(echo -n "$original_string" | cut -c$((position+text_length+1))-)
-        
-        # Возвращаем строку с окрашенным текстом
-        echo "${prefix}${color_code}${text_to_color}${NC}${suffix}"
-    else
-        # Возвращаем исходную строку, если текст не найден
-        echo "$original_string"
-    fi
+
+    # Вызываем функцию color_text_in_string_utf8_bash
+    color_text_in_string_awk "$original_string" "$text_to_color" "$color_code"
 }
+
+
+# Функция для окрашивания указанного текста в строке
+#color_text_in_string_old() {
+    #local original_string="$1"    # Исходная строка
+    #local text_to_color="$2"      # Текст, который нужно окрасить
+    #local color_code="$3"         # Код цвета для окрашивания
+    
+    ## Находим позицию текста в строке
+    #local position=$(echo -n "$original_string" | grep -Fbo "$text_to_color" | cut -d':' -f1)
+    
+    ## Если текст найден
+    #if [ -n "$position" ]; then
+        ## Получаем длину текста
+        #local text_length=${#text_to_color}
+        
+        ## Разделяем строку на части до и после окрашиваемого текста
+        #local prefix=$(echo -n "$original_string" | cut -c1-$position)
+        #local suffix=$(echo -n "$original_string" | cut -c$((position+text_length+1))-)
+        
+        ## Возвращаем строку с окрашенным текстом
+        #echo "${prefix}${color_code}${text_to_color}${NC}${suffix}"
+    #else
+        ## Возвращаем исходную строку, если текст не найден
+        #echo "$original_string"
+    #fi
+#}
+
+# Функция для окрашивания текста в строке с поддержкой UTF-8 (awk)
+color_text_in_string_awk() {
+    local original_string="$1"    # Исходная строка
+    local text_to_color="$2"      # Текст, который нужно окрасить
+    local color_code="$3"         # Код цвета для окрашивания
+    
+    # Используем awk для замены текста с сохранением кодировки
+    echo "$original_string" | awk -v text="$text_to_color" -v color="$color_code" -v reset="$NC" '{
+        # Функция gsub заменяет все вхождения подстроки
+        gsub(text, color text reset);
+        print;
+    }'
+}
+
 
 
 
