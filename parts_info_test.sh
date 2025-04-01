@@ -1,6 +1,8 @@
 #!/bin/bash
 
 : << 'TODO'
++ изменить формат тегов в xml-файле на более удобный (ввести необязательные теги вместо разделителей в  <name>)
++ добавить новый консольный шрифт во все наборы софта
 + завершить черновик templates/go_through_mountpoint_1st_checking.teplate.sh
 + внедрить наработки написанные в черновике templates/go_through_mountpoint_1st_checking.teplate.sh в протестировать их работу
 + добавить функции с регексами для валидации данных из xml-файла
@@ -18,9 +20,7 @@ if [[ "$EUID" -ne 0 ]]; then
 fi
 
 # Подключаем файл с цветовыми переменными
-source include/colors.sh
-
-# Подключаем функции
+source include/colors.sh # Подключаем функции
 source include/main_functions.sh
 source include/shared_functions.sh
 trap 'cleanup_all' EXIT
