@@ -14,11 +14,15 @@ sudo btrfs subvolume snapshot -r "$SRC_MNT/$SRC_SUBVOL" "$SRC_MNT/${SRC_SUBVOL}_
 
 # === Список вложенных сабволюмов ===
 echo "[+] Ищем вложенные сабволюмы..."
-mapfile -t SUBVOLS < <(sudo btrfs subvolume list -o "$SRC_MNT/$SRC_SUBVOL" | awk '{print $9}')
+mapfile -t SUBVOLS < <(
+  sudo btrfs subvolume list -o "$SRC_MNT/$SRC_SUBVOL" \
+    | sed -E 's/^.* path //' \
+    | grep -v -E '(snapshots|_snap|_send)' \
+    | grep -v '^\.snapshot'
+)
 
 # === Создание read-only снапшотов вложенных сабволюмов ===
 for subvol_rel in "${SUBVOLS[@]}"; do
-    name=$(basename "$subvol_rel")
     echo "[+] Снапшот вложенного сабволюма: $subvol_rel"
     sudo btrfs subvolume snapshot -r "$SRC_MNT/$subvol_rel" "$SRC_MNT/${subvol_rel}_send"
 done
@@ -44,3 +48,4 @@ if [ "$DELETE_SNAPS" = true ]; then
 fi
 
 echo "[✓] Перенос завершён."
+
