@@ -36,6 +36,7 @@
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
+			<bundle>terminus-font</bundle>
 			<bundle>base-devel rust cmake meson ninja</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
@@ -77,6 +78,7 @@
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay</bundle>
+			<bundle>terminus-font</bundle>
 			<bundle>base-devel rust cmake meson ninja</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu</bundle>
             <bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi</bundle>
@@ -107,6 +109,7 @@
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
+			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mplayer</bundle>
 			<bundle>gnome xorg-server xorg-xinit xorg-xauth xclip</bundle>
 			<bundle>gvim xed luakit</bundle>
@@ -138,6 +141,7 @@
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
+			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
@@ -168,6 +172,7 @@
 			<bundle>base-devel rust cmake</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
+			<bundle>terminus-font</bundle>
 		</pakages>
 		<extrafiles>
 			<home>
@@ -184,6 +189,7 @@
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less htop lvm2 cryptsetup</bundle>
 			<bundle>nvim nano vim micro</bundle>
 			<bundle>ntfs-3g dosfstools os-prober</bundle>
+			<bundle>terminus-font</bundle>
 		</pakages>
 		<extrafiles>
 			<home>
@@ -310,6 +316,8 @@
 			<point type="new">
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
+				<device>/dev/mainvg/mikro_testbox</device>
+				<subvolume>@arch_megatest</subvolume>
 				<crypt_mode>none_in_none</crypt_mode>
 				<names>@arch_megatest_in_/dev/mainvg/mikro_testbox</names>
 				<size>20G</size>
@@ -317,6 +325,8 @@
 			<point type="new">
 				<location>/boot</location>
 				<way>new_ext4_in_lvm</way>
+				<device>/dev/mainvg/boot_megatest</device>
+				<subvolume>@arch_megatest</subvolume>
 				<crypt_mode>none_in_none</crypt_mode>
 				<names>/dev/mainvg/boot_megatest</names>
 				<size>5G</size>

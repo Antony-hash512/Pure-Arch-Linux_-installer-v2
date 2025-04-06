@@ -162,7 +162,8 @@ def main():
             "mount_point": point.find('location').text.strip(),
             "type": point.find('way').text.strip(),
             "crypt_mode": point.find('crypt_mode').text.strip(),
-            "name": point.find('names').text.strip()
+            "name": point.find('names').text.strip(),
+            "device": point.find('device').text.strip(),
         }
         #проверяем есть ли тег size внутри point
         if point.find('size') is not None:
@@ -170,6 +171,12 @@ def main():
         #проверяем есть ли тег keyfile внутри point
         if point.find('keyfile') is not None:
             data["keyfile"] = point.find('keyfile').text.strip()
+        #проверяем есть ли тег subvolume внутри point
+        if point.find('subvolume') is not None:
+            data["subvolume"] = point.find('subvolume').text.strip()
+        #проверяем есть ли тег pv-volume внутри point
+        if point.find('pv-volume') is not None:
+            data["pv-volume"] = point.find('pv-volume').text.strip()
         bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
         print(bash_array)
     elif command == 'get_extra_mountpoint':
@@ -186,12 +193,19 @@ def main():
             "mount_point": point.find('location').text.strip(),
             "type": point.find('way').text.strip(),
             "crypt_mode": point.find('crypt_mode').text.strip(),
-            "name": point.find('names').text.strip()
+            "name": point.find('names').text.strip(),
+            "device": point.find('device').text.strip(),
         }
         #проверяем есть ли тег keyfile внутри point
         if point.find('keyfile') is not None:
             data["keyfile"] = point.find('keyfile').text.strip()
         bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
+        #проверяем есть ли тег subvolume внутри point
+        if point.find('subvolume') is not None:
+            data["subvolume"] = point.find('subvolume').text.strip()
+        #проверяем есть ли тег pv-volume внутри point
+        if point.find('pv-volume') is not None:
+            data["pv-volume"] = point.find('pv-volume').text.strip()
         print(bash_array)
     elif command == 'get_timezone':
         timezone_elem = component.find('timezone')
