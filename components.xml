@@ -361,7 +361,8 @@
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>@arch_home43_in_/dev/mainvg/gigabox</names>
+				<device>/dev/mainvg/gigabox</device>
+				<subvolume>@arch_home43</subvolume>
 			</point>
 		</mountpoints>
 		<hostname>katana</hostname>
@@ -498,7 +499,7 @@
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<names>/dev/virtvg/btrbox</names>
+				<device>/dev/virtvg/btrbox</device>
 				<subvolume>@home2</subvolume>
 			</point>
 		</mountpoints>
