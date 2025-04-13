@@ -19,6 +19,7 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
+* перенести все кейсы из updates2parts_checker.ahk в этот файл
 * привести xml к новому формату, в котором не используется разбивка имён при помощи "_in_"
 
 
@@ -169,3 +170,81 @@ done
 # для btrfs и pv внутри luks соответственно
 # пишем код как будто то бы тега names уже больше не существует
 
+# ассоциативный массив, который хранит строки с описанием запланированных изменений
+declare -A pending_commands_description
+
+for row in "${NEW_MOUNTPOINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    #получает короткие алиасы переменных и xml-файла
+    mount_point=${current_row["mount_point"]}
+    type=${current_row["type"]}
+    crypt_mode=${current_row["crypt_mode"]}
+    device=${current_row["device"]}
+    #в каждый кейс прописан подкейс с опциями шифрования
+    #устройства с которыми будут проводиться операции будет внесено в поле current_row["device_for_operations"]
+    #за исключением случаев, когда крипто-контейнер ещё только нужно будет создать
+    #в этих случаях заполнение этого поля будет происходить позже, на внесения измениний
+    #данное поле содержать или открытый luks или продублированное имя устройства, если шифрование не используется
+    case "$type" in
+        "format_ext4")
+            #в данном случае задан только партишн, который будет форматироваться
+            ext4_partition=$device
+            basename_of_ext4_partition=$(get_device_basename4lsblk "$ext4_partition")
+            case "$crypt_mode" in
+                "none")
+                    current_row["device_for_operations"]=$ext4_partition
+                    ;;
+                "file")
+                    # пояснение: пока не делаем что либо, то тех пор пока
+                    #пользователь подтвердит начало установки, до этого измененения на диск мы не вносим
+                    #будем использовать функцию для создания и открытия крипто-контейнера
+                    #create_and_open_crypt_container_by_file "$ext4_partition" "$keyfile"
+                    #запишим в качестве девайса для операций, то что ранее было записано функцией save_crypt_container_info
+                    #которая была вызвана внутри create_and_open_crypt_container_by_file
+                    pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
+ 
+                    ;;
+                "pwd")
+                    #будем использовать функцию для создания и открытия крипто-контейнера
+                    #create_and_open_crypt_container_with_new_pwd "$ext4_partition"
+                    #сохраним открытый крипто-контейнер в качестве девайса для операций
+                    pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
+                    ;;
+                *)
+                    echo "Неизвестный тип: $crypt_mode" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "new_subvol_in_btrfs")
+            #в данном случае заданы подтом, который будет создаваться, и существующий партишн, вне lvm
+            subvol_name=${current_row["subvolume"]}
+            btrfs_device=$device
+            current_row["subvolume"]=$subvol_name
+            case "$crypt_mode" in
+                "none")
+                    current_row["device_for_operations"]=$btrfs_device
+                    ;;
+                "file")
+                    #получаем путь к файлу-ключу
+                    keyfile=${current_row["keyfile"]}
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_file "$btrfs_device" "$keyfile"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    #имя отркытого контейнера было получено внутри прощедуры open_crypt_container_by_file
+                    #и сохранено в ассоциативный массив OPENED_CRYPT_CONTAINERS
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                "pwd")
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_pwd "$btrfs_device"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                *)
+                    echo "Неизвестный тип: $crypt_mode" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        
