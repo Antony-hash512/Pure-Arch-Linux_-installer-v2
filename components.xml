@@ -50,7 +50,7 @@
 			<bundle>alsa-utils pipewire pipewire-pulse pipewire-alsa sof-firmware pavucontrol</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
-			<bundle>gvim xed luakit</bundle>
+			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany gtksourceview5 code</bundle>
 			<bundle>rhvoice-language-english rhvoice-language-russian rhvoice-language-georgian rhvoice-voice-tatiana rhvoice-voice-natia rhvoice-voice-alan</bundle>
 			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
@@ -87,7 +87,7 @@
             <bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium thunar vlc terminator</bundle>
-			<bundle>gvim xed luakit</bundle>
+			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape obsidian pinta baobab</bundle>
 		</pakages>
@@ -112,7 +112,7 @@
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mplayer</bundle>
 			<bundle>gnome xorg-server xorg-xinit xorg-xauth xclip</bundle>
-			<bundle>gvim xed luakit</bundle>
+			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>gnome-extra i3lock</bundle>
 			<bundle>sof-firmware mplayer</bundle>
@@ -146,7 +146,7 @@
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs gmrun pavucontrol brightnessctl i3lock gsimplecal xclip</bundle>			
-			<bundle>gvim xed luakit</bundle>
+			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
@@ -187,7 +187,7 @@
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less htop lvm2 cryptsetup</bundle>
-			<bundle>nvim nano vim micro</bundle>
+			<bundle>nvim nano vim micro tree</bundle>
 			<bundle>ntfs-3g dosfstools os-prober</bundle>
 			<bundle>terminus-font</bundle>
 		</pakages>

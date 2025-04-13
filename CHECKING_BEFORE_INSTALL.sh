@@ -1,0 +1,171 @@
+#!/bin/sh
+# тут будет болванка для установочного скрипта
+# пока что пишу код, который все проверяет перед установкой
+# и всё наглядно отображает пользователю
+# когда он будет готов, то начну работать над самим установочным скриптом
+#0) проверяем на права суперпользователя и версию баша
+#1) задаём различные переменные и константы
+#1.1) проверяем кириллический шрифт (будет убрано в англ.версии)
+#1.2) устанавливаем необходимые пакеты
+#2) получаем от пользователя данные какие компоненты использовать
+#2.1) получаем данные и xml-файла
+#2.2) проверяем корректность данных в xml-файле (задача на потом, пока что работаем с заведомо корректними данными)
+#3) проходимся по массиву точек монтирования, открываем крипто-контейнеры, в которых уже есть существующая
+#структура
+#4) взяв за основу вывод команду lsblk отображаем пользователя информацию о:
+#  * уже существующих поддомах на btrfs
+#  * поддома btrfs, которые планируются к созданию (и какая точка мониторования планируется к привязке)
+#  * логические тома lvm, которые планируются к созданию (+ точки монирования)
+#  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
+#  * существующий проблемах, например нехватки свободного место и т.д.
+: <<'TODO'
+* привести xml к новому формату, в котором не используется разбивка имён при помощи "_in_"
+
+
+Другие TODO находятся в файлах prev_ver_of_install.sh и part_info_test.sh
+их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
+TODO
+# проверяем версию баша
+echo "Bash version: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
+echo ""
+if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
+    :
+else
+    echo "The required version of Bash is 4.3 or higher" >&2
+    exit 1
+fi
+
+#проверяем на права суперпользователя
+if [[ "$EUID" -ne 0 ]]; then
+    echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
+    exit 1
+fi
+
+
+#1) задаём различные переменные и константы
+# Подключаем файл с цветовыми переменными
+source include/colors.sh
+# Подключаем функции
+source include/main_functions.sh
+source include/shared_functions.sh
+# используем trap для вызова функции cleanup_all при любом выходе из скрипта
+trap 'cleanup_all' EXIT
+
+
+# Заранее вычисленные степени 1024
+export MB=1048576  # 1024^2
+export GB=1073741824  # 1024^3
+export TB=1099511627776  # 1024^4
+export PB=1125899906842624  # 1024^5
+export EB=1152921504606846976  # 1024^6
+
+# Строковые константы
+export AUTODIR="autocreated_scripts"
+export XML_FILE="components.xml"
+export XML_PARSER="get_data_from_components_xml.py"
+export CHROOT_SCRIPT="run_inside_chroot.sh"
+
+# создаём ассоциативный массив problems для возможного запланированного выхода 
+declare -A problems
+#вносим значения в массив (пустая строка - означает, что проблемы нет)
+problems["no_free_space"]=""
+problems["btrfs_subvolume_name_already_exists"]=""
+problems["lvm_logical_volume_name_already_exists"]=""
+problems["btrfs_device_not_found"]=""
+problems["lvm_group_not_found"]=""
+problems["ext4_device_not_found"]=""
+problems["syntax_problem_in_xml_file"]=""
+
+#флаг для запланрованного выхода из скрипта
+exit_and_show_problems_flag=0
+
+#создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
+declare -A ALL_BTRFS_MOUNTPOINTS
+
+#создаём ассоциативный массив, который будет хранить имена открытых крипто-контейнеров
+declare -A OPENED_CRYPT_CONTAINERS
+
+#создаём массив для хранения имен новых точек монтирования
+declare -a NEW_MOUNTPOINTS
+
+#1.1) проверяем кириллический шрифт (будет убрано в англ.версии)
+echo "test тест"
+echo "если этот текст можно прочитать, то можно продолжать без смены шрифта"
+echo "Do you want to switch to a font with Cyrillic support? (Y/n)"
+read -r USE_CYRILLIC_FONT
+if [[ -z "$USE_CYRILLIC_FONT" || "$USE_CYRILLIC_FONT" =~ ^[Yy]$ ]]; then
+    setfont cyr-sun16
+    echo "test тест"
+    echo "была использована команда setfont cyr-sun16"
+    echo "if it doesn't work, you can use Ctrl+C to exit and to solve this problem by another way"
+else
+    echo "Остаемся на стандартном шрифте (if the cyrillic font doesn't work, you can use Ctrl+C to exit)"
+fi
+#далее считается что кириллица поддерживается (ведем диалог с пользователем на русском, английская версия будет реализована позже, пока что нет смысла)
+echo "перед использованием скрипта также должен быть настроен доступ в интернет и выпонена необходимая минимальная разбивка разделов на диске"
+read -p "Enter - продолжить; ctrl+C - прервать"
+
+#1.2) устанавливаем необходимые пакеты
+pacman -Sy
+packages=("arch-install-scripts" "terminus-font" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
+
+for pkg in "${packages[@]}"; do
+    if ! pacman -Qi "$pkg" &>/dev/null; then
+        sudo pacman -S "$pkg" --noconfirm
+    fi
+done
+# "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
+# почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
+# можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
+
+
+
+#2) получаем от пользователя данные какие компоненты использовать
+# Обработка аргументов командной строки
+INSTALL_LOCATION_ID=""
+while getopts "i:" opt; do
+  case $opt in
+    i)
+      # Проверяем существует ли указанное значение install_location
+      if check_install_location_exists "$OPTARG"; then
+        INSTALL_LOCATION_ID="$OPTARG"
+        echo -e "${GREEN}Используем указанное место установки: $INSTALL_LOCATION_ID${NC}"
+      else
+        echo -e "${RED}Указанное место установки '$OPTARG' не найдено${NC}"
+      fi
+      ;;
+    \?)
+      echo -e "${RED}Неверный параметр -$OPTARG${NC}" >&2
+      ;;
+  esac
+done
+
+# Если INSTALL_LOCATION_ID не был задан через ключ -i или указанное значение не найдено
+if [[ -z "$INSTALL_LOCATION_ID" ]]; then
+    # Выбор места установки
+    INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
+fi
+# Имена других компонентов будут точно так же получены из ключей или запрошены у пользовтеля
+# когда начнётся работа над частью скрипта, которая отвечает за установку
+
+#2.1) получаем данные и xml-файла
+#получаем информацию содержащуюся в xml-файле
+NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
+echo -e "${YELLOW}Количество новых точек монтирования:${NC} $NEW_MOUNTPOINTS_AMOUNT"
+
+for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
+    NEW_MOUNTPOINT=$(parse_xml "install_location" "get_new_mountpoint" "$i")
+    CURRENT_POINT_NAME="new_point$i"
+    declare -A "$CURRENT_POINT_NAME"
+    #получаем ассоциативный массив из строки
+    eval "$CURRENT_POINT_NAME=$NEW_MOUNTPOINT"
+    NEW_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
+done
+
+#3) проходимся по массиву точек монтирования, открываем крипто-контейнеры,
+# в которых уже есть существующая структура
+# в новом формате xml-файла тег names будет полностью изъят,
+# вместо него будет использоваться обязательный тег device и опциональные теги subvolume и pv-volume
+# для btrfs и pv внутри luks соответственно
+# пишем код как будто то бы тега names уже больше не существует
+
