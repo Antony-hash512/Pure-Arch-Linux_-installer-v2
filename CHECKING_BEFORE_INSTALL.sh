@@ -19,9 +19,13 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* перенести все кейсы из updates2parts_checker.ahk в этот файл
+* перенести логику вывода информации пользователю (нужно подумать оставить ли 
+её в том виде, ли тот код нужно переделать)
 * привести xml к новому формату, в котором не используется разбивка имён при помощи "_in_"
-
+* создать функцию, которая будет проверять корректность данных в xml-файле
+* создать функции, которые будут проверять хватает ли свободного места
+реализоцию можно посмотреть в prev_ver_of_install.sh одну для сабволюмов btrfs, другую для lvm
+* добавить обработку всех возможных проблем, которые могут возникнуть
 
 Другие TODO находятся в файлах prev_ver_of_install.sh и part_info_test.sh
 их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
@@ -220,7 +224,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #в данном случае заданы подтом, который будет создаваться, и существующий партишн, вне lvm
             subvol_name=${current_row["subvolume"]}
             btrfs_device=$device
-            current_row["subvolume"]=$subvol_name
             case "$crypt_mode" in
                 "none")
                     current_row["device_for_operations"]=$btrfs_device
@@ -247,4 +250,126 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     ;;
             esac
             ;;
-        
+       "new_subvol_in_btrfs_in_lvm")
+            subvol_name=${current_row["subvolume"]}
+            lv_name=$device
+            btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже          
+            case "$crypt_mode" in
+                "none_in_none")
+                    current_row["device_for_operations"]=$lv_name
+                    ;;
+                "none_in_file")
+                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
+                    pv_device=${cureent_row["pv-volume"]}
+                    #т.к. названия группы томов и логического тома ожидается получить от пользователя, то в данном случае
+                    #в качестве девайса для операций будет использоваться то, что указал пользователь, а не открытый крипто-контейнер
+                    #lvm в данном случае сам всё найдёт по имени группы томов, которой принадлежит в физический том из крипто-контейнера
+                    #при этом пользователя надо предупредить о возможной дыре в безопасности, 
+                    #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
+                    current_row["device_for_operations"]=$lv_name
+                    #используем функцию для открытия крипто-контейнера
+                    keyfile=${current_row["keyfile"]}
+                    open_crypt_container_by_file "$pv_device" "$keyfile"
+                    ;;
+                "none_in_pwd")
+                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
+                    pv_device=${cureent_row["pv-volume"]}
+                    current_row["device_for_operations"]=$lv_name
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_pwd "$pv_device"
+                    ;;
+                "file_in_none")
+                    #получаем путь к файлу-ключу
+                    keyfile=${current_row["keyfile"]}
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_file "$btrfs_device" "$keyfile"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                "pwd_in_none")
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_pwd "$btrfs_device"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                *)
+                    echo "Неизвестный тип: $crypt_mode" >&2
+                    exit 1
+                    ;;
+            esac
+            
+            ;;
+        "new_ext4_in_lvm")
+            lv_name=$device
+            #имя и группы нужно будет получить через спец. функции, которые работают через регексы и учитывают запись через mapper
+            #vg_name=$(echo "$lv_name" | awk -F/ '{print $3}')  # Получаем имя группы томов
+
+            #пока что пишем тут команды как будто бы всё было бы сделано сразу, потом закоментируем для откладывания на потом
+
+            size_of_lv=${current_row["size"]}
+            case "$crypt_mode" in
+                "none_in_none")
+                    current_row["device_for_operations"]=$lv_name
+                    ;;
+                "none_in_file")
+                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
+                    pv_device=${current_row["pv-volume"]}
+                    #используем функцию для открытия крипто-контейнера
+                    keyfile=${current_row["keyfile"]}
+                    open_crypt_container_by_file "$pv_device" "$keyfile"
+                    #opened_lvm_device=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                "none_in_pwd")
+                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
+                    pv_device=${current_row["pv-volume"]}
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_pwd "$pv_device"
+                    ;;
+                "file_in_none")
+                    #в этих двух случаях нужно будет создать новые крипто-контейнеры заданного размера
+                    # TODO: пока что просто отбражаем пользователю планируемые изменения
+                    # но не создаём ничего нового
+                    #получаем путь к файлу-ключу
+                    #keyfile=${current_row["keyfile"]}
+                    #получаем размер тома
+                    size_of_lv=${current_row["size"]}
+                    lv_basename=$(get_device_basename4lsblk "$lv_name")
+                    pending_commands_description["$lv_basename"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
+
+                   # v эти строки нужно будет перенести в ту часть скрипта,
+                   # в которой будет уже непосредственная установка
+                   # #получаем имя тома и группы томов через функции
+                   # lv_basename=$(get_lv_name_from_fulldevname "$lv_name")
+                   # vg_name=$(get_vg_name_from_fulldevname "$lv_name")
+                   # #создаём логический том заданного размера size_of_lv
+                   # lvcreate -l "$size_of_lv" -n "$lv_basename" "$vg_name"
+                   # #создаём крипто-контейнер и открываем его
+                   # #используем функцию для создания и открытия крипто-контейнера
+                   # create_and_open_crypt_container_by_file "$lv_name" "$keyfile"
+                   # #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                   # current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                   # 
+                    ;;
+                "pwd_in_none")
+                    size_of_lv=${current_row["size"]}
+                    lv_basename=$(get_device_basename4lsblk "$lv_name")
+                    pending_commands_description["$lv_basename"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
+                    #используем функцию для открытия крипто-контейнера
+                    #open_crypt_container_by_pwd "$lv_name"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    #current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                *)
+                    echo "Неизвестный тип: $crypt_mode" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+            echo "Неизвестный тип: $type" >&2
+            exit 1
+            ;;
+    esac
+    
+done
+ 

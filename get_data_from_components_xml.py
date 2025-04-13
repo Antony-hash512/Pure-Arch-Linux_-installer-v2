@@ -162,7 +162,6 @@ def main():
             "mount_point": point.find('location').text.strip(),
             "type": point.find('way').text.strip(),
             "crypt_mode": point.find('crypt_mode').text.strip(),
-            "name": point.find('names').text.strip(),
             "device": point.find('device').text.strip(),
         }
         #проверяем есть ли тег size внутри point
@@ -193,7 +192,6 @@ def main():
             "mount_point": point.find('location').text.strip(),
             "type": point.find('way').text.strip(),
             "crypt_mode": point.find('crypt_mode').text.strip(),
-            "name": point.find('names').text.strip(),
             "device": point.find('device').text.strip(),
         }
         #проверяем есть ли тег keyfile внутри point
