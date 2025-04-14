@@ -19,7 +19,10 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* нужно добавить функции, которые проверяют существование партишна по uuid
+* написать функцию для проверки существования логического тома по имени
+* разместить правильные проверки на всё
+* протестировать написанные функции
+* написать функцию для запланированного выхода из скрипта
 * перенести логику вывода информации пользователю (нужно подумать оставить ли 
 её в том виде, ли тот код нужно переделать)
 * создать функцию, которая будет проверять корректность данных в xml-файле
@@ -186,7 +189,10 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     mount_point=${current_row["mount_point"]}
     type=${current_row["type"]}
     crypt_mode=${current_row["crypt_mode"]}
-    device=${current_row["device"]}
+    
+    #device=${current_row["device"]} #device выпилен из xml-файла
+    #вместо него будет использоваться uuid или lv-volume в зависимости от type
+    
     #в каждый кейс прописан подкейс с опциями шифрования
     #устройства с которыми будут проводиться операции будет внесено в поле current_row["device_for_operations"]
     #за исключением случаев, когда крипто-контейнер ещё только нужно будет создать
@@ -195,6 +201,19 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     case "$type" in
         "format_ext4")
             #в данном случае задан только партишн, который будет форматироваться
+
+            #получаем uuid
+            uuid=${current_row["uuid"]}
+            #проверяем существует ли устройство с таким uuid
+            if ! device=$(check_uuid_exists "$uuid"); then
+                echo -e "${RED}Устройство с uuid '$uuid' не существует${NC}" >&2
+                # добавляем проблему для запланрованного выхода из скрипта
+                problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $uuid не найдено\n"
+                exit_and_show_problems_flag=1
+                #выходим из case для проверки других точек монтирования
+                continue
+            fi
+
             ext4_partition=$device
             basename_of_ext4_partition=$(get_device_basename4lsblk "$ext4_partition")
             case "$crypt_mode" in
@@ -224,6 +243,19 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             esac
             ;;
         "new_subvol_in_btrfs")
+
+            #получаем uuid
+            uuid=${current_row["uuid"]}
+            #проверяем существует ли устройство с таким uuid
+            if ! device=$(check_uuid_exists "$uuid"); then
+                echo -e "${RED}Устройство с uuid '$uuid' не существует${NC}" >&2
+                # добавляем проблему для запланрованного выхода из скрипта
+                problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $uuid не найдено\n"
+                exit_and_show_problems_flag=1
+                #выходим из case для проверки других точек монтирования
+                continue
+            fi
+
             #в данном случае заданы подтом, который будет создаваться, и существующий партишн, вне lvm
             subvol_name=${current_row["subvolume"]}
             btrfs_device=$device
