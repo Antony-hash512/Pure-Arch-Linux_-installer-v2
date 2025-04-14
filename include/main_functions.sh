@@ -40,19 +40,7 @@ cleanup_all(){
     else
         echo -e "${YELLOW}Нет временных точек монтирования для размонтирования${NC}"
     fi
-    #cleanup_dummy_device
-    #if [[ -n $dummy_dev ]]; then
-        ##парсим имя файла из комманды
-        #filename=$(losetup $dummy_dev | sed -n 's/.*(\(.*\))/\1/p')
-        #losetup -d $dummy_dev
 
-        #if [[ -f "$filename" ]]; then
-            #echo "Удаляем файл: $filename"
-            #rm -f "$filename"
-        #else
-            #echo -e "${RED}Ошибка: файл $filename не существует${NC}" >&2
-        #fi
-    #fi
 
     #удаляем временные файлы
     rm -f $LSBLK_RAW_INFO
@@ -69,31 +57,6 @@ cleanup_all(){
     done
 }
 
-# Функция для запуска теста
-run_test() {
-    local test_name="$1"
-    local input="$2"
-    local expected="$3"
-    local type="$4"
-
-    if [[ "$type" == "vg" ]]; then
-        result=$(get_vg_name_from_fulldevname "$input")
-    elif [[ "$type" == "lv" ]]; then
-        result=$(get_lv_name_from_fulldevname "$input")
-    fi
-    
-    if [[ "$result" == "$expected" ]]; then
-        echo -e "${GREEN}УСПЕХ${NC}: $test_name"
-        echo "  Входные данные: '$input'"
-        echo "  Ожидалось: '$expected'"
-        echo "  Получено:  '$result'"
-    else
-        echo -e "${RED}ОШИБКА${NC}: $test_name"
-        echo "  Входные данные: '$input'"
-        echo "  Ожидалось: '$expected'"
-        echo "  Получено:  '$result'"
-    fi
-}
 
 # Функция для проверки существования указанного install_location_id
 check_install_location_exists() {
@@ -289,17 +252,7 @@ get_vg_name_from_fulldevname() {
     fi
     echo $vg_name
 }
-#get_lv_name_from_fulldevname() {
-    #local device=$1
-    #output=$(get_vg_or_lv_name_from_fulldevname "$device" "lv")
-    #echo $output
-#}
 
-#get_vg_name_from_fulldevname() {
-    #local device=$1
-    #output=$(get_vg_or_lv_name_from_fulldevname "$device" "vg")
-    #echo $output
-#}
 color_text_in_string() {
     local original_string="$1"    # Исходная строка
     local text_to_color="$2"      # Текст, который нужно окрасить
@@ -601,28 +554,6 @@ safe_lvs() {
     return $ret_val
 }
 
-#create_btrfs_dummy_device() {
-    #local size="${1:-100M}"                         # Размер по умолчанию
-    #local img_file loop_dev
-
-    ## Создание временного файла
-    #img_file="$(mktemp --tmpdir=/tmp dummy.XXXXXX.img)"
-    #fallocate -l "$size" "$img_file"
-
-    ## Подключение loop-устройства
-    #loop_dev=$(losetup -f)
-    #losetup "$loop_dev" "$img_file"
-
-    ## Форматирование в Btrfs с --mixed для экономии места
-    #mkfs.btrfs -q -f --mixed "$loop_dev"
-
-    ## Экспорт для последующего удаления
-    #export DUMMY_IMG="$img_file"
-    #export DUMMY_LOOP="$loop_dev"
-
-    ## Возврат пути к loop-устройству
-    #echo "$loop_dev"
-#}
 
 # Вспомогательная функция для сохранения информации об открытом контейнере
 save_crypt_container_info() {
