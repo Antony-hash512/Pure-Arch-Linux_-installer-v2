@@ -197,13 +197,13 @@ def main():
         #проверяем есть ли тег keyfile внутри point
         if point.find('keyfile') is not None:
             data["keyfile"] = point.find('keyfile').text.strip()
-        bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
         #проверяем есть ли тег subvolume внутри point
         if point.find('subvolume') is not None:
             data["subvolume"] = point.find('subvolume').text.strip()
         #проверяем есть ли тег pv-volume внутри point
         if point.find('pv-volume') is not None:
             data["pv-volume"] = point.find('pv-volume').text.strip()
+        bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
         print(bash_array)
     elif command == 'get_timezone':
         timezone_elem = component.find('timezone')
