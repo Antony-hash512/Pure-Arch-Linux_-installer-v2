@@ -206,14 +206,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/vivo/btrbox</device>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
 				<subvolume>@hypr</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/vivo/btrbox</device>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
 				<subvolume>@home2</subvolume>
 			</point>
 		</mountpoints>
@@ -236,14 +236,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/vivo/btrbox</device>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
 				<subvolume>@</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/vivo/btrbox</device>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
 				<subvolume>@home</subvolume>
 			</point>
 		</mountpoints>
@@ -265,14 +265,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/vivo/btrbox</device>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
 				<subvolume>@arch_gnome</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/vivo/btrbox</device>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
 				<subvolume>@home_gnome</subvolume>
 			</point>
 		</mountpoints>
@@ -294,7 +294,7 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/mainvg/mikro_testbox</device>
+				<lv-volume>/dev/mainvg/mikro_testbox</lv-volume>
 				<subvolume>@arch_gnome</subvolume>
 				<size>20G</size>
 			</point>
@@ -302,7 +302,7 @@
 				<location>/home</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/mainvg/gnome_home</device>
+				<lv-volume>/dev/mainvg/gnome_home</lv-volume>
 				<size>5G</size>
 			</point>
 		</mountpoints>
@@ -323,7 +323,7 @@
 			<point type="new">
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
-				<device>/dev/mainvg/mikro_testbox</device>
+				<lv-volume>/dev/mainvg/mikro_testbox</lv-volume>
 				<subvolume>@arch_megatest</subvolume>
 				<crypt_mode>none_in_none</crypt_mode>
 				<size>20G</size>
@@ -331,7 +331,7 @@
 			<point type="new">
 				<location>/boot</location>
 				<way>new_ext4_in_lvm</way>
-				<device>/dev/mainvg/boot_megatest</device>
+				<lv-volume>/dev/mainvg/boot_megatest</lv-volume>
 				<crypt_mode>none_in_none</crypt_mode>
 				<size>5G</size>
 			</point>
@@ -354,14 +354,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/mainvg/gigabox</device>
+				<lv-volume>/dev/mainvg/gigabox</lv-volume>
 				<subvolume>@arch_system_test43</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/mainvg/gigabox</device>
+				<lv-volume>/dev/mainvg/gigabox</lv-volume>
 				<subvolume>@arch_home43</subvolume>
 			</point>
 		</mountpoints>
@@ -383,14 +383,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/btrbox</device>
+				<lv-volume>/dev/virtvg/btrbox</lv-volume>
 				<subvolume>@arch</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/btrbox</device>
+				<lv-volume>/dev/virtvg/btrbox</lv-volume>
 				<subvolume>@home</subvolume>
 			</point>
 		</mountpoints>
@@ -412,14 +412,14 @@
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/ext4root</device>
+				<lv-volume>/dev/virtvg/ext4root</lv-volume>
 				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/ext4home</device>
+				<lv-volume>/dev/virtvg/ext4home</lv-volume>
 				<size>5G</size>
 			</point>
 		</mountpoints>
@@ -441,14 +441,14 @@
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
-				<device>/dev/virtvg/ext4root_enc</device>
+				<lv-volume>/dev/virtvg/ext4root_enc</lv-volume>
 				<size>20G</size>
 			</point>
 			<point type="new">
 				<location>/boot</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/ext4boot</device>
+				<lv-volume>/dev/virtvg/ext4boot</lv-volume>
 				<size>2G</size>
 			</point>
 		</mountpoints>
@@ -470,7 +470,7 @@
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
-				<device>/dev/virtvg/ext4root_enc</device>
+				<lv-volume>/dev/virtvg/ext4root_enc</lv-volume>
 				<size>20G</size>
 			</point>
 		</mountpoints>
@@ -492,14 +492,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/btrbox</device>
+				<lv-volume>/dev/virtvg/btrbox</lv-volume>
 				<subvolume>@arch2</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/btrbox</device>
+				<lv-volume>/dev/virtvg/btrbox</lv-volume>
 				<subvolume>@home2</subvolume>
 			</point>
 		</mountpoints>
@@ -521,14 +521,14 @@
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/btrbox</device>
+				<lv-volume>/dev/virtvg/btrbox</lv-volume>
 				<subvolume>@arch_gnome</subvolume>
 			</point>
 			<point type="new">
 				<location>/home</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<device>/dev/virtvg/btrbox</device>
+				<lv-volume>/dev/virtvg/btrbox</lv-volume>
 				<subvolume>@home_gnome</subvolume>
 			</point>
 		</mountpoints>

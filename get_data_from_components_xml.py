@@ -162,7 +162,6 @@ def main():
             "mount_point": point.find('location').text.strip(),
             "type": point.find('way').text.strip(),
             "crypt_mode": point.find('crypt_mode').text.strip(),
-            "device": point.find('device').text.strip(),
         }
         #проверяем есть ли тег size внутри point
         if point.find('size') is not None:
@@ -176,6 +175,10 @@ def main():
         #проверяем есть ли тег pv-volume внутри point
         if point.find('pv-volume') is not None:
             data["pv-volume"] = point.find('pv-volume').text.strip()
+        if point.find('lv-volume') is not None:
+            data["lv-volume"] = point.find('lv-volume').text.strip()
+        if point.find('uuid') is not None:
+            data["uuid"] = point.find('uuid').text.strip()
         bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
         print(bash_array)
     elif command == 'get_extra_mountpoint':
@@ -192,7 +195,6 @@ def main():
             "mount_point": point.find('location').text.strip(),
             "type": point.find('way').text.strip(),
             "crypt_mode": point.find('crypt_mode').text.strip(),
-            "device": point.find('device').text.strip(),
         }
         #проверяем есть ли тег keyfile внутри point
         if point.find('keyfile') is not None:
@@ -203,6 +205,10 @@ def main():
         #проверяем есть ли тег pv-volume внутри point
         if point.find('pv-volume') is not None:
             data["pv-volume"] = point.find('pv-volume').text.strip()
+        if point.find('lv-volume') is not None:
+            data["lv-volume"] = point.find('lv-volume').text.strip()
+        if point.find('uuid') is not None:
+            data["uuid"] = point.find('uuid').text.strip()
         bash_array = "(" + ' '.join([f'["{k}"]="{v}"' for k, v in data.items()]) + ")"
         print(bash_array)
     elif command == 'get_timezone':
