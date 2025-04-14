@@ -69,6 +69,31 @@ cleanup_all(){
     done
 }
 
+# Функция для запуска теста
+run_test() {
+    local test_name="$1"
+    local input="$2"
+    local expected="$3"
+    local type="$4"
+
+    if [[ "$type" == "vg" ]]; then
+        result=$(get_vg_name_from_fulldevname "$input")
+    elif [[ "$type" == "lv" ]]; then
+        result=$(get_lv_name_from_fulldevname "$input")
+    fi
+    
+    if [[ "$result" == "$expected" ]]; then
+        echo -e "${GREEN}УСПЕХ${NC}: $test_name"
+        echo "  Входные данные: '$input'"
+        echo "  Ожидалось: '$expected'"
+        echo "  Получено:  '$result'"
+    else
+        echo -e "${RED}ОШИБКА${NC}: $test_name"
+        echo "  Входные данные: '$input'"
+        echo "  Ожидалось: '$expected'"
+        echo "  Получено:  '$result'"
+    fi
+}
 
 # Функция для проверки существования указанного install_location_id
 check_install_location_exists() {
