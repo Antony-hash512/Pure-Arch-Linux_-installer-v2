@@ -554,6 +554,39 @@ safe_lvs() {
     return $ret_val
 }
 
+# Функция для проверки существования группы томов LVM
+# Возвращает 0 (успех), если группа существует, 1 (ошибка), если не существует
+check_vg_exists() {
+    local input="$1"
+    local vg_name=""
+    
+    # Если путь передан в формате /dev/vgname/lvname или /dev/mapper/vgname-lvname
+    if [[ "$input" == "/dev/"* ]]; then
+        vg_name=$(get_vg_name_from_fulldevname "$input")
+    else
+        # Иначе считаем, что передано непосредственно имя группы томов
+        vg_name="$input"
+    fi
+    
+    # Проверяем существование группы томов с помощью safe_vgs
+    if safe_vgs "$vg_name" &>/dev/null; then
+        return 0 # Группа существует
+    else
+        return 1 # Группа не существует
+    fi
+}
+
+safe_vgs(){
+        # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
+    export LVM_SUPPRESS_FD_WARNINGS=1
+    # Вызываем lvs с переданными аргументами
+    vgs "$@"
+    local ret_val=$?
+    # Снимаем переменную окружения
+    unset LVM_SUPPRESS_FD_WARNINGS
+    return $ret_val
+
+}
 
 # Вспомогательная функция для сохранения информации об открытом контейнере
 save_crypt_container_info() {
