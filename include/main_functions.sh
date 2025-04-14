@@ -1041,3 +1041,22 @@ create_and_open_crypt_container_with_new_pwd() {
     return 0
 }
 
+# Функция для проверки существования раздела с указанным UUID
+check_uuid_exists() {
+    local uuid="$1"
+    
+    # Проверяем, что UUID не пуст
+    if [ -z "$uuid" ]; then
+        echo -e "${RED}Ошибка: UUID не указан${NC}" >&2
+        return 2
+    fi
+    
+    # Ищем устройство с указанным UUID
+    if device_path=$(blkid -U "$uuid" 2>/dev/null); then
+        echo "$device_path"
+        return 0  # Раздел существует
+    else
+        return 1  # Раздел не существует
+    fi
+}
+
