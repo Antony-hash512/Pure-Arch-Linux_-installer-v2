@@ -1,6 +1,16 @@
+not only:
+JetBrains:
+pycharm-community-edition
+
+names:
+WebStorm
+Aqua
+CLion
+Rider
+RustRover
+
+---------------------
 yt-dlp
-
-
 brightnessctl
 waybar
 swaylock
