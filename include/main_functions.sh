@@ -156,7 +156,7 @@ one_line() {
     echo "$input_data" | tr '\n' ' ' | sed 's/ $//'
 }
 
-# Функция для замены переносов строк на запятую
+# Функция для замены переносов строк на запятую (скорее всего, не будет использоваться)
 one_line_with_commas() {
     # Получаем данные из первого аргумента
     local input_data="$1"
@@ -165,24 +165,10 @@ one_line_with_commas() {
     echo "$input_data" | tr '\n' ',' | sed 's/,$//'
 }
 
-# Функция для преобразования формата mapper в реальный формат
-# Работает только для устройств, которые существуют
-#standardize_lvm_format_oldversion() {
-    #local device=$1
-    ##если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
-    #if [[ "$device" =~ ^/dev/mapper/ ]]; then
-        ##получаем имя группы (убрав лишние символы пробелов и табуляций)
-        #vg_name=$(safe_lvs --noheading -o vg_name "$device" | tr -d ' ')
-        #lv_name=$(safe_lvs --noheading -o lv_name "$device" | tr -d ' ')
-        #echo "/dev/$vg_name/$lv_name"
-    #else
-        #echo "$device"
-    #fi
-#}
 
 # Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
 # Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
-# ВНИМАНИЕ !!! ДАННУЮ ФУНКЦИЮ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ с /dev/mapper/* томами открытыми из luks, она только для логических томов lvm
+# ВНИМАНИЕ !!! ДАННУЮ ФУНКЦИЮ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ с /dev/mapper/* томов открытых из luks, она только для логических томов lvm
 standardize_lvm_format() {
     local device=$1
     #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
@@ -562,6 +548,30 @@ check_vg_exists() {
         return 0 # Группа существует
     else
         return 1 # Группа не существует
+    fi
+}
+# Функция для проверки существования логического тома
+# Название подчёркивается что требуется полное имя устройства
+check_lv_exists_by_full_devname() {
+    local input="$1"
+    local lv_name=""
+    local vg_name=""
+    
+    # Если путь передан в формате /dev/vgname/lvname или /dev/mapper/vgname-lvname
+    if [[ "$input" == "/dev/"* ]]; then
+        lv_name=$(get_lv_name_from_fulldevname "$input")
+        vg_name=$(get_vg_name_from_fulldevname "$input")
+    else
+        # В этом случае нам нужно знать группу томов
+        echo -e "${RED}Ошибка:${NC} Требуется полное имя устройства" >&2
+        return 2
+    fi
+    
+    # Проверяем существование логического тома с помощью safe_lvs
+    if safe_lvs "$vg_name/$lv_name" &>/dev/null; then
+        return 0 # Том существует
+    else
+        return 1 # Том не существует
     fi
 }
 
