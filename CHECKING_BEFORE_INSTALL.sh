@@ -19,13 +19,12 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* разместить правильные проверки на всё
+* создать функции, которые будут проверять хватает ли свободного места
+реализоцию можно посмотреть в prev_ver_of_install.sh одну для сабволюмов btrfs, другую для lvm
 * написать функцию для запланированного выхода из скрипта
 * перенести логику вывода информации пользователю (нужно подумать оставить ли 
 её в том виде, ли тот код нужно переделать)
 * создать функцию, которая будет проверять корректность данных в xml-файле
-* создать функции, которые будут проверять хватает ли свободного места
-реализоцию можно посмотреть в prev_ver_of_install.sh одну для сабволюмов btrfs, другую для lvm
 * протестировать написанные функции
 * добавить обработку всех возможных проблем, которые могут возникнуть для запланрованного выхода из скрипта
 в одном из трёх мест после каждого из наборов проверок
@@ -76,15 +75,19 @@ export CHROOT_SCRIPT="run_inside_chroot.sh"
 # создаём ассоциативный массив problems для возможного запланированного выхода 
 declare -A problems
 #вносим значения в массив (пустая строка - означает, что проблемы нет)
-# это чекаем на этапе формирования списка запланированных изменений
-problems["no_free_space"]="" 
-problems["btrfs_subvolume_name_already_exists"]=""
+
+# это чекаем, ещё до этапа открытия крипто-контейнеров:
+problems["syntax_problem_in_xml_file"]="" #реализацию можно отложить т.к. пока задаю только корректные данные
+# на этапе открытия крипто-контейнеров:
+problems["lvm_group_not_found"]="" 
+problems["partition_device_by_uuid_not_found"]="" 
+problems["lvm_logical_volume_not_found"]="" 
 problems["lvm_logical_volume_name_already_exists"]=""
-# эти две проблемы можно чекнуть на этапе открытия крипто-контейнеров
-problems["lvm_group_not_found"]="" # (1)
-problems["partition_device_by_uuid_not_found"]="" # (2)
-# это чекаем, ещё до этапа открытия крипто-контейнеров
-problems["syntax_problem_in_xml_file"]=""
+problems["no_free_space_in_vg"]="" 
+# на этапе формирования списка запланированных изменений:
+problems["btrfs_subvolume_name_already_exists"]=""
+problems["no_free_space_for_new_subvolume"]=""
+
 
 #флаг для запланрованного выхода из скрипта
 exit_and_show_problems_flag=0
@@ -117,7 +120,7 @@ read -p "Enter - продолжить; ctrl+C - прервать"
 
 #1.2) устанавливаем необходимые пакеты
 pacman -Sy
-packages=("arch-install-scripts" "terminus-font" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
@@ -127,7 +130,6 @@ done
 # "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
 # можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
-
 
 
 #2) получаем от пользователя данные какие компоненты использовать
@@ -207,7 +209,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             if ! device=$(check_uuid_exists "$uuid"); then
                 echo -e "${RED}Устройство с uuid '$uuid' не существует${NC}" >&2
                 # добавляем проблему для запланрованного выхода из скрипта
-                problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $uuid не найдено\n"
+                problems["partition_device_by_uuid_not_found"]+="Ошибка: устройство с uuid $uuid не найдено\n"
                 exit_and_show_problems_flag=1
                 #выходим из case для проверки других точек монтирования
                 continue
@@ -286,6 +288,36 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             ;;
        "new_subvol_in_btrfs_in_lvm")
             subvol_name=${current_row["subvolume"]}
+            device=${current_row["lv-volume"]}
+            lv_name=$device
+            btrfs_device=$lv_name #аллиас т.к. по смыслу это одно и тоже
+
+            #сначала нужно отдельно обработать случаи, когда физический том lvm зашифрован
+            #в этом случае нужно будет сначала открыть крипто-контейнер
+            #иначе проверки на наличие группы томов и логического тома не сработают
+            
+            #в таких режимах от пользователя также требуется указать партишн с luks в котором лежит pv lvm
+            #т.к. названия группы томов и логического тома ожидается получить от пользователя, то в данном случае
+            #в качестве девайса для операций будет использоваться то, что указал пользователь, а не открытый крипто-контейнер
+            #lvm в данном случае сам всё найдёт по имени группы томов, которой принадлежит в физический том из крипто-контейнера
+            #при этом пользователя надо предупредить о возможной дыре в безопасности, 
+            #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
+            
+            if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
+                pv_device=${current_row["pv-volume"]}
+                if [[ "$crypt_mode" == "none_in_file" ]]; then
+                    #получаем путь к файлу-ключу
+                    keyfile=${current_row["keyfile"]}
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_file "$pv_device" "$keyfile"
+                elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
+                    open_crypt_container_by_pwd "$pv_device"
+                fi
+                current_row["device_for_operations"]=$lv_name;
+                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только один зашифрованный физический том lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+                echo -e "${YELLOW}Возможность использования нескольких зашифрованных физических томов lvm в данной версии скрипта не предусмотрена${NC}"
+            fi
+            
             #получаем имя группы томов
             vg_name=$(get_vg_name_from_fulldevname "$device")
             #проверяем существует ли группа томов
@@ -297,31 +329,28 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 #выходим из case для проверки других точек монтирования
                 continue
             fi
-            lv_name=$device
-            btrfs_device=$lv_name #аллиас т.к. по смыслу это одно тоже          
+
+            #проверяем существует ли логический том
+            if ! check_lv_exists_by_full_devname "$device"; then
+                echo -e "${RED}Логический том '$device' не существует${NC}" >&2
+                # добавляем проблему для запланрованного выхода из скрипта
+                problems["lvm_logical_volume_not_found"]+="Ошибка логический том $device не найден\n"
+                exit_and_show_problems_flag=1
+                #выходим из case для проверки других точек монтирования
+                continue
+            fi            
+         
             case "$crypt_mode" in
                 "none_in_none")
                     current_row["device_for_operations"]=$lv_name
                     ;;
                 "none_in_file")
-                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
-                    pv_device=${cureent_row["pv-volume"]}
-                    #т.к. названия группы томов и логического тома ожидается получить от пользователя, то в данном случае
-                    #в качестве девайса для операций будет использоваться то, что указал пользователь, а не открытый крипто-контейнер
-                    #lvm в данном случае сам всё найдёт по имени группы томов, которой принадлежит в физический том из крипто-контейнера
-                    #при этом пользователя надо предупредить о возможной дыре в безопасности, 
-                    #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
-                    current_row["device_for_operations"]=$lv_name
-                    #используем функцию для открытия крипто-контейнера
-                    keyfile=${current_row["keyfile"]}
-                    open_crypt_container_by_file "$pv_device" "$keyfile"
+                    #уже было обработано в if'ах, которые нужно было обязательно сделать
+                    #до проверки группы томов и логического тома на наличие
+                    :
                     ;;
                 "none_in_pwd")
-                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
-                    pv_device=${cureent_row["pv-volume"]}
-                    current_row["device_for_operations"]=$lv_name
-                    #используем функцию для открытия крипто-контейнера
-                    open_crypt_container_by_pwd "$pv_device"
+                    :
                     ;;
                 "file_in_none")
                     #получаем путь к файлу-ключу
@@ -348,6 +377,26 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             lv_name=$device
             #получаем имя группы томов
             vg_name=$(get_vg_name_from_fulldevname "$device")
+            
+            #аналогично предыдущему случаю
+            #нужно сначала открыть luks, если зашифрован именно физический том pv lvm
+            #иначе проверки на наличие группы томов и логического тома не сработают
+            if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
+                pv_device=${current_row["pv-volume"]}
+                if [[ "$crypt_mode" == "none_in_file" ]]; then
+                    #получаем путь к файлу-ключу
+                    keyfile=${current_row["keyfile"]}
+                    #используем функцию для открытия крипто-контейнера
+                    open_crypt_container_by_file "$pv_device" "$keyfile"
+                elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
+                    open_crypt_container_by_pwd "$pv_device"
+                fi
+                current_row["device_for_operations"]=$lv_name;
+                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только один зашифрованный физический том lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+                echo -e "${YELLOW}Возможность использования нескольких зашифрованных физических томов lvm в данной версии скрипта не предусмотрена${NC}"
+            fi
+
+
             #проверяем существует ли группа томов
             if ! check_vg_exists "$vg_name"; then
                 echo -e "${RED}Группа томов '$vg_name' не существует${NC}" >&2
@@ -358,26 +407,32 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 continue
             fi
 
+            #в данном случае нужно проверить наоборот, что логический том с таким именем не существует
+            #в случае btrfs в процессе установке создаётся сабволюм на уже существующем логическом томе
+            #а случае ext4 создаётся новый логический том
+            if check_lv_exists_by_full_devname "$device"; then
+                echo -e "${RED}Логический том '$device' уже существует${NC}" >&2
+                problems["lvm_logical_volume_name_already_exists"]+="Ошибка логический том $device уже существует\n"
+                exit_and_show_problems_flag=1
+                continue
+            fi
+
             size_of_lv=${current_row["size"]}
             case "$crypt_mode" in
                 "none_in_none")
                     current_row["device_for_operations"]=$lv_name
                     ;;
                 "none_in_file")
-                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
-                    pv_device=${current_row["pv-volume"]}
-                    #используем функцию для открытия крипто-контейнера
-                    keyfile=${current_row["keyfile"]}
-                    open_crypt_container_by_file "$pv_device" "$keyfile"
-                    #opened_lvm_device=${current_row["opened_crypt_container_fullname"]}
+                    :
                     ;;
                 "none_in_pwd")
-                    #в таком режиме от пользователя также требуется указать партишн с luks в котором лежит pv lvm
-                    pv_device=${current_row["pv-volume"]}
-                    #используем функцию для открытия крипто-контейнера
-                    open_crypt_container_by_pwd "$pv_device"
+                    :
                     ;;
                 "file_in_none")
+                    #пока что можно просто проверить есть ли свободное место,
+                    #это можно спокойно сделать именно на данном этапе
+                    #если свободного места нет, то пользователь получит соответствующее сообщение
+
                     #в этих двух случаях нужно будет создать новые крипто-контейнеры заданного размера
                     # TODO: пока что просто отбражаем пользователю планируемые изменения
                     # но не создаём ничего нового
