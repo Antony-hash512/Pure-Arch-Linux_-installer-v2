@@ -69,6 +69,7 @@ check_install_location_exists() {
     fi
 }
 
+#Функция для запроса у пользователя ID компонента
 request_component_id() {
     local component_type=$1
     local prompt_text=$2
@@ -135,6 +136,7 @@ convert_to_bytes() {
     esac
 }
 
+#Функция для запроса у пользователя выхода из программы
 ask_user_to_exit() {
     local question=$1
     #local error_message=$2
@@ -145,7 +147,7 @@ ask_user_to_exit() {
     fi
 }
 
-
+#Функция для замены переносов строк на пробелы
 one_line() {
     # Получаем данные из первого аргумента
     local input_data="$1"
@@ -198,31 +200,9 @@ standardize_lvm_format() {
     fi
 }
 
-
-
-get_vg_or_lv_name_from_fulldevname() {
-    local device=$1
-    local type=$2
-    #если в начале строки стоит /dev/mapper/
-    if [[ "$device" =~ ^/dev/mapper/ ]]; then
-        device_basename=$(basename "$device")
-        # Регулярное выражение для извлечения имен групп томов и логических томов
-        vg_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\1/')
-        lv_name=$(echo "$device_basename" | sed -r 's/(.*[^-])-([^-].*)/\2/')
-        #заменяем все двойные дефисы на один
-        vg_name=$(echo "$vg_name" | sed 's/--/-/g')
-        lv_name=$(echo "$lv_name" | sed 's/--/-/g')
-    else
-        vg_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\1|')
-        lv_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\2|')
-    fi
-    case "$type" in
-        "vg") echo "$vg_name" ;;
-        "lv") echo "$lv_name" ;;
-        *) echo "Ошибка: неизвестный тип '$type'" >&2; exit 1 ;;
-    esac
-}
-
+#Функция для получения имени логического тома из полного имени устройства
+#(без проверки на существование устройства т.к. может быть использовано для имён устройств,
+#которые пока ещё не созданы)
 get_lv_name_from_fulldevname() {
     local device=$1
     #если в начале строки стоит /dev/mapper/
@@ -238,6 +218,9 @@ get_lv_name_from_fulldevname() {
     echo $lv_name
 }
 
+#Функция для получения имени группы томов из полного имени устройства
+#(без проверки на существование устройства т.к. может быть использовано для имён устройств,
+#которые пока ещё не созданы)
 get_vg_name_from_fulldevname() {
     local device=$1
     #если в начале строки стоит /dev/mapper/
@@ -253,6 +236,7 @@ get_vg_name_from_fulldevname() {
     echo $vg_name
 }
 
+#Функция для окрашивания текста в строке (заглушка-оболочка над конкретной реализацией)
 color_text_in_string() {
     local original_string="$1"    # Исходная строка
     local text_to_color="$2"      # Текст, который нужно окрасить
@@ -261,8 +245,6 @@ color_text_in_string() {
 	# добавляем пробелы т.к. они нужны во всех случаях использования данной функции
     color_text_in_string_awk "$original_string" " $text_to_color " "$color_code"
 }
-
-
 
 # Функция для окрашивания текста в строке с поддержкой UTF-8 (awk)
 color_text_in_string_awk() {
@@ -278,9 +260,7 @@ color_text_in_string_awk() {
     }'
 }
 
-
-
-
+#Функция для получения базового имени устройства каким оно отображается в выводе команды lsblk
 get_device_basename4lsblk() {
     local device=$1
     # Определяем формат устройства
@@ -328,6 +308,9 @@ get_device_basename4lsblk() {
     echo "$device_basename"
 }
 
+#Функция для получения точки монтирования для btrfs устройства
+#точка монтирования будет автоматически создана, если устройство не смонтировано
+#после завершения работы скрипта устройство будет размонтировано засчёт заворачивания в trap
 get_btrfs_mountpoint() {
     local btrfs_device=$1 #требуется указать полный путь к устройству
     local btrfs_mountpoint=""
@@ -364,6 +347,8 @@ get_btrfs_mountpoint() {
     echo "$btrfs_mountpoint"
 }
 
+#Функция для получения списка сабволюмов для btrfs устройства
+#использует внутри себя функцию get_btrfs_mountpoint со всем её функционалом
 get_btrfs_subvolumes() {
     local btrfs_device=$1
     #получаем точку монтирования для устройства
@@ -373,13 +358,14 @@ get_btrfs_subvolumes() {
     echo "$subvolumes"
 }
 
+#Функция для паузы
 make_pause() {
     echo ""
     read -p "Нажмите Enter для продолжения"
     echo ""
 }
 
-
+#Функция для вывода списка всех btrfs устройств (возможно, не будет использоваться)
 print_all_btrfs_devices() {
     #проходим по содержимому нового вывода команды lsblk посторочно в цикле
     while IFS= read -r line; do
@@ -393,7 +379,8 @@ print_all_btrfs_devices() {
     echo ""
 }
 
-
+#Функция для вывода списка всех сабволюмов для всех btrfs устройств
+#(возможно, не будет использоваться)
 print_all_btrfs_subvolumes() {
     #проходмся по выводу функции print_all_btrfs_devices
     for device in $(print_all_btrfs_devices); do
@@ -433,7 +420,7 @@ get_vg_name_for_pv() {
     fi
 }
 
-
+#Функция для получения списка сабволюмов для устройства с указанием их точек монтирования
 get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     #проходимся по всем точкам монтирования
     local device=$1
@@ -478,6 +465,7 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
 
 }
 
+#Функция для получения списка логических томов для группы томов с указанием их точек монтирования
 get_new_lvm_volumes_for_group_with_their_mount_points() {
     local vg_name=$1
     local output=""
@@ -505,6 +493,7 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
     echo -e "$output"
 }
 
+#Функция для проверки наличия ext4 разделов для форматирования с указанием их точек монтирования
 check_ext4_partitions_to_format_with_their_mount_points() {
     local device=$1
     local output=""
@@ -576,6 +565,7 @@ check_vg_exists() {
     fi
 }
 
+#Безопасный вызов vgs без утечек дескрипторов
 safe_vgs(){
         # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
     export LVM_SUPPRESS_FD_WARNINGS=1
