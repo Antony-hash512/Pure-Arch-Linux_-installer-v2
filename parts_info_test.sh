@@ -1,13 +1,6 @@
 #!/bin/bash
 
 : << 'TODO'
-+ заменить теги на новые в коде, и зачистить xml от старого формата 
-+ завершить черновик templates/go_through_mountpoint_1st_checking.teplate.sh
-+ внедрить наработки написанные в черновике templates/go_through_mountpoint_1st_checking.teplate.sh в протестировать их работу
-+ добавить функции с регексами для валидации данных из xml-файла
-+ продумать разметку диска для тестов на виртуалке
-+ проверять свободное место на диске
-+ проверять что все прописанные ext4, lvm, btrfs имеются в разметке
 + отображать в разметке случаи с шифрованием
 + добавить другие параметры для запуска (автовыбор других компонентов и альтернативный xml-файл)
 TODO
@@ -192,21 +185,6 @@ while IFS= read -r line; do
         line_colored=$(color_text_in_string "$line_orig" "btrfs" "$CYAN")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
 
-        #определяем полное имя устройства (уже были получены ранее вне if)
-        #if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
-            #:
-        #elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
-            #:
-        #elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
-            #:
-        #else
-            ##фича, которая скорее всего не понадобится, но ввыедена для доп. подстраховки
-            #if [[ -z "$dummy_dev" || ! -b "$dummy_dev" ]]; then
-                #dummy_dev=$(create_btrfs_dummy_device 128M)
-            #fi
-            #device_fullname=$dummy_dev
-            #echo -e "${RED} неизвестный тип раздела, используем временную заглушки, чтобы не возникло дополнительных ошибок${NC}" >&2
-        #fi
 
         #используем функцию get_btrfs_subvolumes
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
