@@ -136,6 +136,36 @@ convert_to_bytes() {
     esac
 }
 
+#Функция для перевода байт в гиги:
+convert_bytes_to_gb() {
+    local bytes=$1
+    echo "$(echo "$bytes / $GB" | bc)G"
+}
+
+#Функции для проверки свободного места в группах томов (и в физических томах)
+check_free_space_in_vg_in_bytes() {
+    local vg_name=$1
+    local free_space=$(safe_vgs "$vg_name" --nosuffix --units b | grep VFree | awk '{print $2}')
+    echo "$free_space"
+}
+check_free_space_in_vg_in_human_format() {
+    local vg_name=$1
+    local free_space=$(safe_vgs "$vg_name" --nosuffix --units h | grep VFree | awk '{print $2}')
+    echo "$free_space"
+}
+
+check_free_space_in_pv_in_bytes() {
+    local pv_name=$1
+    local free_space=$(safe_pvs "$pv_name" --nosuffix --units b | grep PFree | awk '{print $2}')
+    echo "$free_space"
+}
+
+check_free_space_in_pv_in_human_format() {
+    local pv_name=$1
+    local free_space=$(safe_pvs "$pv_name" --nosuffix --units h | grep PFree | awk '{print $2}')
+    echo "$free_space"
+}
+
 #Функция для запроса у пользователя выхода из программы
 ask_user_to_exit() {
     local question=$1

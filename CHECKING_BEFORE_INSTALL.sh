@@ -19,14 +19,12 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* создать функции, которые будут проверять хватает ли свободного места в группах томов lvm
-нужно создать ассоциативный массив, который будет складывать итоговый размер всех томов lvm
-которые планируются к созданию
-реализоцию можно посмотреть в prev_ver_of_install.sh одну для сабволюмов btrfs, другую для lvm
+
 * написать функцию для запланированного выхода из скрипта
 * перенести логику вывода информации пользователю (нужно подумать оставить ли 
 её в том виде, ли тот код нужно переделать)
 * написать функцию, для проверки гарантированного свободного места в btrfs томах
+* создать скрипт, который выполнит автоматическую разбивку диска на виртуальных машине для тестирования скрипта
 * создать функцию, которая будет проверять корректность данных в xml-файле
 * протестировать написанные функции
 * добавить обработку всех возможных проблем, которые могут возникнуть для запланрованного выхода из скрипта
@@ -95,6 +93,8 @@ problems["no_free_space_for_new_subvolume"]=""
 #флаг для запланрованного выхода из скрипта
 exit_and_show_problems_flag=0
 
+
+
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
 
@@ -103,6 +103,10 @@ declare -A OPENED_CRYPT_CONTAINERS
 
 #создаём массив для хранения имен новых точек монтирования
 declare -a NEW_MOUNTPOINTS
+
+#создаём ассоциативный массив, который будет хранить размеры требуемого свободного места
+#в группах томов lvm
+declare -A ALL_LVM_VOLUMES_REQUIRED_SPACE
 
 #1.1) проверяем кириллический шрифт (будет убрано в англ.версии)
 echo "test тест"
@@ -349,7 +353,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     ;;
                 "none_in_file")
                     #уже было обработано в if'ах, которые нужно было обязательно сделать
-                    #до проверки группы томов и логического тома на наличие
+                    #до проверки группы томов и логического тома на их наличие
                     :
                     ;;
                 "none_in_pwd")
@@ -420,16 +424,27 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 continue
             fi
 
+            # проверяем есть ли поле в ассоциативном массиве ALL_LVM_VOLUMES_REQUIRED_SPACE с названием группы томов $vg_name
+            if [[ ! -v ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] ]]; then
+                ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=0
+            fi
+            # получаем размер нового тома из переменной size ${current_row["size"]} в байтах (функция задана в начале скрипта)
+            size_in_bytes=$(convert_to_bytes "${current_row["size"]}")
+
+            # добавляем размер нового тома в ассоциативный массив
+            ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=$((ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] + size_in_bytes))
+            
+
             size_of_lv=${current_row["size"]}
             case "$crypt_mode" in
                 "none_in_none")
                     current_row["device_for_operations"]=$lv_name
                     ;;
                 "none_in_file")
-                    :
+                    : #эти случаи уже были обработаны в if'ах
                     ;;
                 "none_in_pwd")
-                    :
+                    : #эти случаи уже были обработаны в if'ах
                     ;;
                 "file_in_none")
                     #пока что можно просто проверить есть ли свободное место,
@@ -442,9 +457,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #получаем путь к файлу-ключу
                     #keyfile=${current_row["keyfile"]}
                     #получаем размер тома
-                    size_of_lv=${current_row["size"]}
-                    lv_basename=$(get_device_basename4lsblk "$lv_name")
-                    pending_commands_description["$lv_basename"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
+                    #lv_basename=$(get_device_basename4lsblk "$lv_name")
+                    pending_commands_description["$lv_name"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
 
                    # v эти строки нужно будет перенести в ту часть скрипта,
                    # в которой будет уже непосредственная установка
@@ -461,9 +475,9 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                    # 
                     ;;
                 "pwd_in_none")
-                    size_of_lv=${current_row["size"]}
-                    lv_basename=$(get_device_basename4lsblk "$lv_name")
-                    pending_commands_description["$lv_basename"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
+                    #size_of_lv=${current_row["size"]}
+                    #lv_basename=$(get_device_basename4lsblk "$lv_name")
+                    pending_commands_description["$lv_name"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
                     #используем функцию для открытия крипто-контейнера
                     #open_crypt_container_by_pwd "$lv_name"
                     #сохраняем открытый крипто-контейнер в качестве девайса для операций
@@ -483,3 +497,23 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     
 done
  
+ #проверяем доступное свободное место в группах томов
+if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
+    for vg_name in "${!ALL_LVM_VOLUMES_REQUIRED_SPACE[@]}"; do
+        required_space=${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]}
+        echo "Требуемый размер для группы томов $vg_name: $required_space байт ($(echo "$required_space / $GB" | bc) гигов)"
+        #проверяем доступное свободное место группе томов в байтах
+        #free_space=$(vgs /dev/$vg_name --rows --nosuffix --units b | grep VFree | awk '{print $2}')
+        free_space=$(check_free_space_in_vg_in_bytes "$vg_name")
+        echo "Доступное свободное место в группе томов $vg_name: $free_space байт ($(echo "$free_space / $GB" | bc) гигов)"
+        if [[ "$free_space" -lt "$required_space" ]]; then
+            echo "Ошибка: Доступное свободное место в группе томов $vg_name меньше требуемого" >&2
+            echo "Увеличте свободное место. После чего перезапустите установку" >&2
+            #exit 1
+            problems["lvm_group_not_enough_free_space"]+="Ошибка свободного места в группе томов $vg_name меньше требуемого (требуется $(convert_bytes_to_gb "$required_space") свободного места, а доступно $(convert_bytes_to_gb "$free_space"))\n"
+            exit_and_show_problems_flag=1
+        else
+            echo "свободного в группе томов места достаточно"
+        fi
+    done
+fi
