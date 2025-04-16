@@ -20,7 +20,7 @@
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
 
-* написать функцию для запланированного выхода из скрипта
+
 * перенести логику вывода информации пользователю (нужно подумать оставить ли 
 её в том виде, ли тот код нужно переделать)
 * написать функцию, для проверки гарантированного свободного места в btrfs томах
@@ -93,7 +93,17 @@ problems["no_free_space_for_new_subvolume"]=""
 #флаг для запланрованного выхода из скрипта
 exit_and_show_problems_flag=0
 
-
+#функция для проверки проблем и выхода из скрипта
+function check_problems() {
+    if [[ "$exit_and_show_problems_flag" == 1 ]]; then
+        echo -e "${RED}На текущем этапе проверки были выявлены следующие проблемы:${NC}"
+        for problem in "${!problems[@]}"; do
+            echo -e "${RED}$problem:${NC} ${problems[$problem]}"
+        done
+        echo -e "${RED}Устраните проблемы и перезапустите скрипт${NC}"
+        exit 1
+    fi
+}
 
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
@@ -496,6 +506,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     esac
     
 done
+
+check_problems
  
  #проверяем доступное свободное место в группах томов
 if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
@@ -517,3 +529,5 @@ if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
         fi
     done
 fi
+
+check_problems
