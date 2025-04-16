@@ -446,23 +446,23 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
 }
 
 #Функция для получения списка логических томов для группы томов с указанием их точек монтирования
+#Нужно ещё подумать над этой функцией
+#В каких случаях нужно брать значение device_for_operations, а в каких lv-volume?
+#В каких случаях имя не будет формата lv lvm и функцию get_vg_name_from_fulldevname нужно будет заменить на что-то другое?
 get_new_lvm_volumes_for_group_with_their_mount_points() {
     local vg_name=$1
     local output=""
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
-        mount_point=${current_row["mount_point"]}
         type=${current_row["type"]}
-        crypt_mode=${current_row["crypt_mode"]}
-        read -r -a names <<< "${current_row["name"]//_in_/ }"
-        #преобразуем имя устройства в реальный формат
-        #current_device_name=$(convert_mapper_format_to_real_format_with_regex "${names[0]}")
-        #получаем имя группы томов из имени устройства используя регулярное выражение
-        #current_vg_name=$(echo "$current_device_name" | sed -E 's|/dev/([^/]+)/[^/]+$|\1|')
-        current_device_name=${names[0]}
-        current_vg_name=$(get_vg_name_from_fulldevname "$current_device_name")
-        #если тип монтирования - new_ext4_in_lvm
+        #нас интересуют только эти случаи, всё остальное сразу пропускаем
         if [[ "$type" == "new_ext4_in_lvm" ]]; then
+
+            mount_point=${current_row["mount_point"]}
+            #crypt_mode=${current_row["crypt_mode"]}
+            current_device_name=${current_row["device_for_operations"]}
+            current_vg_name=$(get_vg_name_from_fulldevname "$current_device_name")
+        
             #если группы томов совпадают, то добавляем в output
             if [[ "$vg_name" == "$current_vg_name" ]]; then
                 current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
