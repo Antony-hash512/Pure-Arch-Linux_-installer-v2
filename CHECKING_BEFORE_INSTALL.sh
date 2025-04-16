@@ -207,7 +207,7 @@ done
 # пишем код как будто то бы тега names уже больше не существует
 
 # ассоциативный массив, который хранит строки с описанием запланированных изменений
-declare -A pending_commands_description
+declare -A pending_commands_description #если решу оставить, то нужно перенести в начало скрипта
 
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
