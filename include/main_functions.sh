@@ -405,6 +405,8 @@ get_vg_name_for_pv() {
 }
 
 #Функция для получения списка сабволюмов для устройства с указанием их точек монтирования
+#Данную функцию можно использовать только после этапа открытия крипто-контейнеров
+#Т.к. в ней используется поле device_for_operations, которое заполняется только после этого этапа
 get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     #проходимся по всем точкам монтирования
     local device_from_input=$1
@@ -418,6 +420,7 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
             subvolume=${current_row["subvolume"]}
             mount_point=${current_row["mount_point"]}
             crypt_mode=${current_row["crypt_mode"]}
+            
             current_check_device=${current_row["device_for_operations"]}
 
             if [[ "$crypt_mode" = *"file"* || "$crypt_mode" = *"pwd"* || "$type" == "new_subvol_in_btrfs" ]]; then
