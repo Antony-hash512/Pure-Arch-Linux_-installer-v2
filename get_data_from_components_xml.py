@@ -8,9 +8,12 @@ DEFAULT_XML_FILE = 'components.xml'  # Значение по умолчанию 
 # Парсим аргументы командной строки
 parser = argparse.ArgumentParser(description='Парсер для получения данных из XML файла')
 parser.add_argument('--xml', default=DEFAULT_XML_FILE, help=f'Путь к файлу XML (по умолчанию: {DEFAULT_XML_FILE})')
-parser.add_argument('component_type', help='Тип компонента (например, driverspack, softpack)')
-parser.add_argument('component_id', help='ID компонента')
-parser.add_argument('command', help='Команда для выполнения')
+#parser.add_argument('component_type', help='Тип компонента (например, driverspack, softpack)')
+#parser.add_argument('component_id', help='ID компонента')
+#parser.add_argument('command', help='Команда для выполнения')
+#читается отдельно в соответствии внутренней логикой
+#другая версия с полной справкой находится в ветке other_version_of_parser
+#но она работает по другому, с дополнительными аргументом
 
 # Получаем значение XML_FILE из аргументов или используем по умолчанию
 args, remaining_args = parser.parse_known_args()
