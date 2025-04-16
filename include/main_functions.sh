@@ -382,37 +382,38 @@ make_pause() {
 }
 
 #Функция для вывода списка всех btrfs устройств (возможно, не будет использоваться)
-print_all_btrfs_devices() {
-    #проходим по содержимому нового вывода команды lsblk посторочно в цикле
-    while IFS= read -r line; do
-        #если первое слово в строке - btrfs, то выводим второе имя с добавлением нужного префикса перед ним
-        if [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+lvm ]]; then
-            echo "/dev/mapper/$(echo "$line" | awk '{print $3}')"
-        elif [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+part ]]; then
-            echo "/dev/$(echo "$line" | awk '{print $3}')"
-        fi
-    done < <(lsblk -l -n -o FSTYPE,TYPE,NAME)
-    echo ""
-}
-
-#Функция для вывода списка всех сабволюмов для всех btrfs устройств
-#(возможно, не будет использоваться)
-print_all_btrfs_subvolumes() {
-    #проходмся по выводу функции print_all_btrfs_devices
-    for device in $(print_all_btrfs_devices); do
-        #выводим подсводы для каждого устройства
-        echo -e "${YELLOW}Сабволюмы для устройства $device:${NC}"
-        #используем функцию get_btrfs_subvolumes
-        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов
-        if [[ -z "$(get_btrfs_subvolumes "$device")" ]]; then
-            echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device нет сабволюмов${NC}"
-        else
-            #выводим сабволюмы
-            get_btrfs_subvolumes "$device"
-        fi
-        echo ""
-    done
-}
+#устаревшая реализация, которая не работает с крипто-контейнерами
+#print_all_btrfs_devices() {
+#    #проходим по содержимому нового вывода команды lsblk посторочно в цикле
+#    while IFS= read -r line; do
+#        #если первое слово в строке - btrfs, то выводим второе имя с добавлением нужного префикса перед ним
+#        if [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+lvm ]]; then
+#            echo "/dev/mapper/$(echo "$line" | awk '{print $3}')"
+#        elif [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+part ]]; then
+#            echo "/dev/$(echo "$line" | awk '{print $3}')"
+#        fi
+#    done < <(lsblk -l -n -o FSTYPE,TYPE,NAME)
+#    echo ""
+#}
+#
+##Функция для вывода списка всех сабволюмов для всех btrfs устройств
+##(возможно, не будет использоваться)
+#print_all_btrfs_subvolumes() {
+#    #проходмся по выводу функции print_all_btrfs_devices
+#    for device in $(print_all_btrfs_devices); do
+#        #выводим подсводы для каждого устройства
+#        echo -e "${YELLOW}Сабволюмы для устройства $device:${NC}"
+#        #используем функцию get_btrfs_subvolumes
+#        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов
+#        if [[ -z "$(get_btrfs_subvolumes "$device")" ]]; then
+#            echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device нет сабволюмов${NC}"
+#        else
+#            #выводим сабволюмы
+#            get_btrfs_subvolumes "$device"
+#        fi
+#        echo ""
+#    done
+#}
 
 # Функция для получения имени группы томов, если устройство является физическим томом LVM
 get_vg_name_for_pv() {
@@ -439,44 +440,40 @@ get_vg_name_for_pv() {
 #Функция для получения списка сабволюмов для устройства с указанием их точек монтирования
 get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     #проходимся по всем точкам монтирования
-    local device=$1
+    local device_from_input=$1
     local output=""
+
+
     #именно на этом этапе возникает ошибка для крипто-контейнеров, поскольку они как и логические тома lvm-ов тоже
     #находятся в каталоге /dev/mapper/ но имеют другой формат имени
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
         type=${current_row["type"]}
-        name=${current_row["name"]}
-        #преобразуем строку name в массив с разделителем "_in_"
-        read -r -a names <<< "${name//_in_/ }"
-        mount_point=${current_row["mount_point"]}
-        crypt_mode=${current_row["crypt_mode"]}
+        #нас интересуют только эти случаи, всё остальное сразу пропускаем
+        if [[ "$type" == "new_subvol_in_btrfs_in_lvm" || "$type" == "new_subvol_in_btrfs" ]]; then 
+            subvolume=${current_row["subvolume"]}
+            mount_point=${current_row["mount_point"]}
+            crypt_mode=${current_row["crypt_mode"]}
+            current_check_device=${current_row["device_for_operations"]}
 
-        if [[ "$crypt_mode" = *"file"* || "$crypt_mode" = *"pwd"* ]]; then
-            #echo "crypto container detected" > /dev/tty
-            current_check_device="${current_row["opened_crypt_container_fullname"]}"
-            #возращаем исходное значение функции которое точно не сломано функцией convert_mapper 
-            current_device=$device
-        else
-            current_check_device="${names[1]}"
-            #это на тот случай если пользователь пропишет имя устройства через mapper
-            current_check_device=$(standardize_lvm_format "$current_check_device")
-            #помещено сюда, чтобы избежать преобразований для luks т.к. тогда случай с mapper будет разобран не правильно
-            current_device=$(standardize_lvm_format "$device")
-        fi
-        
-        
-        #если тип монтирования - new_subvol_in_btrfs_in_lvm или new_subvol_in_btrfs
-        if [[ "$type" == "new_subvol_in_btrfs_in_lvm" || "$type" == "new_subvol_in_btrfs" ]]; then
-            #echo -e "${CYAN}Передано в функцию:${NC} $device" > /dev/tty
-            #echo -e "${BLUE}Получено из ассоциативного массива:${NC} $current_check_device" > /dev/tty
+            if [[ "$crypt_mode" = *"file"* || "$crypt_mode" = *"pwd"* || "$type" == "new_subvol_in_btrfs" ]]; then
+                #возращаем исходное значение функции которое точно не сломано функцией standardize_lvm_format
+                current_device=$device_from_input
+            else
+                #это на тот случай если пользователь пропишет имя устройства через mapper
+                current_check_device=$(standardize_lvm_format "$current_check_device")
+                #помещено сюда, чтобы избежать преобразований для luks
+                #т.к. тогда случай с mapper будет разобран не правильно
+                #тип без lvm тоже сюда не попадаёт
+                current_device_from_input_form=$(standardize_lvm_format "$device_from_input")
+            fi
+
             #если имя устройства совпадает с именем устройства в из xml-файла, то добавляем в output
-            if [[ "$current_device" == "$current_check_device" ]]; then
-                output="$output +${names[0]}->$mount_point"
+            if [[ "$current_device_from_input_form" == "$current_check_device" ]]; then
+                output="$output +$subvolume->$mount_point"
             fi
         fi
     done
-    #echo "$output" > /dev/tty
     echo -e "$output"
 
 }

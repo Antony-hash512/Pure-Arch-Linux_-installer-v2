@@ -239,7 +239,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 #выходим из case для проверки других точек монтирования
                 continue
             fi
-
+            current_row["device"]=$device
             ext4_partition=$device
             basename_of_ext4_partition=$(get_device_basename4lsblk "$ext4_partition")
             case "$crypt_mode" in
@@ -281,7 +281,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 #выходим из case для проверки других точек монтирования
                 continue
             fi
-
+            current_row["device"]=$device
             #в данном случае заданы подтом, который будет создаваться, и существующий партишн, вне lvm
             subvol_name=${current_row["subvolume"]}
             btrfs_device=$device
@@ -314,6 +314,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
        "new_subvol_in_btrfs_in_lvm")
             subvol_name=${current_row["subvolume"]}
             device=${current_row["lv-volume"]}
+            current_row["device"]=$device
             lv_name=$device
             btrfs_device=$lv_name #аллиас т.к. по смыслу это одно и тоже
 
@@ -335,8 +336,12 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     keyfile=${current_row["keyfile"]}
                     #используем функцию для открытия крипто-контейнера
                     open_crypt_container_by_file "$pv_device" "$keyfile"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                 elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
                     open_crypt_container_by_pwd "$pv_device"
+                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                 fi
                 current_row["device_for_operations"]=$lv_name;
                 echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только один зашифрованный физический том lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
@@ -399,10 +404,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             
             ;;
         "new_ext4_in_lvm")
+            device=${current_row["lv-volume"]}
             lv_name=$device
             #получаем имя группы томов
             vg_name=$(get_vg_name_from_fulldevname "$device")
-            
+            current_row["device"]=$device
             #аналогично предыдущему случаю
             #нужно сначала открыть luks, если зашифрован именно физический том pv lvm
             #иначе проверки на наличие группы томов и логического тома не сработают
