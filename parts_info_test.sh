@@ -138,11 +138,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
 done
 
 
-#make_pause
-#print_all_btrfs_devices
-#echo -e "${CYAN}Информация о найденных устройствах с файловой системой btrfs:${NC}"
-#print_all_btrfs_subvolumes
-#make_pause
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
 echo -e "${GRAY}${ITALIC}${UNDERLINE}Построение информации...${NC}"

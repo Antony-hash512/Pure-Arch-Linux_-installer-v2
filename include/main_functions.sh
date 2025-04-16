@@ -381,39 +381,6 @@ make_pause() {
     echo ""
 }
 
-#Функция для вывода списка всех btrfs устройств (возможно, не будет использоваться)
-#устаревшая реализация, которая не работает с крипто-контейнерами
-#print_all_btrfs_devices() {
-#    #проходим по содержимому нового вывода команды lsblk посторочно в цикле
-#    while IFS= read -r line; do
-#        #если первое слово в строке - btrfs, то выводим второе имя с добавлением нужного префикса перед ним
-#        if [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+lvm ]]; then
-#            echo "/dev/mapper/$(echo "$line" | awk '{print $3}')"
-#        elif [[ "$line" =~ ^[[:space:]]*btrfs[[:space:]]+part ]]; then
-#            echo "/dev/$(echo "$line" | awk '{print $3}')"
-#        fi
-#    done < <(lsblk -l -n -o FSTYPE,TYPE,NAME)
-#    echo ""
-#}
-#
-##Функция для вывода списка всех сабволюмов для всех btrfs устройств
-##(возможно, не будет использоваться)
-#print_all_btrfs_subvolumes() {
-#    #проходмся по выводу функции print_all_btrfs_devices
-#    for device in $(print_all_btrfs_devices); do
-#        #выводим подсводы для каждого устройства
-#        echo -e "${YELLOW}Сабволюмы для устройства $device:${NC}"
-#        #используем функцию get_btrfs_subvolumes
-#        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов
-#        if [[ -z "$(get_btrfs_subvolumes "$device")" ]]; then
-#            echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device нет сабволюмов${NC}"
-#        else
-#            #выводим сабволюмы
-#            get_btrfs_subvolumes "$device"
-#        fi
-#        echo ""
-#    done
-#}
 
 # Функция для получения имени группы томов, если устройство является физическим томом LVM
 get_vg_name_for_pv() {
