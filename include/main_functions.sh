@@ -410,9 +410,6 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
     local device_from_input=$1
     local output=""
 
-
-    #именно на этом этапе возникает ошибка для крипто-контейнеров, поскольку они как и логические тома lvm-ов тоже
-    #находятся в каталоге /dev/mapper/ но имеют другой формат имени
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
         type=${current_row["type"]}
