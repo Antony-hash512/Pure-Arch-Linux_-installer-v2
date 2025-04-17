@@ -495,24 +495,25 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
 
 #Функция для проверки наличия ext4 разделов для форматирования с указанием их точек монтирования
 check_ext4_partitions_to_format_with_their_mount_points() {
-    local device=$1
+    local device_from_input=$1
     local output=""
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
-        mount_point=${current_row["mount_point"]}
         type=${current_row["type"]}
-        #преобразуем строку type в массив с разделителем "_in_"
-        read -r -a types <<< "${type//_in_/ }"
-        crypt_mode=${current_row["crypt_mode"]}
-        read -r -a names <<< "${current_row["name"]//_in_/ }"
-        #преобразуем имя устройства в реальный формат
-        current_device_name=${names[0]}
-        #если тип монтирования - new_ext4_in_lvm
         if [[ "$type" == "format_ext4" ]]; then
-            #если имя устройства совпадает с именем устройства в массиве names[0], то добавляем в output
-            if [[ "$device" == "$current_device_name" ]]; then
+        
+            mount_point=${current_row["mount_point"]}
+            crypt_mode=${current_row["crypt_mode"]}
+            current_device_name=${current_row["device"]}
+
+            #если полученное имя устройства совпадает с именем устройства в массиве, то добавляем в output
+            if [[ "$device_from_input" == "$current_device_name" ]]; then
                 #т.к. девайс только один, сразу присваиваем значение
-                output="${GREEN}${BLINK}${BOLD}$current_device_name${NC} ${RED}${UNDERLINE}планируется отформатировать${NC} ${GREEN}в ext4${NC} ${RED}${UNDERLINE}для монтирования в${NC} ${GREEN}${BLINK}${BOLD}$mount_point${NC}"
+                if [[ "$crypt_mode" == "file" || "$crypt_mode" == "pwd" ]]; then
+                    output="${GREEN}${BLINK}${BOLD}$current_device_name${NC} ${RED}${UNDERLINE}планируется отформатировать${NC} ${GREEN}в крипто-контейнер luck с ext4 внутри ${NC} ${RED}${UNDERLINE}для монтирования в${NC} ${GREEN}${BLINK}${BOLD}$mount_point${NC}"
+                else
+                    output="${GREEN}${BLINK}${BOLD}$current_device_name${NC} ${RED}${UNDERLINE}планируется отформатировать${NC} ${GREEN}в ext4${NC} ${RED}${UNDERLINE}для монтирования в${NC} ${GREEN}${BLINK}${BOLD}$mount_point${NC}"
+                fi
             fi
         fi
     done
