@@ -137,7 +137,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     fi
 done
 
-
+# V отсуда будем переность инфу в новый файл
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
 echo -e "${GRAY}${ITALIC}${UNDERLINE}Построение информации...${NC}"
