@@ -482,7 +482,11 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
                 #current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
                 #current_basename=$(get_device_basename4lsblk "$current_device_name")
                 current_basename=$(get_lv_name_from_fulldevname "$current_device_name")
-                output="$output +${current_basename}->$mount_point"
+                if [[ "$crypt_mode" == "file_in_none" || "$crypt_mode" == "pwd_in_none" ]]; then
+                    output="$output +[new ext4 -> $mount_point in new luks $current_basename]"
+                else
+                    output="$output +${current_basename}->$mount_point"
+                fi
             fi
         fi
     done
