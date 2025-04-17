@@ -479,7 +479,9 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
             #если группы томов совпадают, то добавляем в output
             if [[ "$vg_name" == "$current_vg_name" ]]; then
                 #лучше использовать функцию т.к. не понятьно в каком формате приходит current_device_name
-                current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
+                #current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
+                #current_basename=$(get_device_basename4lsblk "$current_device_name")
+                current_basename=$(get_lv_name_from_fulldevname "$current_device_name")
                 output="$output +${current_basename}->$mount_point"
             fi
         fi
