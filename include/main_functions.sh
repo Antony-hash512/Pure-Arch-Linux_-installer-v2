@@ -457,6 +457,11 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
 #В каких случаях имя не будет формата lv lvm и функцию get_vg_name_from_fulldevname нужно будет заменить на что-то другое?
 #Ответ: в данной функции не подтребуется замена, т.к. в случае разбраный выше: мы работаем только с тем
 #что найдётся по "lvm" в выводе команды lsblk, crypt и part тут не затрагиваются
+
+#crypt_mode влияет на то, как будет отображена информация пользователю:
+#при crypt_mode = file_in_none и pwd_in_none нужно также уточнить, что будет создан
+#не просто логический том, а luks
+
 get_new_lvm_volumes_for_group_with_their_mount_points() {
     local vg_name=$1
     local output=""
@@ -467,12 +472,13 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
         if [[ "$type" == "new_ext4_in_lvm" ]]; then
 
             mount_point=${current_row["mount_point"]}
-            #crypt_mode=${current_row["crypt_mode"]}
-            current_device_name=${current_row["device_for_operations"]}
+            crypt_mode=${current_row["crypt_mode"]}
+            current_device_name=${current_row["lv-volume"]}
             current_vg_name=$(get_vg_name_from_fulldevname "$current_device_name")
         
             #если группы томов совпадают, то добавляем в output
             if [[ "$vg_name" == "$current_vg_name" ]]; then
+                #лучше использовать функцию т.к. не понятьно в каком формате приходит current_device_name
                 current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
                 output="$output +${current_basename}->$mount_point"
             fi
