@@ -463,7 +463,7 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
 #не просто логический том, а luks
 
 get_new_lvm_volumes_for_group_with_their_mount_points() {
-    local vg_name=$1
+    local vg_name_from_input=$1
     local output=""
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -477,7 +477,7 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
             current_vg_name=$(get_vg_name_from_fulldevname "$current_device_name")
         
             #если группы томов совпадают, то добавляем в output
-            if [[ "$vg_name" == "$current_vg_name" ]]; then
+            if [[ "$vg_name_from_input" == "$current_vg_name" ]]; then
                 #лучше использовать функцию т.к. не понятьно в каком формате приходит current_device_name
                 #current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
                 #current_basename=$(get_device_basename4lsblk "$current_device_name")
