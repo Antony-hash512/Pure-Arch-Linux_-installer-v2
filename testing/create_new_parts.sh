@@ -5,11 +5,11 @@ parted -a optimal /dev/sda mklabel gpt
 
 # Создание разделов с использованием оптимального выравнивания
 parted -a optimal /dev/sda mkpart primary fat32 1MiB 350MiB   # /dev/sda1 - EFI 350 MB
-parted -a optimal /dev/sda mkpart primary 350MiB 20.35GiB    # /dev/sda2 - для LUKS с LVM внутри 20 GB
-parted -a optimal /dev/sda mkpart primary 20.35GiB 50.35GiB   # /dev/sda3 - для LVM 30 GB
-parted -a optimal /dev/sda mkpart primary 50.35GiB 60.35GiB   # /dev/sda4 - btrfs 10 GB
-parted -a optimal /dev/sda mkpart primary 60.35GiB 70.35GiB   # /dev/sda5 - LUKS 10 GB
-parted -a optimal /dev/sda mkpart primary 70.35GiB 80.35GiB   # /dev/sda6 - ext4 10 GB
+parted -a optimal /dev/sda mkpart primary 350MiB 20GiB    # /dev/sda2 - для LUKS с LVM внутри 20 GB
+parted -a optimal /dev/sda mkpart primary 20GiB 50GiB   # /dev/sda3 - для LVM 30 GB
+parted -a optimal /dev/sda mkpart primary 50GiB 60GiB   # /dev/sda4 - btrfs 10 GB
+parted -a optimal /dev/sda mkpart primary 60GiB 70GiB   # /dev/sda5 - LUKS 10 GB
+parted -a optimal /dev/sda mkpart primary 70GiB 80GiB   # /dev/sda6 - ext4 10 GB
 
 # Установка флага загрузки для EFI раздела
 parted /dev/sda set 1 boot on

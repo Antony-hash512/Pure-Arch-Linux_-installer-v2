@@ -200,64 +200,6 @@
 </softpacks>
 
 <install_locations>
-	<install_location name="vivo_new_home_fld" description="Стандартоная установка ">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/vivo/btrbox</lv-volume>
-				<subvolume>@hypr</subvolume>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/vivo/btrbox</lv-volume>
-				<subvolume>@home2</subvolume>
-			</point>
-		</mountpoints>
-		
-		<hostname>katana</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
-		<efi>
-			<bootlabel>Hyprland_nocrypt2</bootlabel>
-			<dev>/dev/nvme0n1p1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
-		<iso>false</iso>
-	</install_location>
-	
-	<install_location name="vivo_hyprland" description="Установка Hyprland на Vivobook">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/vivo/btrbox</lv-volume>
-				<subvolume>@</subvolume>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/vivo/btrbox</lv-volume>
-				<subvolume>@home</subvolume>
-			</point>
-		</mountpoints>
-		<hostname>vivobook</hostname>
-		<username>mega</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
-		<efi>
-			<bootlabel>ArchHyprlandNotCrypted</bootlabel>
-			<dev>/dev/nvme0n1p1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
 	
 	<install_location name="vivo_gnome" description="Установка GNOME на Vivobook">
 		<mountpoints>
@@ -280,44 +222,15 @@
 		<username>fireice</username>
 		<useruid>1000</useruid>
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchGnomeNotCrypted</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
 			<new_location>/boot/efi</new_location>
 		</efi>
-		<iso>true</iso>
-	</install_location>
-	
-	<install_location name="main_nvidia_gnome" description="Установка GNOME с NVIDIA">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/mainvg/mikro_testbox</lv-volume>
-				<subvolume>@arch_gnome</subvolume>
-				<size>20G</size>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/mainvg/gnome_home</lv-volume>
-				<size>5G</size>
-			</point>
-		</mountpoints>
-		<hostname>katana</hostname>
-		<username>fireice</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
-		<efi>
-			<bootlabel>ArchGnomeNotCrypted2</bootlabel>
-			<dev>/dev/nvme0n1p1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
 		<iso>false</iso>
 	</install_location>
-
+	
 	<install_location name="nvidia_megatest" description="Редактируемое тестирование анализатора изменений для запуска на голом железе">
 		<mountpoints>
 			<point type="new">
@@ -340,6 +253,7 @@
 		<username>fireice</username>
 		<useruid>1000</useruid>
 		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchGnomeNotCrypted2</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
@@ -348,165 +262,48 @@
 		<iso>false</iso>
 	</install_location>
 	
-	<install_location name="main_openbox" description="Установка Openbox на основной системе">
+
+	<!-- Пронумерованные различние варианты установок для тестирования скрипта -->
+	<install_location name="vm_test1" description="Тестовая установка на VM 1">
 		<mountpoints>
 			<point type="new">
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/mainvg/gigabox</lv-volume>
-				<subvolume>@arch_system_test43</subvolume>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/mainvg/gigabox</lv-volume>
-				<subvolume>@arch_home43</subvolume>
-			</point>
-		</mountpoints>
-		<hostname>katana</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
-		<efi>
-			<bootlabel>ArchTest43</bootlabel>
-			<dev>/dev/nvme0n1p1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
-		<iso>false</iso>
-	</install_location>
-	
-	<install_location name="vm_test" description="Тестовая установка на VM">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/btrbox</lv-volume>
+				<crypt_mode>none_in_pwd</crypt_mode>
+				<lv-volume>/dev/locked_vg/btrfs_in_locked_lvm</lv-volume>
 				<subvolume>@arch</subvolume>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/btrbox</lv-volume>
-				<subvolume>@home</subvolume>
+				<pv-volume>/dev/sda2</pv-volume>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
 		<efi>
-			<bootlabel>ArchTest</bootlabel>
+			<bootlabel>ArchTest1</bootlabel>
 			<dev>/dev/sda1</dev>
 			<new_location>/boot/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
-
-	<install_location name="vm_test_ext4" description="Тестовая установка на VM новый ext4 на lvm">
+	
+	<install_location name="vm_test2" description="Тестовая установка на VM 2">
 		<mountpoints>
 			<point type="new">
 				<location>/</location>
 				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/ext4root</lv-volume>
-				<size>20G</size>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/ext4home</lv-volume>
+				<crypt_mode>none_in_pwd</crypt_mode>
+				<lv-volume>/dev/locked_vg/new_ext4_from_test2</lv-volume>
 				<size>5G</size>
+				<pv-volume>/dev/sda2</pv-volume>
 			</point>
 		</mountpoints>
-		<hostname>qemu-arch-ext4-in-lvm</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
-		<efi>
-			<bootlabel>ArchTestExt4InLvm</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-
-	<install_location name="vm_test_enc" description="Тестовая установка на VM новый ext4 на lvm c шифрованием">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>pwd_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/ext4root_enc</lv-volume>
-				<size>20G</size>
-			</point>
-			<point type="new">
-				<location>/boot</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/ext4boot</lv-volume>
-				<size>2G</size>
-			</point>
-		</mountpoints>
-		<hostname>qemu-arch-ext4-in-lvm-enc</hostname>
+		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
 		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
-		<efi>
-			<bootlabel>ArchTestEnc</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-
-	<install_location name="vm_test_enc_noboot" description="Тестовая установка на VM новый ext4 на lvm c шифрованием без boot">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_ext4_in_lvm</way>
-				<crypt_mode>pwd_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/ext4root_enc</lv-volume>
-				<size>20G</size>
-			</point>
-		</mountpoints>
-		<hostname>qemu-arch-ext4-in-lvm-enc-noboot</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
-		<efi>
-			<bootlabel>ArchTestEncNoboot</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-
-	<install_location name="vm_test2" description="Тестовая установка на VM">
-		<mountpoints>
-			<point type="new">
-				<location>/</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/btrbox</lv-volume>
-				<subvolume>@arch2</subvolume>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/btrbox</lv-volume>
-				<subvolume>@home2</subvolume>
-			</point>
-		</mountpoints>
-		<hostname>qemu-arch2</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
 			<dev>/dev/sda1</dev>
@@ -514,35 +311,147 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	
-	<install_location name="vm_gnome" description="Тестовая установка GNOME на VM">
+
+    <install_location name="vm_test3" description="Тестовая установка на VM 3">
 		<mountpoints>
 			<point type="new">
 				<location>/</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/btrbox</lv-volume>
-				<subvolume>@arch_gnome</subvolume>
-			</point>
-			<point type="new">
-				<location>/home</location>
-				<way>new_subvol_in_btrfs_in_lvm</way>
-				<crypt_mode>none_in_none</crypt_mode>
-				<lv-volume>/dev/virtvg/btrbox</lv-volume>
-				<subvolume>@home_gnome</subvolume>
+				<lv-volume>/dev/opened_vg/btrfs_in_opened_lvm</lv-volume>
+				<subvolume>@arch</subvolume>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
 		<efi>
-			<bootlabel>ArchTestGnome</bootlabel>
+			<bootlabel>ArchTest3</bootlabel>
 			<dev>/dev/sda1</dev>
 			<new_location>/boot/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
+
+    <install_location name="vm_test4" description="Тестовая установка на VM 4">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<lv-volume>/dev/opened_vg/luks_in_opened_lvm</lv-volume>
+				<subvolume>@arch</subvolume>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest4</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	
+	<install_location name="vm_test5" description="Тестовая установка на VM 5">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<lv-volume>/dev/opened_vg/new_encrypted_ext4_in_open_lvm</lv-volume>
+				<size>5G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest5</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	
+	<install_location name="vm_test6" description="Тестовая установка на VM 6">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
+				<size>5G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest6</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+    <!-- дополнительные варианты тех же самых тестов для проверки нехватки места -->
+    <install_location name="vm_test5a" description="Тестовая установка на VM 5a">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<lv-volume>/dev/opened_vg/new_encrypted_ext4_in_open_lvm</lv-volume>
+				<size>20G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest5a</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	
+	<install_location name="vm_test6a" description="Тестовая установка на VM 6a">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
+				<size>20G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest6a</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+
+	<!-- тесты для случаев, где нужно указать uuid'ы будут добавлене чуть позже -->
+
 </install_locations>
 
 <settings_variants>
