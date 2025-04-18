@@ -34,3 +34,5 @@ gvfs-mtp
 paru:
   wlogout
   hyprshot
+
+  facad
