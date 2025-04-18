@@ -148,6 +148,12 @@ LSBLK_RAW_INFO_UPDATED=$(mktemp)
 #записываем содержимое во временный файл
 #RM или RO - нужно дописать в конец строки чтобы при добавлении дополнительного параметра всё было выровнено по правому краю
 lsblk -o NAME,TYPE,FSTYPE,SIZE,RM,RO,ROTA > $LSBLK_RAW_INFO
+#расшифровка дальнейшего использования:
+#$(echo "$line" | awk '{print $1}') - NAME
+#$(echo "$line" | awk '{print $2}') - TYPE
+#$(echo "$line" | awk '{print $3}') - FSTYPE
+#имеет смысл сделать функции для лучшей читаемости кода
+#можно сделать псевдо неймспейс lineop_ для данных групп функций (и отдельный файл lineops.sh)
 
 #определяем длину строки в файле
 LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
@@ -183,7 +189,8 @@ while IFS= read -r line; do
 
         #используем функцию get_btrfs_subvolumes
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
-        if [[ -z "$(get_btrfs_subvolumes "$device_fullname")" ]]; then
+        existing_subvolumes_strings=$(get_btrfs_subvolumes "$device_fullname")
+        if [[ -z "$existing_subvolumes_strings" ]]; then
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
             #получаем строку с планируемыми изменениями
             new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
@@ -193,7 +200,7 @@ while IFS= read -r line; do
             fi
         else
             #получаем список существующих сабволюмов в формате в одну строку
-            existing_subvolumes_string=$(one_line "$(get_btrfs_subvolumes "$device_fullname")")
+            existing_subvolumes_string=$(one_line "$existing_subvolumes_strings")
             #получаем массив из строки
             read -r -a existing_subvolumes <<< "$existing_subvolumes_string"
             #выводим сабволюмы, используем функцию one_line чтобы отобразить их в одной строке, если их несколько
