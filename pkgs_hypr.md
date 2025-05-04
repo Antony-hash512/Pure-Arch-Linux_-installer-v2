@@ -8,6 +8,9 @@ Aqua
 CLion
 Rider
 RustRover
+----
+cronie
+
 
 ---------------------
 yt-dlp
