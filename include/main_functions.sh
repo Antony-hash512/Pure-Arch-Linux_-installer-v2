@@ -418,21 +418,18 @@ get_vg_name_for_pv() {
 #для функций, которые уже работают с заполненным ассоциативным массивом, который передаётся
 #в функцию также в виде ссылки, они будут просто возвращать строку с данными, отформатированную
 #нужном формате
-get_new_btrfs_subvolumes_for_device() {
-    #принимает на вход ссылку на ассоциативный массив
-    local -n array_ref=$1
-    #полученный массив нужно заполнить в формате: "имя_планируемого_тома"->"точка_монтирования"
 
-
-}
 
 #Функция для получения списка сабволюмов для устройства с указанием их точек монтирования
 #Данную функцию можно использовать только после этапа открытия крипто-контейнеров
 #Т.к. в ней используется поле device_for_operations, которое заполняется только после этого этапа
-get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
+fill_in_array_by_new_btrfs_subvolumes_for_device() {
     #проходимся по всем точкам монтирования
     local device_from_input=$1
-    local output=""
+    #принимает на вход ссылку на ассоциативный массив
+    local -n array_ref=$2
+    #полученный массив нужно заполнить в формате: "имя_планируемого_тома"->"точка_монтирования"
+    #проходимся по всем точкам монтирования
 
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -447,7 +444,7 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
 
             if [[ "$crypt_mode" = *"file"* || "$crypt_mode" = *"pwd"* || "$type" == "new_subvol_in_btrfs" ]]; then
                 #возращаем исходное значение функции которое точно не сломано функцией standardize_lvm_format
-                current_device=$device_from_input
+                current_device_from_input_form=$device_from_input
             else
                 #это на тот случай если пользователь пропишет имя устройства через mapper
                 current_check_device=$(standardize_lvm_format "$current_check_device")
@@ -457,14 +454,23 @@ get_new_btrfs_subvolumes_for_device_with_their_mount_points() {
                 current_device_from_input_form=$(standardize_lvm_format "$device_from_input")
             fi
 
-            #если имя устройства совпадает с именем устройства в из xml-файла, то добавляем в output
+            #если имя устройства совпадает с именем устройства в из xml-файла, то добавляем в ассоциативный массив
             if [[ "$current_device_from_input_form" == "$current_check_device" ]]; then
-                output="$output +$subvolume->$mount_point"
+                array_ref["$subvolume"]="$mount_point"
             fi
         fi
     done
-    echo -e "$output"
+}
+#все старые функции будут выпилены, за формирование строки будет отвечать новые функции
+#(название можно будет сократить)
+get_string_for_new_btrfs_subvolumes_for_device() {
+    local -n array_ref=$1
+    local output=""
+    for key in "${!array_ref[@]}"; do
+        output="$output +$key->${array_ref[$key]}"
+    done
 
+    echo "$output"
 }
 
 #Функция для получения списка логических томов для группы томов с указанием их точек монтирования

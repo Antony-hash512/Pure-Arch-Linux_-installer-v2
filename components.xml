@@ -234,7 +234,7 @@
 	<install_location name="nvidia_megatest" description="Редактируемое тестирование анализатора изменений для запуска на голом железе">
 		<mountpoints>
 			<point type="new">
-				<location>/</location>
+				<location>/test</location>
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<lv-volume>/dev/mainvg/mikro_testbox</lv-volume>
 				<subvolume>@arch_megatest</subvolume>

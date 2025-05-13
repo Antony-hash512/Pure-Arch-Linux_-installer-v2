@@ -1,6 +1,7 @@
 #!/bin/bash
 
 : << 'TODO'
++ после чистки от говнокода, нужно почистить от коментариев, которые потеряют актуальность
 + отображать в разметке случаи с шифрованием
 + добавить другие параметры для запуска (автовыбор других компонентов и альтернативный xml-файл)
 TODO
@@ -104,35 +105,40 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
     mount_point=${current_row["mount_point"]}
     type=${current_row["type"]}
-    #преобразуем строку type в массив с разделителем "_in_"
-    read -r -a types <<< "${type//_in_/ }"
     crypt_mode=${current_row["crypt_mode"]}
-    name=${current_row["name"]}
-    #преобразуем строку name в массив с разделителем "_in_"
-    read -r -a names <<< "${name//_in_/ }"
-    echo -e "${YELLOW}Точка монтирования $row:${NC} $mount_point $type $crypt_mode $name"
+    echo -e "${YELLOW}Точка монтирования $row:${NC} $mount_point $type $crypt_mode"
     echo "Тип монтирования: $type"
 
-
-    #на этом этап открываем крипто-контейнеры luks, если это требуется
-    #находим имя устройства
-    if [[ "$type" == *"btrfs"* ]]; then
-        device_name=${names[1]}
-    elif [[ "$type" == *"ext4"* ]]; then
-        device_name=${names[0]}
+    # Определяем устройство из нового формата XML
+    if [[ -n "${current_row["lv-volume"]}" ]]; then
+        device_name=${current_row["lv-volume"]}
+    #elif [[ -n "${current_row["pv-volume"]}" ]]; then
+    #    device_name=${current_row["pv-volume"]}
+    #не используемся, в этой версии файла не тестируются случаи с шифрованием
+    elif [[ -n "${current_row["uuid"]}" ]]; then
+        device_name=$(check_uuid_exists "${current_row["uuid"]}") || {
+            echo -e "${RED}Устройство с UUID ${current_row["uuid"]} не найдено${NC}" >&2
+            continue
+        }
+    else
+        echo -e "${RED}Не удалось определить устройство для точки монтирования $row${NC}" >&2
+        continue
     fi
     echo -e "${GREEN}Имя устройства: $device_name${NC}"
     current_row["device_name"]=$device_name
-    #если в строке crypt_mode содержится подстрока pwd или file, то открываем крипто-контейнер
+
+    # Заполняем device_for_operations только для томов без шифрования
+
+    current_row["device_for_operations"]=$device_name
+
+
+    # Открытие крипто-контейнера для зашифрованных томов
     if [[ "$crypt_mode" == *"pwd"* ]]; then
         echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks с паролем${NC}"
-        #открываем крипто-контейнер
         open_crypt_container_by_pwd "$device_name"
     elif [[ "$crypt_mode" == *"file"* ]]; then
         echo -e "${YELLOW}${ITALIC}Открытие крипто-контейнера luks с файлом-ключом${NC}"
-        # Получаем путь к файлу-ключу из XML или используем значение по умолчанию
         key_file=$(parse_xml "install_location" "get_key_file" "$row")
-        #открываем крипто-контейнер
         open_crypt_container_by_file "$device_name" "$key_file"
     fi
 done
@@ -192,8 +198,16 @@ while IFS= read -r line; do
         existing_subvolumes_strings=$(get_btrfs_subvolumes "$device_fullname")
         if [[ -z "$existing_subvolumes_strings" ]]; then
             echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
-            #получаем строку с планируемыми изменениями
-            new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
+ 
+            #для начала создаём ассоциативный массив (в текущей реализации временный
+            #т.к. будет пересоздаваться при каждой итерации цикла)
+            declare -A new_btrfs_subvolumes_with_mountpoints
+            #заполняем массив
+            #нужно передавать имя массива, а не его содержимое
+            fill_in_array_by_new_btrfs_subvolumes_for_device "$device_fullname" new_btrfs_subvolumes_with_mountpoints
+
+            #формируем строку с планируемыми изменениями
+            new_btrfs_subvolumes_string=$(get_string_for_new_btrfs_subvolumes_for_device new_btrfs_subvolumes_with_mountpoints)
             #если полученная строка не пустая то выводим сообщение о планируемых изменениях
             if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
                 echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
@@ -203,22 +217,28 @@ while IFS= read -r line; do
             existing_subvolumes_string=$(one_line "$existing_subvolumes_strings")
             #получаем массив из строки
             read -r -a existing_subvolumes <<< "$existing_subvolumes_string"
-            #выводим сабволюмы, используем функцию one_line чтобы отобразить их в одной строке, если их несколько
+            #выводим список сабволюмов на экран
             echo -e "!${BOLD}Имеющиеся сабволюмы:${NC} ${CYAN}$existing_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
-            #получаем строку с планируемыми изменениями
-            new_btrfs_subvolumes_string=$(get_new_btrfs_subvolumes_for_device_with_their_mount_points "$device_fullname")
-            #получаем массив из строки
-            read -r -a new_btrfs_subvolumes <<< "$new_btrfs_subvolumes_string"
-            #если полученная строка не пустая, то проверяем, есть ли в ней уже существующие сабволюмы
+            
+            #для начала создаём ассоциативный массив (в текущей реализации временный
+            #т.к. будет пересоздаваться при каждой итерации цикла)
+            declare -A new_btrfs_subvolumes_with_mountpoints
+            #заполняем массив
+            #нужно передавать имя массива, а не его содержимое
+            fill_in_array_by_new_btrfs_subvolumes_for_device "$device_fullname" new_btrfs_subvolumes_with_mountpoints
+
+            #формируем строку с планируемыми изменениями
+            new_btrfs_subvolumes_string=$(get_string_for_new_btrfs_subvolumes_for_device new_btrfs_subvolumes_with_mountpoints)
+            #если ассоциативный массив не пустой, то проверяем, есть ли в ней уже существующие сабволюмы
             if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
                 the_same_flag=0
-                for subvolume_with_mount_point in "${new_btrfs_subvolumes[@]}"; do
+                for subvolume_with_mount_point in "${!new_btrfs_subvolumes_with_mountpoints[@]}"; do
                     #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
                     for existing_subvolume in "${existing_subvolumes[@]}"; do
-                        if [[ "$(echo "$subvolume_with_mount_point" | sed 's|->/.*$||' | sed 's|^+||')" == "$existing_subvolume" ]]; then
+                        if [[ "$subvolume_with_mount_point" == "$existing_subvolume" ]]; then
                             the_same_flag=1
                             #окрашиваем в красный
-                            new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
+                            new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$subvolume_with_mount_point" "$RED")
                         fi
                     done
                 done
@@ -235,7 +255,10 @@ while IFS= read -r line; do
                 echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
             fi
         fi
-
+        #удаляем временный ассоциативный массив, если он существует
+        if declare -p new_btrfs_subvolumes_with_mountpoints &>/dev/null; then
+            unset new_btrfs_subvolumes_with_mountpoints
+        fi
     elif [[ "$(echo "$line" | awk '{print $3}')" == "LVM2_member" ]]; then
         #окрашиваем находку
         line_colored=$(color_text_in_string "$line_orig" "LVM2_member" "$YELLOW")
