@@ -10,7 +10,7 @@ Rider
 RustRover
 ----
 cronie
-
+sudo-rs
 
 ---------------------
 yt-dlp
