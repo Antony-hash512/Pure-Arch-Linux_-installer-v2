@@ -19,7 +19,6 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* унифицировать ошибки уже существующих поддомов btrfs и разделов на lvm
 * протестировать на vm как выводит информацию текущая реализация
 * сделать привязку pv-volume тоже к uuid
 * добавить случаи с uuid в xml-файл для тестирования на виртуальной машине
@@ -526,7 +525,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     
 done
 
-#v сюда добавляем отображение инфы пользователю
+#v данный код отвечает за отображение инфы пользователю
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
 echo -e "${GRAY}Построение информации...${NC}"
@@ -611,7 +610,7 @@ while IFS= read -r line; do
                     #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
                     for existing_subvolume in "${existing_subvolumes[@]}"; do
                         if [[ "$subvolume_with_mount_point" == "$existing_subvolume" ]]; then
-                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюм $existing_subvolume уже существует,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюм $existing_subvolume уже существует${NC}" >> $LSBLK_RAW_INFO_UPDATED
                             is_unique_flag=1
                             #окрашиваем в красный
                             new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
@@ -623,6 +622,8 @@ while IFS= read -r line; do
                     #окрашиваем в зеленый
                     new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
                 else
+                    #выводим в этой секции на случай, если совпадений было несколько
+                    echo -e "!${RED}отредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
                     problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
                     exit_and_show_problems_flag=1    
                 fi
@@ -671,8 +672,9 @@ while IFS= read -r line; do
                 for new_lvm_volume in "${!new_lvm_volumes[@]}"; do
                     for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
                         if [[ "$new_lvm_volume" == "$existing_lvm_volume" ]]; then
-                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует${NC}" >> $LSBLK_RAW_INFO_UPDATED
                             is_unique_flag=1
+                            #окрашиваем в красный
                             new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")
                         fi
                     done
@@ -680,6 +682,8 @@ while IFS= read -r line; do
                 if (( is_unique_flag == 0 )); then
                     new_lvm_volumes_string="${GREEN}${new_lvm_volumes_string}${NC}"
                 else
+                    #выводим в этой секции на случай, если совпадений было несколько
+                    echo -e "!${RED}отредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
                     problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов lvm"
                     exit_and_show_problems_flag=1
                 fi
@@ -722,7 +726,7 @@ done < <(sed '1d' $LSBLK_RAW_INFO)
 mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 #выводим содержимое временного файла
 # Настраиваем специальный pager для bat
-bat --style=grid,numbers,header-filename \
+bat --style=grid,numbers \
     --paging=always \
     --pager="less -R -F -X -P ' ↑↓ прокрутка | q — выход'" \
     "$LSBLK_RAW_INFO"
