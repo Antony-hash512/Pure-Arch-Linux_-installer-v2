@@ -611,6 +611,7 @@ while IFS= read -r line; do
                     #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
                     for existing_subvolume in "${existing_subvolumes[@]}"; do
                         if [[ "$subvolume_with_mount_point" == "$existing_subvolume" ]]; then
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюм $existing_subvolume уже существует,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
                             is_unique_flag=1
                             #окрашиваем в красный
                             new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
@@ -622,7 +623,6 @@ while IFS= read -r line; do
                     #окрашиваем в зеленый
                     new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
                 else
-                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюмы которые планируется создать уже существуют на устройстве,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
                     problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
                     exit_and_show_problems_flag=1    
                 fi
@@ -635,7 +635,7 @@ while IFS= read -r line; do
             unset new_btrfs_subvolumes_with_mountpoints
         fi
     elif [[ "$fstype_from_lsblk" == "LVM2_member" ]]; then
-        #окрашиваем находку
+        #окрашиваем найденный элемент
         line_colored=$(color_text_in_string "$line_orig" "LVM2_member" "$YELLOW")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
         if [[ "$type_from_lsblk" == "crypt" ]]; then
@@ -671,7 +671,7 @@ while IFS= read -r line; do
                 for new_lvm_volume in "${!new_lvm_volumes[@]}"; do
                     for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
                         if [[ "$new_lvm_volume" == "$existing_lvm_volume" ]]; then
-                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
                             is_unique_flag=1
                             new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")
                         fi
@@ -696,11 +696,11 @@ while IFS= read -r line; do
         fi
 
     elif [[ "$fstype_from_lsblk" == "ext4" ]]; then
-        #окрашиваем находку
+        #окрашиваем найденный элемент
         line_colored=$(color_text_in_string "$line_orig" "ext4" "$BLUE")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
     elif [[ "$fstype_from_lsblk" == "crypto_LUKS" ]]; then
-        #окрашиваем находку
+        #окрашиваем найденный элемент
         line_colored=$(color_text_in_string "$line_orig" "crypto_LUKS" "$LIGHT_BLUE")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
     else
@@ -708,7 +708,6 @@ while IFS= read -r line; do
         echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
     fi
     #т.к. в ext4 можно форматнуть любой раздел, эту проверку осуществляем вне предыдущего if
-    #проверяем, есть ли такой раздел в массиве NEW_MOUNTPOINTS
     
     #проверяем отмечен ли для форматирования через функцию check_ext4_partitions_to_format_with_their_mount_points
     string_checker=$(check_ext4_partitions_to_format_with_their_mount_points "$device_fullname")
@@ -723,7 +722,7 @@ done < <(sed '1d' $LSBLK_RAW_INFO)
 mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 #выводим содержимое временного файла
 # Настраиваем специальный pager для bat
-bat --style=grid,numbers \
+bat --style=grid,numbers,header-filename \
     --paging=always \
     --pager="less -R -F -X -P ' ↑↓ прокрутка | q — выход'" \
     "$LSBLK_RAW_INFO"
