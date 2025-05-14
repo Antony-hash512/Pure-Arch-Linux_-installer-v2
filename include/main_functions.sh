@@ -11,7 +11,7 @@ cleanup_all(){
                 continue
             fi
         
-            echo -e "${GRAY}${ITALIC}${UNDERLINE}Размонтируем точку монтирования $mountpoint${NC}"
+            echo -e "${GRAY}Размонтируем точку монтирования $mountpoint${NC}"
             if umount "$mountpoint"; then
                 echo -e "${GREEN}Успешно размонтировано: $mountpoint${NC}"
                 # Удаляем временный каталог, если он был создан с помощью mktemp
@@ -405,15 +405,11 @@ get_vg_name_for_pv() {
     fi
 }
 
-#В рамках очистки от говнокода, данные три (две?) функции нужно переделать следующим образом:
+
 #помимо строки с  названием девайса функции также будут принимать на вход свежесозданную
 #ссылку на пустой ассоциативный массив, который в ходе выполнения функций будет заполнен
 #данными для дальнейшего использования в формате: "имя_планируемого_тома"->"точка_монтирования"
-#также можно вернуть в виде строки или заполнить обычный массив также переданный в функцию в в виде ссылки
-#просто список планируемых к созданию томов, но это не обязательно, т.к. по ключам ассоциативного массива
-#также можно будет пройтись. 
-#при сравнении с выводом команды lsblk, полное имя устройства логического тома,
-#нужно будет обернуть в get_device_basename4lsblk
+
 
 #когда новые виды функций будут реализованы, старые названия можно будет использовать
 #для функций, которые уже работают с заполненным ассоциативным массивом, который передаётся
@@ -494,6 +490,7 @@ get_string_for_new_btrfs_subvolumes_for_device() {
 fill_in_array_by_new_lvm_volumes_for_group() {
     local vg_name_from_input=$1
     local -n array_ref=$2
+    local -n array_ref_is_luks=$3
     local output=""
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -512,22 +509,29 @@ fill_in_array_by_new_lvm_volumes_for_group() {
                 #current_basename=$(echo "$current_device_name" | sed -E 's|/dev/[^/]+/([^/]+)$|\1|')
                 #current_basename=$(get_device_basename4lsblk "$current_device_name")
                 current_basename=$(get_lv_name_from_fulldevname "$current_device_name")
+                array_ref["$current_basename"]="$mount_point"
+                # по аналогии со статусом возврата в bash: 0 это истина, 1 это ложь
                 if [[ "$crypt_mode" == "file_in_none" || "$crypt_mode" == "pwd_in_none" ]]; then
-                    output="$output +[new ext4 -> $mount_point in new luks $current_basename]"
+                    array_ref_is_luks["$current_basename"]=0
                 else
-                    output="$output +${current_basename}->$mount_point"
+                    array_ref_is_luks["$current_basename"]=1
                 fi
             fi
         fi
     done
-    echo -e "$output"
 }
 
 get_string_for_new_lvm_volumes_for_group() {
     local -n array_ref=$1
+    local -n array_ref_is_luks=$2
     local output=""
     for key in "${!array_ref[@]}"; do
-        output="$output +$key->${array_ref[$key]}"
+        
+        if (( "${array_ref_is_luks[$key]}" == 0 )); then
+            output="$output [ + $key в новом luks -> ${array_ref[$key]} ]"
+        else
+            output="$output [ + $key -> ${array_ref[$key]} ]"
+        fi
     done
     echo "$output"
 }

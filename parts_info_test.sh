@@ -2,6 +2,7 @@
 
 : << 'TODO'
 + после чистки от говнокода, нужно почистить от коментариев, которые потеряют актуальность
++ вывести выбор списка разделов в отдельную функцию
 + отображать в разметке случаи с шифрованием
 + добавить другие параметры для запуска (автовыбор других компонентов и альтернативный xml-файл)
 TODO
@@ -214,7 +215,7 @@ done
 # V отсуда будем переность инфу в новый файл
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
-echo -e "${GRAY}${ITALIC}${UNDERLINE}Построение информации...${NC}"
+echo -e "${GRAY}Построение информации...${NC}"
 
 #создаём временные файлы и сохраняем имя в переменные
 LSBLK_RAW_INFO=$(mktemp)
@@ -268,7 +269,7 @@ while IFS= read -r line; do
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
         existing_subvolumes_strings=$(get_btrfs_subvolumes "$device_fullname")
         if [[ -z "$existing_subvolumes_strings" ]]; then
-            echo -e "${GRAY}${ITALIC}${UNDERLINE}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            echo -e "${GRAY}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
  
             #для начала создаём ассоциативный массив (в текущей реализации временный
             #т.к. будет пересоздаваться при каждой итерации цикла)
@@ -302,25 +303,25 @@ while IFS= read -r line; do
             new_btrfs_subvolumes_string=$(get_string_for_new_btrfs_subvolumes_for_device new_btrfs_subvolumes_with_mountpoints)
             #если ассоциативный массив не пустой, то проверяем, есть ли в ней уже существующие сабволюмы
             if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
-                the_same_flag=0
+                is_unique_flag=0
                 for subvolume_with_mount_point in "${!new_btrfs_subvolumes_with_mountpoints[@]}"; do
                     #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
                     for existing_subvolume in "${existing_subvolumes[@]}"; do
                         if [[ "$subvolume_with_mount_point" == "$existing_subvolume" ]]; then
-                            the_same_flag=1
+                            is_unique_flag=1
                             #окрашиваем в красный
                             new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
                         fi
                     done
                 done
                 #если the_same_flag равен 1, то выводим сообщение об ошибке
-                if [[ "$the_same_flag" == 1 ]]; then
-                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюмы которые планируется создать уже существуют на устройстве,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                    problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
-                    exit_and_show_problems_flag=1
-                elif [[ "$the_same_flag" == 0 ]]; then
+                if (( is_unique_flag == 0 )); then
                     #окрашиваем в зеленый
                     new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
+                else
+                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюмы которые планируется создать уже существуют на устройстве,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                    problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
+                    exit_and_show_problems_flag=1    
                 fi
             
                 #echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
@@ -349,36 +350,48 @@ while IFS= read -r line; do
         else
             #выводим имя группы томов
             echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
-            #проверяем точки монтирования из xml-конфига
-            new_lvm_volumes_string=$(get_new_lvm_volumes_for_group_with_their_mount_points "$vg_name")
-            #получаем массив из строки
-            read -r -a new_lvm_volumes <<< "$new_lvm_volumes_string"
+
+            #создаём временный ассоциативный массив для хранения новых томов lvm
+            declare -A new_lvm_volumes
+            declare -A new_lvm_volumes_is_luks
+            #заполняем массив
+            fill_in_array_by_new_lvm_volumes_for_group "$vg_name" new_lvm_volumes new_lvm_volumes_is_luks
+            #формируем строку с планируемыми изменениями
+            new_lvm_volumes_string=$(get_string_for_new_lvm_volumes_for_group new_lvm_volumes new_lvm_volumes_is_luks)
+           
             #поучаем список существующий логических томов с преобразованием в одну строку
             existing_lvm_volumes_string=$(one_line "$(safe_lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
             #получаем массив из строки
             read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
             #проходимся по массивам для поиска совпадений
             if [[ -n "$new_lvm_volumes_string" ]]; then 
-                the_same_flag=0
+                is_unique_flag=0
 
-                for new_lvm_volume in "${new_lvm_volumes[@]}"; do
+                for new_lvm_volume in "${!new_lvm_volumes[@]}"; do
                     for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
-                        if [[ "$(echo "$new_lvm_volume" | sed 's|->/.*$||' | sed 's|^+||')" == "$existing_lvm_volume" ]]; then
+                        if [[ "$new_lvm_volume" == "$existing_lvm_volume" ]]; then
                             echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                            the_same_flag=1
+                            is_unique_flag=1
                             new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")
                         fi
                     done
                 done
-                if [[ "$the_same_flag" == 0 ]]; then
+                if (( is_unique_flag == 0 )); then
                     new_lvm_volumes_string="${GREEN}${new_lvm_volumes_string}${NC}"
-                elif [[ "$the_same_flag" == 1 ]]; then
+                else
                     problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов lvm"
                     exit_and_show_problems_flag=1
                 fi
 
-                echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_lvm_volumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} $new_lvm_volumes_string" >> $LSBLK_RAW_INFO_UPDATED
             fi
+        fi
+        #удаляем временные ассоциативные массивы, если они существуют
+        if declare -p new_lvm_volumes &>/dev/null; then
+            unset new_lvm_volumes
+        fi
+        if declare -p new_lvm_volumes_is_luks &>/dev/null; then
+            unset new_lvm_volumes_is_luks
         fi
 
     elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
