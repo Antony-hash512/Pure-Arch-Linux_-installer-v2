@@ -1,8 +1,6 @@
 #!/bin/bash
 
 : << 'TODO'
-
-+ вывести выбор списка разделов в отдельную функцию
 + отображать в разметке случаи с шифрованием
 + добавить другие параметры для запуска (автовыбор других компонентов и альтернативный xml-файл)
 TODO
@@ -49,57 +47,8 @@ declare -a LSBLK_FORMATS=(
     "NAME,TYPE,FSTYPE"
     "NAME,TYPE,FSTYPE,UUID"
 )
-# создаём ассоциативный массив с примерной шириной каждого поля
-declare -A LSBLK_FIELDS_WIDTHS=(
-    ["NAME"]=35
-    ["TYPE"]=5
-    ["FSTYPE"]=12
-    ["SIZE"]=8
-    ["UUID"]=40
-    ["MOUNTPOINTS"]=35
-    ["RM"]=3
-    ["RO"]=3
-    ["ROTA"]=5
-)
 
-# функция для вычисления ширины поля
-function calculate_width_of_lsblk_field() {
-    local lsblk_format=$1
-    #получаем массив из строки с разделителем - запятая
-    local field_names=($(echo "$lsblk_format" | tr ',' '\n'))
-    local field_width=0
-    for field_name in "${field_names[@]}"; do
-        local field_width=$(($field_width + ${LSBLK_FIELDS_WIDTHS[$field_name]}))
-    done
-    echo $field_width
-}
-# функция для сравнения ширины поля с шириной интерфейса tty для отображения в цвете
-function get_colored_requirement_for_width_of_lsblk_field() {
-    local lsblk_format=$1
-    local field_width=$(calculate_width_of_lsblk_field "$lsblk_format")
-    if [[ "$field_width" -ge "$TTY_WIDTH" ]]; then
-        echo -e "${RED}$field_width+${NC}"
-    else
-        echo -e "${GREEN}$field_width+${NC}"
-    fi
-}
-
-echo -e "${BOLD}${YELLOW}Ширина интерфейса tty в символах: ${GREEN}$TTY_WIDTH${NC}"
-echo -e "Пожалуйста, выберите формат вывода lsblk для просмотра списка разделов перед установкой:"
-echo -e "${GREEN}*${NC}) $LSBLK_FORMAT (${YELLOW}по умолчанию, можно просто нажать Enter${NC}; требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "$LSBLK_FORMAT"))"
-for ((i=0; i<${#LSBLK_FORMATS[@]}; i++)); do
-    echo -e "${GREEN}$((i+1))${NC}) ${LSBLK_FORMATS[$i]} (требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "${LSBLK_FORMATS[$i]}"))"
-done
-echo "при низком разрешении экрана и/или крупном шрифте рекомендуется выбрать короткий формат (например, NAME,TYPE,FSTYPE,SIZE)"
-echo "при FullHD, 4K, 8K и т.п. и относительно мелком шрифте можно отобразить всю необходимую вам информацию по максимуму"
-read -p "Введите номер нужного формата: " format_choice
-
-if [[ "$format_choice" -ge 1 && "$format_choice" -le ${#LSBLK_FORMATS[@]} ]]; then
-    export LSBLK_FORMAT="${LSBLK_FORMATS[$((format_choice-1))]}"
-else
-    echo -e "${YELLOW}Используется формат по умолчанию:${NC} $LSBLK_FORMAT"
-fi
-
+request_lsblk_format
 
 # создаём ассоциативный массив problems для возможного запланированного выхода 
 declare -A problems
@@ -197,7 +146,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     current_row["device_name"]=$device_name
 
     # Заполняем device_for_operations только для томов без шифрования
-
     current_row["device_for_operations"]=$device_name
 
 
@@ -221,20 +169,11 @@ echo -e "${GRAY}Построение информации...${NC}"
 LSBLK_RAW_INFO=$(mktemp)
 LSBLK_RAW_INFO_UPDATED=$(mktemp)
 #записываем содержимое во временный файл
-#RM или RO - нужно дописать в конец строки чтобы при добавлении дополнительного параметра всё было выровнено по правому краю
-
-#lsblk -o NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA > $LSBLK_RAW_INFO
 lsblk -o $LSBLK_FORMAT > $LSBLK_RAW_INFO
 
-#расшифровка дальнейшего использования:
-#$(echo "$line" | awk '{print $1}') - NAME
-#$(echo "$line" | awk '{print $2}') - TYPE
-#$(echo "$line" | awk '{print $3}') - FSTYPE
-#имеет смысл сделать функции для лучшей читаемости кода
-#можно сделать псевдо неймспейс lineop_ для данных групп функций (и отдельный файл lineops.sh)
 
 #определяем длину строки в файле
-LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
+#LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
 
 #записываем первую строку с добавочным текстом (если нужен) во второй временный файл
 echo "$(head -n 1 $LSBLK_RAW_INFO)" > $LSBLK_RAW_INFO_UPDATED
@@ -247,19 +186,20 @@ while IFS= read -r line; do
     #заменяем '│ ' на '│·' чтобы избежать ошибочного разбиения на слова
     line=$(echo "$line" | sed 's/│ /│·/g')
     #получаем базовое имя устройства
-    device_basename=$(echo "$line" | awk '{print $1}')
     #удаляем любые символы отображающие древовидную структуру из начала строки
-    device_basename=$(echo "$device_basename" | sed 's/^[├─└│·]*//')
+    device_basename=$(echo "$line" | awk '{print $1}' | sed 's/^[├─└│·]*//')
+    type_from_lsblk=$(echo "$line" | awk '{print $2}')
+    fstype_from_lsblk=$(echo "$line" | awk '{print $3}')
     #определяем полное имя устройства
-    if [[ "$(echo "$line" | awk '{print $2}')" == "lvm" ]]; then
+    if [[ "$type_from_lsblk" == "lvm" ]]; then
         device_fullname="/dev/mapper/$device_basename"
-    elif [[ "$(echo "$line" | awk '{print $2}')" == "part" ]]; then
+    elif [[ "$type_from_lsblk" == "part" ]]; then
         device_fullname="/dev/$device_basename"
-    elif [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+    elif [[ "$type_from_lsblk" == "crypt" ]]; then
         device_fullname=/dev/mapper/$device_basename
     fi
 
-    if [[ "$(echo "$line" | awk '{print $3}')" == "btrfs" ]]; then
+    if [[ "$fstype_from_lsblk" == "btrfs" ]]; then
         # Используем функцию для окрашивания слова "btrfs"
         line_colored=$(color_text_in_string "$line_orig" "btrfs" "$CYAN")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
@@ -323,9 +263,7 @@ while IFS= read -r line; do
                     problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
                     exit_and_show_problems_flag=1    
                 fi
-            
-                #echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+                    echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
 
             fi
         fi
@@ -333,11 +271,11 @@ while IFS= read -r line; do
         if declare -p new_btrfs_subvolumes_with_mountpoints &>/dev/null; then
             unset new_btrfs_subvolumes_with_mountpoints
         fi
-    elif [[ "$(echo "$line" | awk '{print $3}')" == "LVM2_member" ]]; then
+    elif [[ "$fstype_from_lsblk" == "LVM2_member" ]]; then
         #окрашиваем находку
         line_colored=$(color_text_in_string "$line_orig" "LVM2_member" "$YELLOW")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
-        if [[ "$(echo "$line" | awk '{print $2}')" == "crypt" ]]; then
+        if [[ "$type_from_lsblk" == "crypt" ]]; then
             device_fullname="/dev/mapper/$device_basename"
         else
             device_fullname="/dev/$device_basename"
@@ -346,7 +284,7 @@ while IFS= read -r line; do
         vg_name=$(get_vg_name_for_pv "$device_fullname")
         #если том не принадлежит ни одной группе томов, нет смысла делать дальнейшие проверки
         if [[ -z "$vg_name" ]]; then
-            echo -e "!${GRAY}${ITALIC}Не принадлежит ни одной группе томов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            echo -e "!${GRAY}Не принадлежит ни одной группе томов${NC}" >> $LSBLK_RAW_INFO_UPDATED
         else
             #выводим имя группы томов
             echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
@@ -394,11 +332,11 @@ while IFS= read -r line; do
             unset new_lvm_volumes_is_luks
         fi
 
-    elif [[ "$(echo "$line" | awk '{print $3}')" == "ext4" ]]; then
+    elif [[ "$fstype_from_lsblk" == "ext4" ]]; then
         #окрашиваем находку
         line_colored=$(color_text_in_string "$line_orig" "ext4" "$BLUE")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
-    elif [[ "$(echo "$line" | awk '{print $3}')" == "crypto_LUKS" ]]; then
+    elif [[ "$fstype_from_lsblk" == "crypto_LUKS" ]]; then
         #окрашиваем находку
         line_colored=$(color_text_in_string "$line_orig" "crypto_LUKS" "$LIGHT_BLUE")
         echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED

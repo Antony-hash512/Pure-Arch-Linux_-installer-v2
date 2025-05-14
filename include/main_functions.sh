@@ -451,7 +451,7 @@ fill_in_array_by_new_btrfs_subvolumes_for_device() {
         fi
     done
 }
-#Функция для получения строки с планируемыми изменениями для устройства
+#Функция для получения строки с планируемыми изменениями для btrfs
 get_string_for_new_btrfs_subvolumes_for_device() {
     local -n array_ref=$1
     local output=""
@@ -465,22 +465,20 @@ get_string_for_new_btrfs_subvolumes_for_device() {
 #Функция для заполнения ассоциативных массивов для построения строки с планируемыми изменениями
 #В функции для btrfs мы искали совпадение девайсов с btrfs для добавления нового сабволюма туда
 #Здесь же мы ищем совпадение групп томов для добавления или нового логического тома или c голой ext4 или с luks
-
-#Ответы на пару вопросов, которые у меня возникли при обдумывании этой функции:
-#В каких случаях нужно брать значение device_for_operations, а в каких lv-volume? - во всех случаях lv-volume
-#Т.к. при отсутствии шифрования device_for_operations совпадает с lv-volume,
-#Если шифрование на уровне pv, они также совпадают, если на уровне lv, device_for_operations ещё не создан,
-#И не может быть найден в выводе команды lsblk, нужно всё равно найти lv-volume и отобразить информацию,
-#Что внутри него будет создан luks
-#В каких случаях имя не будет формата lv lvm и функцию get_vg_name_from_fulldevname нужно будет заменить на что-то другое?
-#Ответ: в данной функции не подтребуется замена, т.к. в случае разбраный выше: мы работаем только с тем
-#что найдётся по "lvm" в выводе команды lsblk, crypt и part тут не затрагиваются
-
-#crypt_mode влияет на то, как будет отображена информация пользователю:
-#при crypt_mode = file_in_none и pwd_in_none нужно также уточнить, что будет создан
-#не просто логический том, а luks
-
 fill_in_array_by_new_lvm_volumes_for_group() {
+    #Ответы на пару вопросов, которые у меня возникли при обдумывании этой функции:
+    #В каких случаях нужно брать значение device_for_operations, а в каких lv-volume? - во всех случаях lv-volume
+    #Т.к. при отсутствии шифрования device_for_operations совпадает с lv-volume,
+    #Если шифрование на уровне pv, они также совпадают, если на уровне lv, device_for_operations ещё не создан,
+    #И не может быть найден в выводе команды lsblk, нужно всё равно найти lv-volume и отобразить информацию,
+    #Что внутри него будет создан luks
+    #В каких случаях имя не будет формата lv lvm и функцию get_vg_name_from_fulldevname нужно будет заменить на что-то другое?
+    #Ответ: в данной функции не подтребуется замена, т.к. в случае разбраный выше: мы работаем только с тем
+    #что найдётся по "lvm" в выводе команды lsblk, crypt и part тут не затрагиваются
+    
+    #crypt_mode влияет на то, как будет отображена информация пользователю:
+    #при crypt_mode = file_in_none и pwd_in_none нужно также уточнить, что будет создан
+    #не просто логический том, а luks
     local vg_name_from_input=$1
     local -n array_ref=$2
     local -n array_ref_is_luks=$3
@@ -514,6 +512,7 @@ fill_in_array_by_new_lvm_volumes_for_group() {
     done
 }
 
+#Функция для получения строки с планируемыми изменениями для lvm
 get_string_for_new_lvm_volumes_for_group() {
     local -n array_ref=$1
     local -n array_ref_is_luks=$2
@@ -1157,3 +1156,67 @@ function check_problems() {
         exit 1
     fi
 }
+
+#Функция для запроса формата вывода lsblk
+function request_lsblk_format() {
+    #требует заданных переменных:
+    #LSBLK_FORMAT - формат вывода lsblk по умолчанию
+    #LSBLK_FORMATS - массив с форматами вывода lsblk
+    #TTY_WIDTH - ширина терминала
+    # создаём ассоциативный массив с примерной шириной каждого поля
+    declare -A LSBLK_FIELDS_WIDTHS=(
+        ["NAME"]=35
+        ["TYPE"]=5
+        ["FSTYPE"]=12
+        ["SIZE"]=8
+        ["UUID"]=40
+        ["MOUNTPOINTS"]=35
+        ["RM"]=3
+        ["RO"]=3
+        ["ROTA"]=5
+    )
+    
+    # функция для вычисления ширины поля
+    function calculate_width_of_lsblk_field() {
+        local lsblk_format=$1
+        #получаем массив из строки с разделителем - запятая
+        local field_names=($(echo "$lsblk_format" | tr ',' '\n'))
+        local field_width=0
+        for field_name in "${field_names[@]}"; do
+            local field_width=$(($field_width + ${LSBLK_FIELDS_WIDTHS[$field_name]}))
+        done
+        echo $field_width
+    }
+    # функция для сравнения ширины поля с шириной интерфейса tty для отображения в цвете
+    function get_colored_requirement_for_width_of_lsblk_field() {
+        local lsblk_format=$1
+        local field_width=$(calculate_width_of_lsblk_field "$lsblk_format")
+        if [[ "$field_width" -ge "$TTY_WIDTH" ]]; then
+            echo -e "${RED}$field_width+${NC}"
+        else
+            echo -e "${GREEN}$field_width+${NC}"
+        fi
+    }
+    
+    echo -e "${BOLD}${YELLOW}Ширина интерфейса tty в символах: ${GREEN}$TTY_WIDTH${NC}"
+    echo -e "Пожалуйста, выберите формат вывода lsblk для просмотра списка разделов перед установкой:"
+    echo -e "${GREEN}*${NC}) $LSBLK_FORMAT (${YELLOW}по умолчанию, можно просто нажать Enter${NC}; требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "$LSBLK_FORMAT"))"
+    for ((i=0; i<${#LSBLK_FORMATS[@]}; i++)); do
+        echo -e "${GREEN}$((i+1))${NC}) ${LSBLK_FORMATS[$i]} (требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "${LSBLK_FORMATS[$i]}"))"
+    done
+    echo "при низком разрешении экрана и/или крупном шрифте рекомендуется выбрать короткий формат (например, NAME,TYPE,FSTYPE,SIZE)"
+    echo "при FullHD, 4K, 8K и т.п. и относительно мелком шрифте можно отобразить всю необходимую вам информацию по максимуму"
+    read -p "Введите номер нужного формата: " format_choice
+    
+    if [[ "$format_choice" -ge 1 && "$format_choice" -le ${#LSBLK_FORMATS[@]} ]]; then
+        export LSBLK_FORMAT="${LSBLK_FORMATS[$((format_choice-1))]}"
+    else
+        echo -e "${YELLOW}Используется формат по умолчанию:${NC} $LSBLK_FORMAT"
+    fi
+}
+
+#Функция для проверки существования раздела с указанным UUID и получения пути к нему
+#check_uuid_exists() {
+    # Возвращает:
+    #   - путь к устройству через echo, если оно существует
+    #   - код возврата 0, если раздел существует 
