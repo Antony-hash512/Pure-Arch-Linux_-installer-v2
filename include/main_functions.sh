@@ -1155,6 +1155,8 @@ function check_problems() {
         echo ""
         echo -e "${RED}${BOLD}Устраните проблемы и перезапустите скрипт${NC}"
         exit 1
+    else
+        echo -e "${GREEN}На текущем этапе проверки проблем не выявлено${NC}"
     fi
 }
 
