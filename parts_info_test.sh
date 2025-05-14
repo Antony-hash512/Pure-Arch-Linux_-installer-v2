@@ -85,7 +85,7 @@ function get_colored_requirement_for_width_of_lsblk_field() {
 
 echo -e "${BOLD}${YELLOW}Ширина интерфейса tty в символах: ${GREEN}$TTY_WIDTH${NC}"
 echo -e "Пожалуйста, выберите формат вывода lsblk для просмотра списка разделов перед установкой:"
-echo -e "${GREEN}0${NC}) $LSBLK_FORMAT (по умолчанию; требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "$LSBLK_FORMAT"))"
+echo -e "${GREEN}*${NC}) $LSBLK_FORMAT (${YELLOW}по умолчанию, можно просто нажать Enter${NC}; требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "$LSBLK_FORMAT"))"
 for ((i=0; i<${#LSBLK_FORMATS[@]}; i++)); do
     echo -e "${GREEN}$((i+1))${NC}) ${LSBLK_FORMATS[$i]} (требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "${LSBLK_FORMATS[$i]}"))"
 done
