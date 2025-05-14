@@ -1150,9 +1150,10 @@ function check_problems() {
     if [[ "$exit_and_show_problems_flag" == 1 ]]; then
         echo -e "${RED}На текущем этапе проверки были выявлены следующие проблемы:${NC}"
         for problem in "${!problems[@]}"; do
-            echo -e "${RED}$problem:${NC} ${problems[$problem]}"
+            echo -e "$problem: ${RED}${problems[$problem]}${NC}"
         done
-        echo -e "${RED}Устраните проблемы и перезапустите скрипт${NC}"
+        echo ""
+        echo -e "${RED}${BOLD}Устраните проблемы и перезапустите скрипт${NC}"
         exit 1
     fi
 }
@@ -1214,9 +1215,3 @@ function request_lsblk_format() {
         echo -e "${YELLOW}Используется формат по умолчанию:${NC} $LSBLK_FORMAT"
     fi
 }
-
-#Функция для проверки существования раздела с указанным UUID и получения пути к нему
-#check_uuid_exists() {
-    # Возвращает:
-    #   - путь к устройству через echo, если оно существует
-    #   - код возврата 0, если раздел существует 

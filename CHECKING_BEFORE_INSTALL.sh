@@ -19,7 +19,7 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* перенести логику вывода информации пользователю из prev_ver_of_install.sh в очищенном от говнокода виде
+* унифицировать ошибки уже существующих поддомов btrfs и разделов на lvm
 * протестировать на vm как выводит информацию текущая реализация
 * сделать привязку pv-volume тоже к uuid
 * добавить случаи с uuid в xml-файл для тестирования на виртуальной машине
@@ -28,7 +28,7 @@
 * создать функцию, которая будет проверять корректность данных в xml-файле
 * протестировать написанные функции (опционально)
 
-Другие TODO находятся в файлах prev_ver_of_install.sh и part_info_test.sh
+Другие TODO находятся в файлах prev_ver_of_install.sh
 их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
 TODO
 # проверяем версию баша
@@ -70,6 +70,24 @@ export AUTODIR="autocreated_scripts"
 export XML_FILE="components.xml"
 export XML_PARSER="get_data_from_components_xml.py"
 export CHROOT_SCRIPT="run_inside_chroot.sh"
+
+# Формат вывода lsblk по умолчанию
+export LSBLK_FORMAT="NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
+# Читаем ширину терминала
+TTY_WIDTH=$(tput cols)
+
+# Создаем массив с возможными вариантами (для возможности изменения)
+declare -a LSBLK_FORMATS=(
+    "NAME,TYPE,FSTYPE,SIZE,UUID,MOUNTPOINTS,RM,RO,ROTA"
+    "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS,RM,RO,ROTA"
+    "NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
+    "NAME,TYPE,FSTYPE,SIZE,UUID,MOUNTPOINTS"
+    "NAME,TYPE,FSTYPE,SIZE,UUID"
+    "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS"
+    "NAME,TYPE,FSTYPE,SIZE"
+    "NAME,TYPE,FSTYPE"
+    "NAME,TYPE,FSTYPE,UUID"
+)
 
 # создаём ассоциативный массив problems для возможного запланированного выхода 
 declare -A problems
@@ -123,9 +141,13 @@ fi
 echo "перед использованием скрипта также должен быть настроен доступ в интернет и выпонена необходимая минимальная разбивка разделов на диске"
 read -p "Enter - продолжить; ctrl+C - прервать"
 
+#1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
+request_lsblk_format
+
+
 #1.2) устанавливаем необходимые пакеты
 pacman -Sy
-packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
+packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc" "bat")
 
 for pkg in "${packages[@]}"; do
     if ! pacman -Qi "$pkg" &>/dev/null; then
@@ -246,7 +268,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
                     ;;
                 *)
-                    echo "Неизвестный тип: $crypt_mode" >&2
+                    echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none, file, pwd)" >&2
                     exit 1
                     ;;
             esac
@@ -289,7 +311,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                     ;;
                 *)
-                    echo "Неизвестный тип: $crypt_mode" >&2
+                    echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none, file, pwd)" >&2
                     exit 1
                     ;;
             esac
@@ -380,7 +402,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                     ;;
                 *)
-                    echo "Неизвестный тип: $crypt_mode" >&2
+                    echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none)" >&2
                     exit 1
                     ;;
             esac
@@ -491,13 +513,13 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                     ;;
                 *)
-                    echo "Неизвестный тип: $crypt_mode" >&2
+                    echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none)" >&2
                     exit 1
                     ;;
             esac
             ;;
         *)
-            echo "Неизвестный тип: $type" >&2
+            echo "Для $mount_point неизвестный тип: $type (в данном случае предусмотрены: format_ext4, new_subvol_in_btrfs, new_subvol_in_btrfs_in_lvm, new_ext4_in_lvm)" >&2
             exit 1
             ;;
     esac
@@ -506,10 +528,213 @@ done
 
 #v сюда добавляем отображение инфы пользователю
 
+echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
+echo -e "${GRAY}Построение информации...${NC}"
 
+#создаём временные файлы и сохраняем имя в переменные
+LSBLK_RAW_INFO=$(mktemp)
+LSBLK_RAW_INFO_UPDATED=$(mktemp)
+#записываем содержимое во временный файл
+lsblk -o $LSBLK_FORMAT > $LSBLK_RAW_INFO
+
+
+#записываем первую строку с добавочным текстом (если нужен) во второй временный файл
+echo "$(head -n 1 $LSBLK_RAW_INFO)" > $LSBLK_RAW_INFO_UPDATED
+
+
+#проходися по файлу начиная со второй строки в цикле
+while IFS= read -r line; do
+    #дублируем строку как есть до изменения
+    line_orig="$line"
+    #заменяем '│ ' на '│·' чтобы избежать ошибочного разбиения на слова
+    line=$(echo "$line" | sed 's/│ /│·/g')
+    #получаем базовое имя устройства
+    #удаляем любые символы отображающие древовидную структуру из начала строки
+    device_basename=$(echo "$line" | awk '{print $1}' | sed 's/^[├─└│·]*//')
+    type_from_lsblk=$(echo "$line" | awk '{print $2}')
+    fstype_from_lsblk=$(echo "$line" | awk '{print $3}')
+    #определяем полное имя устройства
+    if [[ "$type_from_lsblk" == "lvm" ]]; then
+        device_fullname="/dev/mapper/$device_basename"
+    elif [[ "$type_from_lsblk" == "part" ]]; then
+        device_fullname="/dev/$device_basename"
+    elif [[ "$type_from_lsblk" == "crypt" ]]; then
+        device_fullname=/dev/mapper/$device_basename
+    fi
+
+    if [[ "$fstype_from_lsblk" == "btrfs" ]]; then
+        # Используем функцию для окрашивания слова "btrfs"
+        line_colored=$(color_text_in_string "$line_orig" "btrfs" "$CYAN")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+
+
+        #используем функцию get_btrfs_subvolumes
+        #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
+        existing_subvolumes_strings=$(get_btrfs_subvolumes "$device_fullname")
+        if [[ -z "$existing_subvolumes_strings" ]]; then
+            echo -e "${GRAY}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+ 
+            #для начала создаём ассоциативный массив (в текущей реализации временный
+            #т.к. будет пересоздаваться при каждой итерации цикла)
+            declare -A new_btrfs_subvolumes_with_mountpoints
+            #заполняем массив
+            #нужно передавать имя массива, а не его содержимое
+            fill_in_array_by_new_btrfs_subvolumes_for_device "$device_fullname" new_btrfs_subvolumes_with_mountpoints
+
+            #формируем строку с планируемыми изменениями
+            new_btrfs_subvolumes_string=$(get_string_for_new_btrfs_subvolumes_for_device new_btrfs_subvolumes_with_mountpoints)
+            #если полученная строка не пустая то выводим сообщение о планируемых изменениях
+            if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
+                echo -e "!${BOLD}Планируемые изменения:${NC} ${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            fi
+        else
+            #получаем список существующих сабволюмов в формате в одну строку
+            existing_subvolumes_string=$(one_line "$existing_subvolumes_strings")
+            #получаем массив из строки
+            read -r -a existing_subvolumes <<< "$existing_subvolumes_string"
+            #выводим список сабволюмов на экран
+            echo -e "!${BOLD}Имеющиеся сабволюмы:${NC} ${CYAN}$existing_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+            
+            #для начала создаём ассоциативный массив (в текущей реализации временный
+            #т.к. будет пересоздаваться при каждой итерации цикла)
+            declare -A new_btrfs_subvolumes_with_mountpoints
+            #заполняем массив
+            #нужно передавать имя массива, а не его содержимое
+            fill_in_array_by_new_btrfs_subvolumes_for_device "$device_fullname" new_btrfs_subvolumes_with_mountpoints
+
+            #формируем строку с планируемыми изменениями
+            new_btrfs_subvolumes_string=$(get_string_for_new_btrfs_subvolumes_for_device new_btrfs_subvolumes_with_mountpoints)
+            #если ассоциативный массив не пустой, то проверяем, есть ли в ней уже существующие сабволюмы
+            if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
+                is_unique_flag=0
+                for subvolume_with_mount_point in "${!new_btrfs_subvolumes_with_mountpoints[@]}"; do
+                    #проверяем, есть ли такой сабволюм в массиве existing_subvolumes
+                    for existing_subvolume in "${existing_subvolumes[@]}"; do
+                        if [[ "$subvolume_with_mount_point" == "$existing_subvolume" ]]; then
+                            is_unique_flag=1
+                            #окрашиваем в красный
+                            new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
+                        fi
+                    done
+                done
+                #если the_same_flag равен 1, то выводим сообщение об ошибке
+                if (( is_unique_flag == 0 )); then
+                    #окрашиваем в зеленый
+                    new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
+                else
+                    echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Сабволюмы которые планируется создать уже существуют на устройстве,\nотредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                    problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
+                    exit_and_show_problems_flag=1    
+                fi
+                    echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+
+            fi
+        fi
+        #удаляем временный ассоциативный массив, если он существует
+        if declare -p new_btrfs_subvolumes_with_mountpoints &>/dev/null; then
+            unset new_btrfs_subvolumes_with_mountpoints
+        fi
+    elif [[ "$fstype_from_lsblk" == "LVM2_member" ]]; then
+        #окрашиваем находку
+        line_colored=$(color_text_in_string "$line_orig" "LVM2_member" "$YELLOW")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+        if [[ "$type_from_lsblk" == "crypt" ]]; then
+            device_fullname="/dev/mapper/$device_basename"
+        else
+            device_fullname="/dev/$device_basename"
+        fi
+        #получаем имя группы томов
+        vg_name=$(get_vg_name_for_pv "$device_fullname")
+        #если том не принадлежит ни одной группе томов, нет смысла делать дальнейшие проверки
+        if [[ -z "$vg_name" ]]; then
+            echo -e "!${GRAY}Не принадлежит ни одной группе томов${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        else
+            #выводим имя группы томов
+            echo -e "!${BOLD}Имя группы томов:${NC} ${YELLOW}$vg_name${NC}" >> $LSBLK_RAW_INFO_UPDATED
+
+            #создаём временный ассоциативный массив для хранения новых томов lvm
+            declare -A new_lvm_volumes
+            declare -A new_lvm_volumes_is_luks
+            #заполняем массив
+            fill_in_array_by_new_lvm_volumes_for_group "$vg_name" new_lvm_volumes new_lvm_volumes_is_luks
+            #формируем строку с планируемыми изменениями
+            new_lvm_volumes_string=$(get_string_for_new_lvm_volumes_for_group new_lvm_volumes new_lvm_volumes_is_luks)
+           
+            #поучаем список существующий логических томов с преобразованием в одну строку
+            existing_lvm_volumes_string=$(one_line "$(safe_lvs --noheading -o lv_name "$vg_name" | tr -d ' ')")
+            #получаем массив из строки
+            read -r -a existing_lvm_volumes <<< "$existing_lvm_volumes_string"
+            #проходимся по массивам для поиска совпадений
+            if [[ -n "$new_lvm_volumes_string" ]]; then 
+                is_unique_flag=0
+
+                for new_lvm_volume in "${!new_lvm_volumes[@]}"; do
+                    for existing_lvm_volume in "${existing_lvm_volumes[@]}"; do
+                        if [[ "$new_lvm_volume" == "$existing_lvm_volume" ]]; then
+                            echo -e "!${RED}${BOLD}Ошибка:${NC} ${RED}Том $existing_lvm_volume уже существует на устройстве${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                            is_unique_flag=1
+                            new_lvm_volumes_string=$(color_text_in_string "$new_lvm_volumes_string" "$existing_lvm_volume" "$RED")
+                        fi
+                    done
+                done
+                if (( is_unique_flag == 0 )); then
+                    new_lvm_volumes_string="${GREEN}${new_lvm_volumes_string}${NC}"
+                else
+                    problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов lvm"
+                    exit_and_show_problems_flag=1
+                fi
+
+                echo -e "!${BOLD}Планируемые изменения:${NC} $new_lvm_volumes_string" >> $LSBLK_RAW_INFO_UPDATED
+            fi
+        fi
+        #удаляем временные ассоциативные массивы, если они существуют
+        if declare -p new_lvm_volumes &>/dev/null; then
+            unset new_lvm_volumes
+        fi
+        if declare -p new_lvm_volumes_is_luks &>/dev/null; then
+            unset new_lvm_volumes_is_luks
+        fi
+
+    elif [[ "$fstype_from_lsblk" == "ext4" ]]; then
+        #окрашиваем находку
+        line_colored=$(color_text_in_string "$line_orig" "ext4" "$BLUE")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+    elif [[ "$fstype_from_lsblk" == "crypto_LUKS" ]]; then
+        #окрашиваем находку
+        line_colored=$(color_text_in_string "$line_orig" "crypto_LUKS" "$LIGHT_BLUE")
+        echo -e "$line_colored" >> $LSBLK_RAW_INFO_UPDATED
+    else
+        #пишем строку как есть
+        echo "$line_orig" >> $LSBLK_RAW_INFO_UPDATED
+    fi
+    #т.к. в ext4 можно форматнуть любой раздел, эту проверку осуществляем вне предыдущего if
+    #проверяем, есть ли такой раздел в массиве NEW_MOUNTPOINTS
+    
+    #проверяем отмечен ли для форматирования через функцию check_ext4_partitions_to_format_with_their_mount_points
+    string_checker=$(check_ext4_partitions_to_format_with_their_mount_points "$device_fullname")
+    if [[ -n "$string_checker" ]]; then
+        echo -e "!${BOLD}Планируемые изменения:${NC} ${RED}$string_checker${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        echo -e "!${RED}Перед тем как продолжить, проверьте что на устройстве нет важных данных${NC}" >> $LSBLK_RAW_INFO_UPDATED
+        echo -e "!${YELLOW}Если хотите прервать выполнение скрипта для перепроверки, нажмите ctrl+c${NC}" >> $LSBLK_RAW_INFO_UPDATED
+    fi
+done < <(sed '1d' $LSBLK_RAW_INFO)
+
+# Обновляем первый временный файл и обнуляем второй
+mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
+#выводим содержимое временного файла
+# Настраиваем специальный pager для bat
+bat --style=grid,numbers \
+    --paging=always \
+    --pager="less -R -F -X -P ' ↑↓ прокрутка | q — выход'" \
+    "$LSBLK_RAW_INFO"
+#Пояснение:
+#- `--paging=always` принудительно пускает вывод через `less`.
+#- Флаг `-F` у `less` заставляет сразу выйти, если всё влезло в экран (аналог `--quit-if-one-screen`).
+#- `-X` предотвращает очистку экрана при выходе.
+#- Остальные опции (`-R`, `-P`) задают цветной вывод и подсказку пользователю как выйти только в случае большого вывода.
 
 # ^ end
-
+make_pause
 check_problems
  
  #проверяем доступное свободное место в группах томов
@@ -535,3 +760,4 @@ fi
 
 check_problems
 
+make_pause

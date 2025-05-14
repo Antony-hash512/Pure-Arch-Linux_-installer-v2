@@ -1,9 +1,5 @@
 #!/bin/bash
 
-: << 'TODO'
-+ отображать в разметке случаи с шифрованием
-+ добавить другие параметры для запуска (автовыбор других компонентов и альтернативный xml-файл)
-TODO
 
 #проверяем на права суперпользователя
 if [[ "$EUID" -ne 0 ]]; then
@@ -171,9 +167,6 @@ LSBLK_RAW_INFO_UPDATED=$(mktemp)
 #записываем содержимое во временный файл
 lsblk -o $LSBLK_FORMAT > $LSBLK_RAW_INFO
 
-
-#определяем длину строки в файле
-#LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
 
 #записываем первую строку с добавочным текстом (если нужен) во второй временный файл
 echo "$(head -n 1 $LSBLK_RAW_INFO)" > $LSBLK_RAW_INFO_UPDATED
@@ -357,7 +350,7 @@ while IFS= read -r line; do
 done < <(sed '1d' $LSBLK_RAW_INFO)
 
 # Обновляем первый временный файл и обнуляем второй
-cp $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
+mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 #выводим содержимое временного файла
 cat $LSBLK_RAW_INFO
 
