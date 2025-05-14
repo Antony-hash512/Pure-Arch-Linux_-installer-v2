@@ -32,6 +32,74 @@ export XML_FILE="components.xml"
 export XML_PARSER="get_data_from_components_xml.py"
 export CHROOT_SCRIPT="run_inside_chroot.sh"
 
+# Формат вывода lsblk по умолчанию
+export LSBLK_FORMAT="NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
+TTY_WIDTH=$(tput cols)
+
+# Создаем массив с возможными вариантами
+declare -a LSBLK_FORMATS=(
+    "NAME,TYPE,FSTYPE,SIZE,UUID,MOUNTPOINTS,RM,RO,ROTA"
+    "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS,RM,RO,ROTA"
+    "NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
+    "NAME,TYPE,FSTYPE,SIZE,UUID,MOUNTPOINTS"
+    "NAME,TYPE,FSTYPE,SIZE,UUID"
+    "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS"
+    "NAME,TYPE,FSTYPE,SIZE"
+    "NAME,TYPE,FSTYPE"
+    "NAME,TYPE,FSTYPE,UUID"
+)
+# создаём ассоциативный массив с примерной шириной каждого поля
+declare -A LSBLK_FIELDS_WIDTHS=(
+    ["NAME"]=35
+    ["TYPE"]=5
+    ["FSTYPE"]=12
+    ["SIZE"]=8
+    ["UUID"]=40
+    ["MOUNTPOINTS"]=35
+    ["RM"]=3
+    ["RO"]=3
+    ["ROTA"]=5
+)
+
+# функция для вычисления ширины поля
+function calculate_width_of_lsblk_field() {
+    local lsblk_format=$1
+    #получаем массив из строки с разделителем - запятая
+    local field_names=($(echo "$lsblk_format" | tr ',' '\n'))
+    local field_width=0
+    for field_name in "${field_names[@]}"; do
+        local field_width=$(($field_width + ${LSBLK_FIELDS_WIDTHS[$field_name]}))
+    done
+    echo $field_width
+}
+# функция для сравнения ширины поля с шириной интерфейса tty для отображения в цвете
+function get_colored_requirement_for_width_of_lsblk_field() {
+    local lsblk_format=$1
+    local field_width=$(calculate_width_of_lsblk_field "$lsblk_format")
+    if [[ "$field_width" -ge "$TTY_WIDTH" ]]; then
+        echo -e "${RED}$field_width+${NC}"
+    else
+        echo -e "${GREEN}$field_width+${NC}"
+    fi
+}
+
+echo -e "${BOLD}${YELLOW}Ширина интерфейса tty в символах: ${GREEN}$TTY_WIDTH${NC}"
+echo -e "Пожалуйста, выберите формат вывода lsblk для просмотра списка разделов перед установкой:"
+echo -e "${GREEN}0${NC}) $LSBLK_FORMAT (по умолчанию; требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "$LSBLK_FORMAT"))"
+for ((i=0; i<${#LSBLK_FORMATS[@]}; i++)); do
+    echo -e "${GREEN}$((i+1))${NC}) ${LSBLK_FORMATS[$i]} (требуется примерно: $(get_colored_requirement_for_width_of_lsblk_field "${LSBLK_FORMATS[$i]}"))"
+done
+echo "при низком разрешении экрана и/или крупном шрифте рекомендуется выбрать короткий формат (например, NAME,TYPE,FSTYPE,SIZE)"
+echo "при FullHD, 4K, 8K и т.п. и относительно мелком шрифте можно отобразить всю необходимую вам информацию по максимуму"
+read -p "Введите номер нужного формата: " format_choice
+
+if [[ "$format_choice" -ge 1 && "$format_choice" -le ${#LSBLK_FORMATS[@]} ]]; then
+    export LSBLK_FORMAT="${LSBLK_FORMATS[$((format_choice-1))]}"
+else
+    echo -e "${YELLOW}Используется формат по умолчанию:${NC} $LSBLK_FORMAT"
+fi
+
+
 # создаём ассоциативный массив problems для возможного запланированного выхода 
 declare -A problems
 #вносим значения в массив (пустая строка - означает, что проблемы нет)
@@ -81,7 +149,7 @@ declare -A OPENED_CRYPT_CONTAINERS
 
 #echo -e "${CYAN}Общая информация:${NC}"
 #echo -e "${YELLOW}список разделов до начала установки:${NC}"
-#lsblk -o NAME,FSTYPE,SIZE,RM,RO,MOUNTPOINTS
+#lsblk -o $LSBLK_FORMAT
 #make_pause
 
 #получаем информацию содержащуюся в xml-файле
@@ -153,7 +221,10 @@ LSBLK_RAW_INFO=$(mktemp)
 LSBLK_RAW_INFO_UPDATED=$(mktemp)
 #записываем содержимое во временный файл
 #RM или RO - нужно дописать в конец строки чтобы при добавлении дополнительного параметра всё было выровнено по правому краю
-lsblk -o NAME,TYPE,FSTYPE,SIZE,RM,RO,ROTA > $LSBLK_RAW_INFO
+
+#lsblk -o NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA > $LSBLK_RAW_INFO
+lsblk -o $LSBLK_FORMAT > $LSBLK_RAW_INFO
+
 #расшифровка дальнейшего использования:
 #$(echo "$line" | awk '{print $1}') - NAME
 #$(echo "$line" | awk '{print $2}') - TYPE
@@ -210,7 +281,7 @@ while IFS= read -r line; do
             new_btrfs_subvolumes_string=$(get_string_for_new_btrfs_subvolumes_for_device new_btrfs_subvolumes_with_mountpoints)
             #если полученная строка не пустая то выводим сообщение о планируемых изменениях
             if [[ -n "$new_btrfs_subvolumes_string" ]]; then 
-                echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} ${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
             fi
         else
             #получаем список существующих сабволюмов в формате в одну строку
@@ -238,7 +309,7 @@ while IFS= read -r line; do
                         if [[ "$subvolume_with_mount_point" == "$existing_subvolume" ]]; then
                             the_same_flag=1
                             #окрашиваем в красный
-                            new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$subvolume_with_mount_point" "$RED")
+                            new_btrfs_subvolumes_string=$(color_text_in_string "$new_btrfs_subvolumes_string" "$existing_subvolume" "$RED")
                         fi
                     done
                 done
@@ -252,7 +323,9 @@ while IFS= read -r line; do
                     new_btrfs_subvolumes_string="${GREEN}${new_btrfs_subvolumes_string}${NC}"
                 fi
             
-                echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                #echo -e "!${BOLD}Планируемые изменения:${NC} ${BLINK}${GREEN}$new_btrfs_subvolumes_string${NC}" >> $LSBLK_RAW_INFO_UPDATED
+                echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
+
             fi
         fi
         #удаляем временный ассоциативный массив, если он существует

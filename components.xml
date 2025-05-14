@@ -242,12 +242,28 @@
 				<size>20G</size>
 			</point>
 			<point type="new">
+				<location>/test2</location>
+				<way>new_subvol_in_btrfs</way>
+				<uuid>cb0216a5-f7f1-4072-a21c-8d0fbede26ef</uuid>
+				<subvolume>@arch_megatest2</subvolume>
+				<crypt_mode>none_in_none</crypt_mode>
+				<size>20G</size>
+			</point>
+			<!--point type="new">
+				<location>/test3</location>
+				<way>new_subvol_in_btrfs</way>
+				<uuid>cb0216a5-f7f1-4072-a21c-8d0fbede26ef</uuid>
+				<subvolume>@mining_randomx_boot</subvolume>
+				<crypt_mode>none_in_none</crypt_mode>
+				<size>20G</size>
+			</point-->
+			<!--point type="new">
 				<location>/boot</location>
 				<way>new_ext4_in_lvm</way>
 				<lv-volume>/dev/mainvg/boot_megatest</lv-volume>
 				<crypt_mode>none_in_none</crypt_mode>
 				<size>5G</size>
-			</point>
+			</point-->
 		</mountpoints>
 		<hostname>katana</hostname>
 		<username>fireice</username>

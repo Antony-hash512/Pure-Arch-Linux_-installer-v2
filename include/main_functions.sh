@@ -37,6 +37,7 @@ cleanup_all(){
     
         # Очищаем файл
         > /tmp/btrfs_temp_mounts.txt
+        rm -f /tmp/btrfs_temp_mounts.txt
     else
         echo -e "${YELLOW}Нет временных точек монтирования для размонтирования${NC}"
     fi
@@ -424,13 +425,13 @@ get_vg_name_for_pv() {
 #Данную функцию можно использовать только после этапа открытия крипто-контейнеров
 #Т.к. в ней используется поле device_for_operations, которое заполняется только после этого этапа
 fill_in_array_by_new_btrfs_subvolumes_for_device() {
-    #проходимся по всем точкам монтирования
+    #принимаем на вход имя устройства
     local device_from_input=$1
-    #принимает на вход ссылку на ассоциативный массив
+    #принимаем на вход ссылку на ассоциативный массив
     local -n array_ref=$2
     #полученный массив нужно заполнить в формате: "имя_планируемого_тома"->"точка_монтирования"
+    
     #проходимся по всем точкам монтирования
-
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
         type=${current_row["type"]}
@@ -467,7 +468,7 @@ get_string_for_new_btrfs_subvolumes_for_device() {
     local -n array_ref=$1
     local output=""
     for key in "${!array_ref[@]}"; do
-        output="$output +$key->${array_ref[$key]}"
+        output="$output [ + $key -> ${array_ref[$key]} ]"
     done
 
     echo "$output"
@@ -490,8 +491,9 @@ get_string_for_new_btrfs_subvolumes_for_device() {
 #при crypt_mode = file_in_none и pwd_in_none нужно также уточнить, что будет создан
 #не просто логический том, а luks
 
-get_new_lvm_volumes_for_group_with_their_mount_points() {
+fill_in_array_by_new_lvm_volumes_for_group() {
     local vg_name_from_input=$1
+    local -n array_ref=$2
     local output=""
     for row in "${NEW_MOUNTPOINTS[@]}"; do
         declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -519,6 +521,15 @@ get_new_lvm_volumes_for_group_with_their_mount_points() {
         fi
     done
     echo -e "$output"
+}
+
+get_string_for_new_lvm_volumes_for_group() {
+    local -n array_ref=$1
+    local output=""
+    for key in "${!array_ref[@]}"; do
+        output="$output +$key->${array_ref[$key]}"
+    done
+    echo "$output"
 }
 
 #Функция для проверки наличия ext4 разделов для форматирования с указанием их точек монтирования
