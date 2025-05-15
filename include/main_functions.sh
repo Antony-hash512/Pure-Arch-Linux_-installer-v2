@@ -818,7 +818,7 @@ check_and_update_crypt_container_info() {
     local device_name="$1"
     local map_name=$(lsblk -l -n -o NAME,TYPE,PKNAME | awk -v dev="$bname" '$2=="crypt" && $3==dev {print $1; exit}')
     if [[ -n "$map_name" ]]; then
-        echo -e "${YELLOW}Крипто-контейнер для $device_name уже открыт в системе как $map_name, пропускаем открытие${NC}"
+        echo -e "${YELLOW}${BOLD}Крипто-контейнер для ${GREEN}$device_name${YELLOW} уже открыт в системе как ${GREEN}$map_name${NC}, пропускаем открытие${NC}" > /dev/tty
         OPENED_CRYPT_CONTAINERS["$device_name"]="$map_name"
         save_crypt_container_info "$device_name" "$map_name"
         return 0
