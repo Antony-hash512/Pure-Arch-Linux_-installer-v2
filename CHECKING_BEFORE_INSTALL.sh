@@ -213,8 +213,8 @@ done
 # пишем код как будто то бы тега names уже больше не существует
 
 # ассоциативный массив, который хранит строки с описанием запланированных изменений
-# НЕ НУЖНО, НЕЗАБУДЬ УДАЛИТЬ
-# declare -A pending_commands_description #если решу оставить, то нужно перенести в начало скрипта
+#todo: проверить, нужно ли этот массив, если удалять то вместе со всеми использованиями
+declare -A pending_commands_description
 # скорее всего не понадобится т.к. функционал по отображения информации о создании новых luks
 # уже реализуется в соответствующих функциях
 
@@ -756,7 +756,6 @@ if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
         required_space=${ALL_LVM_VOLUMES_REQUIRED_SPACE[$vg_name]}
         echo "Требуемый размер для группы томов $vg_name: $required_space байт ($(echo "$required_space / $GB" | bc) гигов)"
         #проверяем доступное свободное место группе томов в байтах
-        #free_space=$(vgs /dev/$vg_name --rows --nosuffix --units b | grep VFree | awk '{print $2}')
         free_space=$(check_free_space_in_vg_in_bytes "$vg_name")
         echo "Доступное свободное место в группе томов $vg_name: $free_space байт ($(echo "$free_space / $GB" | bc) гигов)"
         if [[ "$free_space" -lt "$required_space" ]]; then
