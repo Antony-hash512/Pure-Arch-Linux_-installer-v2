@@ -126,6 +126,7 @@ declare -a NEW_MOUNTPOINTS
 #создаём ассоциативный массив, который будет хранить размеры требуемого свободного места
 #в группах томов lvm
 declare -A ALL_LVM_VOLUMES_REQUIRED_SPACE
+ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED=false
 
 #1.1) проверяем кириллический шрифт (будет убрано в англ.версии)
 echo "test тест"
@@ -465,6 +466,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
 
             # добавляем размер нового тома в ассоциативный массив
             ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"]=$((ALL_LVM_VOLUMES_REQUIRED_SPACE["$vg_name"] + size_in_bytes))
+            ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED=true
             
 
             size_of_lv=${current_row["size"]}
