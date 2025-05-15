@@ -730,15 +730,18 @@ done < <(sed '1d' $LSBLK_RAW_INFO)
 mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 #выводим содержимое временного файла
 # Настраиваем специальный pager для bat
-bat --style=grid,numbers \
-    --paging=always \
-    --pager="less -R -F -X -P ' ↑↓ прокрутка | q — выход'" \
-    "$LSBLK_RAW_INFO"
-#Пояснение:
+#bat --style=grid,numbers \
+#    --paging=always \
+#    --pager="less -R -F -X -P ' ↑↓ прокрутка | q — выход'" \
+#    "$LSBLK_RAW_INFO"
+##Пояснение:
 #- `--paging=always` принудительно пускает вывод через `less`.
 #- Флаг `-F` у `less` заставляет сразу выйти, если всё влезло в экран (аналог `--quit-if-one-screen`).
 #- `-X` предотвращает очистку экрана при выходе.
 #- Остальные опции (`-R`, `-P`) задают цветной вывод и подсказку пользователю как выйти только в случае большого вывода.
+
+#т.к. bat нет на установочном диске, на случай проблем с установкой будем использовать less
+less -R -F -X -P ' ↑↓ прокрутка | q — выход' "$LSBLK_RAW_INFO"
 
 # ^ end
 make_pause
