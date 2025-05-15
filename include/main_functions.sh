@@ -47,6 +47,19 @@ cleanup_all(){
     rm -f $LSBLK_RAW_INFO
     rm -f $LSBLK_RAW_INFO_UPDATED
 
+    # Деактивируем LVM-группы и тома, связанные с открытыми крипто-контейнерами
+    for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
+        mapper_name=${OPENED_CRYPT_CONTAINERS[$device]}
+        mapper_path="/dev/mapper/$mapper_name"
+        vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+        if [ -n "$vg_names" ]; then
+            for vg in $vg_names; do
+                echo -e "${GRAY}Деактивируем VG $vg для $mapper_path${NC}"
+                vgchange -an "$vg" || echo -e "${YELLOW}Не удалось деактивировать VG $vg${NC}"
+            done
+        fi
+    done
+
     #закрываем открытые крипто-контейнеры с проверкой и выводом сообщений об успешном закрытии или ошибке
     for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
         cryptsetup luksClose "${OPENED_CRYPT_CONTAINERS[$device]}"
