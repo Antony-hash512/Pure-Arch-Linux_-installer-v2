@@ -159,7 +159,7 @@ convert_bytes_to_gb() {
 #Функции для проверки свободного места в группах томов (и в физических томах)
 check_free_space_in_vg_in_bytes() {
     local vg_name=$1
-    #local free_space=$(safe_vgs "$vg_name" --nosuffix --units b | grep VFree | awk '{print $2}')
+    #local free_space=$(safe_vgs "$vg_name" --noheadings --nosuffix --units b | grep VFree | awk '{print $2}')
     local free_space=$(vgs "$vg_name" --noheadings --nosuffix --units b -o vg_free | tr -d '[:space:]')
     echo "$free_space"
 }
