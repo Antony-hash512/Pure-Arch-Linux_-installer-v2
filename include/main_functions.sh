@@ -833,6 +833,7 @@ open_crypt_container_by_pwd() {
     check_and_update_crypt_container_info "$device_name"
     #Выходим если проверка сработала
     if [ $? -eq 0 ]; then
+        echo -e "${YELLOW}${BOLD}Крипто-контейнер для ${GREEN}$device_name${YELLOW} уже открыт в системе как ${GREEN}$map_name${NC}, пропускаем открытие${NC}" > /dev/tty
         return 0
     fi
 
