@@ -432,20 +432,9 @@ fill_in_array_by_new_btrfs_subvolumes_for_device() {
             
             current_check_device=${current_row["device_for_operations"]}
 
-            if [[ "$crypt_mode" = *"file"* || "$crypt_mode" = *"pwd"* || "$type" == "new_subvol_in_btrfs" ]]; then
-                #возращаем исходное значение функции которое точно не сломано функцией standardize_lvm_format
-                current_device_from_input_form=$device_from_input
-            else
-                #это на тот случай если пользователь пропишет имя устройства через mapper
-                current_check_device=$(standardize_lvm_format "$current_check_device")
-                #помещено сюда, чтобы избежать преобразований для luks
-                #т.к. тогда случай с mapper будет разобран не правильно
-                #тип без lvm тоже сюда не попадаёт
-                current_device_from_input_form=$(standardize_lvm_format "$device_from_input")
-            fi
-
-            #если имя устройства совпадает с именем устройства в из xml-файла, то добавляем в ассоциативный массив
-            if [[ "$current_device_from_input_form" == "$current_check_device" ]]; then
+            # сравниваем по полным путям или после нормализации LVM
+            if [[ "$device_from_input" == "$current_check_device" ]] || \
+               [[ "$(standardize_lvm_format \"$device_from_input\")" == "$(standardize_lvm_format \"$current_check_device\")" ]]; then
                 array_ref["$subvolume"]="$mount_point"
             fi
         fi
