@@ -813,12 +813,9 @@ generate_crypt_container_name() {
     echo "opened_luks_${basename}_${timestamp}_${random}"
 }
 
-# Функция для открытия контейнера по паролю
-open_crypt_container_by_pwd() {
+# Функция для проверки, открыт ли контейнер и обновлении информации о нём
+check_and_update_crypt_container_info() {
     local device_name="$1"
-
-    # Если в системе уже есть открытый LUKS-контейнер для device_name, пропускаем открытие
-    local bname=$(basename "$device_name")
     local map_name=$(lsblk -l -n -o NAME,TYPE,PKNAME | awk -v dev="$bname" '$2=="crypt" && $3==dev {print $1; exit}')
     if [[ -n "$map_name" ]]; then
         echo -e "${YELLOW}Крипто-контейнер для $device_name уже открыт в системе как $map_name, пропускаем открытие${NC}"
@@ -826,7 +823,18 @@ open_crypt_container_by_pwd() {
         save_crypt_container_info "$device_name" "$map_name"
         return 0
     fi
+}
 
+# Функция для открытия контейнера по паролю
+open_crypt_container_by_pwd() {
+    local device_name="$1"
+
+    # Если в системе уже есть открытый LUKS-контейнер для device_name, пропускаем открытие
+    check_and_update_crypt_container_info "$device_name"
+    #Выходим если проверка сработала
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
 
     # Генерируем имя контейнера с помощью новой функции
     local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
@@ -869,18 +877,14 @@ open_crypt_container_by_file() {
     local key_file="$2"
     
     # Если в системе уже есть открытый LUKS-контейнер для device_name, пропускаем открытие
-    local bname=$(basename "$device_name")
-    local map_name=$(lsblk -l -n -o NAME,TYPE,PKNAME | awk -v dev="$bname" '$2=="crypt" && $3==dev {print $1; exit}')
-    if [[ -n "$map_name" ]]; then
-        echo -e "${YELLOW}Крипто-контейнер для $device_name уже открыт в системе как $map_name, пропускаем открытие${NC}"
-        OPENED_CRYPT_CONTAINERS["$device_name"]="$map_name"
-        save_crypt_container_info "$device_name" "$map_name"
+    check_and_update_crypt_container_info "$device_name"
+    #Выходим если проверка сработала
+    if [ $? -eq 0 ]; then
         return 0
     fi
 
     # Генерируем имя контейнера с помощью новой функции
     local opened_crypt_container_name=$(generate_crypt_container_name "$device_name")
-    
     local max_attempts=1
     local attempts=0
     local success=false
