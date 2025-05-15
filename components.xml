@@ -434,7 +434,7 @@
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
 				<lv-volume>/dev/opened_vg/new_encrypted_ext4_in_open_lvm</lv-volume>
-				<size>20G</size>
+				<size>200G</size>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
@@ -457,7 +457,7 @@
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
 				<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
-				<size>20G</size>
+				<size>200G</size>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
