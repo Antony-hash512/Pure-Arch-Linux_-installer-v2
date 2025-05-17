@@ -19,8 +19,6 @@
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* убрать запрос пользователя по поводу кириллического шрифта, ставить его автоматически,
-можно даже до проверки на рут и версию баша
 * сделать привязку pv-volume тоже к uuid, сделать возможным указать несколько pv-volume по uuid 
 * ввести ключ для автоматической установки формата вывода lsblk
 * добавить случаи с uuid в xml-файл для тестирования на виртуальной машине
@@ -38,19 +36,25 @@
 Другие TODO находятся в файлах prev_ver_of_install.sh
 их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
 TODO
+
+echo "test тест"
+setfont cyr-sun16
+echo "test тест"
+echo "была использована команда setfont cyr-sun16"
+
 # проверяем версию баша
 echo "Bash version: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
 echo ""
 if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
     :
 else
-    echo "The required version of Bash is 4.3 or higher" >&2
+    echo "Требуется версия Bash 4.3 или выше" >&2
     exit 1
 fi
 
 #проверяем на права суперпользователя
 if [[ "$EUID" -ne 0 ]]; then
-    echo -e "\033[31mERROR: This script must be run as root\033[0m" >&2
+    echo -e "\033[31mОШИБКА: Этот скрипт должен быть запущен от имени суперпользователя (root)\033[0m" >&2
     exit 1
 fi
 
@@ -133,18 +137,18 @@ declare -A ALL_LVM_VOLUMES_REQUIRED_SPACE
 ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED=false
 
 #1.1) проверяем кириллический шрифт (будет убрано в англ.версии)
-echo "test тест"
-echo "если этот текст можно прочитать, то можно продолжать без смены шрифта"
-echo "Do you want to switch to a font with Cyrillic support? (Y/n)"
-read -r USE_CYRILLIC_FONT
-if [[ -z "$USE_CYRILLIC_FONT" || "$USE_CYRILLIC_FONT" =~ ^[Yy]$ ]]; then
-    setfont cyr-sun16
-    echo "test тест"
-    echo "была использована команда setfont cyr-sun16"
-    echo "if it doesn't work, you can use Ctrl+C to exit and to solve this problem by another way"
-else
-    echo "Остаемся на стандартном шрифте (if the cyrillic font doesn't work, you can use Ctrl+C to exit)"
-fi
+#echo "test тест"
+#echo "если этот текст можно прочитать, то можно продолжать без смены шрифта"
+#echo "Do you want to switch to a font with Cyrillic support? (Y/n)"
+#read -r USE_CYRILLIC_FONT
+#if [[ -z "$USE_CYRILLIC_FONT" || "$USE_CYRILLIC_FONT" =~ ^[Yy]$ ]]; then
+#    setfont cyr-sun16
+#    echo "test тест"
+#    echo "была использована команда setfont cyr-sun16"
+#    echo "if it doesn't work, you can use Ctrl+C to exit and to solve this problem by another way"
+#else
+#    echo "Остаемся на стандартном шрифте (if the cyrillic font doesn't work, you can use Ctrl+C to exit)"
+#fi
 #далее считается что кириллица поддерживается (ведем диалог с пользователем на русском, английская версия будет реализована позже, пока что нет смысла)
 echo "перед использованием скрипта также должен быть настроен доступ в интернет и выпонена необходимая минимальная разбивка разделов на диске"
 read -p "Enter - продолжить; ctrl+C - прервать"
