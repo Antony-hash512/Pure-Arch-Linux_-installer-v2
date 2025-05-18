@@ -154,7 +154,11 @@ echo "Перед использованием скрипта также долж
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 #1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
-request_lsblk_format
+if [[ "$TTY_WIDTH" -lt 150 ]]; then
+    request_lsblk_format
+else
+    echo "Вывод lsblk будет выполнен в формате по умолчанию: $LSBLK_FORMAT".
+fi
 
 
 #1.2) устанавливаем необходимые пакеты
