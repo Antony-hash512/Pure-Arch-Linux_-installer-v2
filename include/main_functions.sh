@@ -71,6 +71,10 @@ cleanup_all(){
     done
 }
 
+#Функция для вывода логотипа
+show_logo() {
+    echo -e "$LOGO"
+}
 
 # Функция для проверки существования указанного install_location_id
 check_install_location_exists() {
