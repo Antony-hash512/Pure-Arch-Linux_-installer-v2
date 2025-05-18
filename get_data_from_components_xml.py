@@ -194,6 +194,8 @@ def main():
         #проверяем есть ли тег pv-volume внутри point
         if point.find('pv-volume') is not None:
             data["pv-volume"] = point.find('pv-volume').text.strip()
+        if point.find('pv-volumes-uuids') is not None:
+            data["pv-volumes-uuids"] = point.find('pv-volumes-uuids').text.strip()
         if point.find('lv-volume') is not None:
             data["lv-volume"] = point.find('lv-volume').text.strip()
         if point.find('uuid') is not None:

@@ -36,7 +36,8 @@ EOF
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
-* сделать привязку pv-volume тоже к uuid, сделать возможным указать несколько pv-volume по uuid 
+* сделать привязку pv-volume тоже к uuid
+* сделать возможным указать несколько pv-volume по uuid с разделением через запятую
 * ввести ключ для автоматической установки формата вывода lsblk
 * добавить случаи с uuid в xml-файл для тестирования на виртуальной машине
 * протестировать на vm обновлённый функционал
@@ -393,7 +394,20 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
             
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
-                pv_device=${current_row["pv-volume"]}
+                #pv_device=${current_row["pv-volume"]}
+                pv_uuid=${current_row["pv-volumes-uuids"]}
+                #проверяем существует ли устройство с таким uuid
+                if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
+                    echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
+                    # добавляем проблему для запланрованного выхода из скрипта
+                    problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
+                    exit_and_show_problems_flag=1
+                    #выходим из case для проверки других точек монтирования
+                    continue
+                fi
+
+
+
                 if [[ "$crypt_mode" == "none_in_file" ]]; then
                     #получаем путь к файлу-ключу
                     keyfile=${current_row["keyfile"]}
@@ -476,7 +490,17 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #нужно сначала открыть luks, если зашифрован именно физический том pv lvm
             #иначе проверки на наличие группы томов и логического тома не сработают
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
-                pv_device=${current_row["pv-volume"]}
+                #pv_device=${current_row["pv-volume"]}
+                pv_uuid=${current_row["pv-volumes-uuids"]}
+                #проверяем существует ли устройство с таким uuid
+                if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
+                    echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
+                    # добавляем проблему для запланрованного выхода из скрипта
+                    problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
+                    exit_and_show_problems_flag=1
+                    #выходим из case для проверки других точек монтирования
+                    continue
+                fi
                 if [[ "$crypt_mode" == "none_in_file" ]]; then
                     #получаем путь к файлу-ключу
                     keyfile=${current_row["keyfile"]}
