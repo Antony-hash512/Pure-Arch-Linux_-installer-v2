@@ -301,6 +301,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 exit_and_show_problems_flag=1
                 #выходим из case для проверки других точек монтирования
                 continue
+            else
+                echo -e "${GREEN}Устройство с uuid '$uuid' найдено: $device${NC}"
             fi
             current_row["device"]=$device
             ext4_partition=$device
@@ -343,6 +345,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 exit_and_show_problems_flag=1
                 #выходим из case для проверки других точек монтирования
                 continue
+            else
+                echo -e "${GREEN}Устройство с uuid '$uuid' найдено: $device${NC}"
             fi
             current_row["device"]=$device
             #в данном случае заданы подтом, который будет создаваться, и существующий партишн, вне lvm
@@ -393,7 +397,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
             
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
-                #pv_device=${current_row["pv-volume"]}
                 pv_uuid=${current_row["pv-volumes-uuids"]}
                 #проверяем существует ли устройство с таким uuid
                 if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
@@ -495,7 +498,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #нужно сначала открыть luks, если зашифрован именно физический том pv lvm
             #иначе проверки на наличие группы томов и логического тома не сработают
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
-                #pv_device=${current_row["pv-volume"]}
                 pv_uuid=${current_row["pv-volumes-uuids"]}
                 #проверяем существует ли устройство с таким uuid
                 if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
