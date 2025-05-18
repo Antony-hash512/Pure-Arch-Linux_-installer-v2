@@ -404,6 +404,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     exit_and_show_problems_flag=1
                     #выходим из case для проверки других точек монтирования
                     continue
+                else
+                    echo -e "${GREEN}Устройство с uuid '$pv_uuid' найдено: $pv_device${NC}"
                 fi
 
 
@@ -435,6 +437,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 exit_and_show_problems_flag=1
                 #выходим из case для проверки других точек монтирования
                 continue
+            else
+                echo -e "${GREEN}Группа томов '$vg_name' найдена${NC}"
             fi
 
             #проверяем существует ли логический том
@@ -445,6 +449,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 exit_and_show_problems_flag=1
                 #выходим из case для проверки других точек монтирования
                 continue
+            else
+                echo -e "${GREEN}Логический том '$device' найден${NC}"
             fi            
          
             case "$crypt_mode" in
@@ -500,6 +506,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     exit_and_show_problems_flag=1
                     #выходим из case для проверки других точек монтирования
                     continue
+                else
+                    echo -e "${GREEN}Устройство с uuid '$pv_uuid' найдено: $pv_device${NC}"
                 fi
                 if [[ "$crypt_mode" == "none_in_file" ]]; then
                     #получаем путь к файлу-ключу
