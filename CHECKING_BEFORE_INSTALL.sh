@@ -609,6 +609,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     
 done
 
+check_problems
+
 #v данный код отвечает за отображение инфы пользователю
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
