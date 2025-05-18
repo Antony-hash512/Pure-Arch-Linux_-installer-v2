@@ -295,7 +295,6 @@
 				<crypt_mode>none_in_pwd</crypt_mode>
 				<lv-volume>/dev/locked_vg/btrfs_in_locked_lvm</lv-volume>
 				<subvolume>@arch</subvolume>
-				<pv-volume>/dev/sda2</pv-volume>
 				<pv-volumes-uuids>caccc8f8-e1a4-4000-8f00-639f5cc66d31</pv-volumes-uuids>
 			</point>
 		</mountpoints>
@@ -320,7 +319,6 @@
 				<crypt_mode>none_in_pwd</crypt_mode>
 				<lv-volume>/dev/locked_vg/new_ext4_from_test2</lv-volume>
 				<size>5G</size>
-				<pv-volume>/dev/sda2</pv-volume>
 				<pv-volumes-uuids>caccc8f8-e1a4-4000-8f00-639f5cc66d31</pv-volumes-uuids>
 			</point>
 		</mountpoints>
