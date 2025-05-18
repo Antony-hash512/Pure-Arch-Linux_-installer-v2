@@ -37,6 +37,21 @@
 их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
 TODO
 
+# логирование (если задан ключ --log)
+enable_log=false
+
+for arg in "$@"; do
+    if [[ "$arg" == "--log" ]]; then
+        enable_log=true
+        break
+    fi
+done
+
+if $enable_log; then
+    exec > >(tee -a log.txt) 2>&1
+fi
+
+# пренудительная установка кириллического шрифта
 echo "test тест"
 setfont cyr-sun16
 echo "test тест"
@@ -157,7 +172,7 @@ read -p "Enter - продолжить; ctrl+C - прервать"
 if [[ "$TTY_WIDTH" -lt 150 ]]; then
     request_lsblk_format
 else
-    echo "Вывод lsblk будет выполнен в формате по умолчанию: $LSBLK_FORMAT".
+    echo "Вывод lsblk будет выполнен в формате по умолчанию: $LSBLK_FORMAT. TTY достаточно широкий ($TTY_WIDTH) для вывода всех необходимых данных."
 fi
 
 
