@@ -3,7 +3,7 @@
 # пока что пишу код, который все проверяет перед установкой
 # и всё наглядно отображает пользователю
 # когда он будет готов, то начну работать над самим установочным скриптом
-#0) проверяем на права суперпользователя и версию баша
+#0) читаем аргументы командной строки, включаем киррилический шрифт, проверяем на права рута и версию баша
 #1) задаём различные переменные и константы
 #1.1) проверяем кириллический шрифт (будет убрано в англ.версии)
 #1.2) устанавливаем необходимые пакеты
@@ -34,36 +34,71 @@
 * зарелизить бету
 
 Другие TODO находятся в файлах prev_ver_of_install.sh
+
 их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
 TODO
 
+
+
+# Подключаем файл с цветовыми переменными
+source include/colors.sh
+
+# Обработка аргументов командной строки
 # логирование (если задан ключ --log)
 enable_log=false
 
+# фильтрация --log из аргументов
+filtered_args=()
 for arg in "$@"; do
     if [[ "$arg" == "--log" ]]; then
         enable_log=true
-        break
+    else
+        filtered_args+=("$arg")
     fi
 done
 
+# восстанавливаем позиционные параметры без --log
+set -- "${filtered_args[@]}"
+
 if $enable_log; then
+    #если файл log.txt не существует, то создаём его с правами 666
+    if [[ ! -f log.txt ]]; then
+        touch log.txt
+        chmod 666 log.txt
+    fi
+    #добавляем в лог текущую дату и время
+    echo "--------------------------------Дата и время: $(date)--------------------------------" >> log.txt
     exec > >(tee -a log.txt) 2>&1
 fi
 
 # пренудительная установка кириллического шрифта
-echo "test тест"
-setfont cyr-sun16
-echo "test тест"
-echo "была использована команда setfont cyr-sun16 для гарантированного отображения кириллического шрифта"
+if [[ "$TERM" == "linux" ]] && command -v setfont &>/dev/null; then
+    echo "test тест"
+    setfont cyr-sun16
+    echo "test тест"
+    echo -e "${YELLOW}была использована команда setfont cyr-sun16 для гарантированного отображения кириллического шрифта${NC}"
+fi
+
+# проверяем ключи парсинга xml-файла
+INSTALL_LOCATION_ID=""
+while getopts "i:" opt; do
+  case $opt in
+    i)
+      # проверка на наличие в xml-файле будет проведена позже
+      INSTALL_LOCATION_ID="$OPTARG"
+      echo -e "${GREEN}Аргумент после ключа -i: $INSTALL_LOCATION_ID прочитан${NC}"
+      ;;
+    \?)
+      echo -e "${RED}Неверный параметр -$OPTARG${NC}" >&2
+      ;;
+  esac
+done
 
 # проверяем версию баша
-echo "Версия Bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}"
-echo ""
 if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
-    :
+    echo -e "${GREEN}Версия Bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}${NC}"
 else
-    echo "Требуется версия Bash 4.3 или выше" >&2
+    echo -e "${RED}Требуется версия Bash 4.3 или выше (используется версия ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]})${NC}" >&2
     exit 1
 fi
 
@@ -75,8 +110,6 @@ fi
 
 
 #1) задаём различные переменные и константы
-# Подключаем файл с цветовыми переменными
-source include/colors.sh
 # Подключаем функции
 source include/main_functions.sh
 source include/shared_functions.sh
@@ -191,29 +224,20 @@ done
 
 
 #2) получаем от пользователя данные какие компоненты использовать
-# Обработка аргументов командной строки
-INSTALL_LOCATION_ID=""
-while getopts "i:" opt; do
-  case $opt in
-    i)
-      # Проверяем существует ли указанное значение install_location
-      if check_install_location_exists "$OPTARG"; then
-        INSTALL_LOCATION_ID="$OPTARG"
-        echo -e "${GREEN}Используем указанное место установки: $INSTALL_LOCATION_ID${NC}"
-      else
-        echo -e "${RED}Указанное место установки '$OPTARG' не найдено${NC}"
-      fi
-      ;;
-    \?)
-      echo -e "${RED}Неверный параметр -$OPTARG${NC}" >&2
-      ;;
-  esac
-done
+
 
 # Если INSTALL_LOCATION_ID не был задан через ключ -i или указанное значение не найдено
 if [[ -z "$INSTALL_LOCATION_ID" ]]; then
     # Выбор места установки
     INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
+else
+    # если уже задан значит было получено из ключа -i
+    # проверяем существует ли указанное место установки
+    if ! check_install_location_exists "$INSTALL_LOCATION_ID"; then
+        echo -e "${RED}Указанное через ключ -i место установки '$INSTALL_LOCATION_ID' не найдено в файле ${GREEN}$XML_FILE${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}Используем указанное место установки из ключа -i: $INSTALL_LOCATION_ID${NC}"
 fi
 # Имена других компонентов будут точно так же получены из ключей или запрошены у пользовтеля
 # когда начнётся работа над частью скрипта, которая отвечает за установку
