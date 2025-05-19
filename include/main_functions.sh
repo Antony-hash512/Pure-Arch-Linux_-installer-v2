@@ -85,7 +85,9 @@ close_descriptors() {
 #Функция для активации LVM-групп, относящихся к открытым крипто-контейнерам
 activate_lvm_groups_for_opened_crypt_containers() {
     local vg_name=$1
-    close_descriptors
+    #close_descriptors
+    export LVM_SUPPRESS_FD_WARNINGS=1
+
     if [ -n "$vg_name" ]; then
         # путь /dev/<vg_name> существует только для активной группы
         if [ ! -e "/dev/$vg_name" ]; then
@@ -109,6 +111,8 @@ activate_lvm_groups_for_opened_crypt_containers() {
             done
         fi
     fi
+    # Снимаем переменную окружения
+    unset LVM_SUPPRESS_FD_WARNINGS
 }
 
 #Функция для вывода логотипа
