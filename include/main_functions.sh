@@ -444,8 +444,7 @@ fill_in_array_by_pv_devices() {
         if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
             echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
             flag_of_not_found_devices=true
-            problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
-            exit_and_show_problems_flag=1
+            add_problem "partition_device_by_uuid_not_found" "Ошибка устройство с uuid $pv_uuid не найдено"
         else
             pv_devices_ref+=("$pv_device")
         fi
