@@ -37,8 +37,7 @@ EOF
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
 
-* задейстовать функцию fill_in_array_by_pv_devices для первого случая
-* задейстовать функцию add_problem для добавления проблем в массив problems
+* задейстовать везде функцию add_problem для добавления проблем в массив problems
 * добавить проверку что несколько физических томов lvm входят в одну группу томов
 * актулизировать заметки в obsidian
 * протестировать на vm обновлённый функционал
@@ -300,8 +299,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             if ! device=$(check_uuid_exists "$uuid"); then
                 echo -e "${RED}Устройство с uuid '$uuid' не существует${NC}" >&2
                 # добавляем проблему для запланрованного выхода из скрипта
-                problems["partition_device_by_uuid_not_found"]+="Ошибка: устройство с uuid $uuid не найдено\n"
-                exit_and_show_problems_flag=1
+                add_problem "partition_device_by_uuid_not_found" "Ошибка: устройство с uuid $uuid не найдено"
                 #выходим из case для проверки других точек монтирования
                 continue
             else
@@ -400,28 +398,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
             
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then
-                #обяъвляем временный массив для хранения uuid физических томов
-                declare -a pv_uuids=()
+                 #объявляем временный массив для хранения физических томов
                 declare -a pv_devices=()
-                #локальный флаг о не найденных устройствах
-                flag_of_not_found_devices=false
-                #разделяем строку pv-volumes-uuids по запятой и добавляем в массив
-                IFS=',' read -r -a pv_uuids <<< "${current_row["pv-volumes-uuids"]}"
-                #проходим по массиву и проверяем существует ли устройство с таким uuid
-                for pv_uuid in "${pv_uuids[@]}"; do
-                    if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
-                    echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
-                        # добавляем проблему для запланрованного выхода из скрипта
-                        problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
-                        exit_and_show_problems_flag=1
-                        flag_of_not_found_devices=true
-                    else
-                        echo -e "${GREEN}Устройство с uuid '$pv_uuid' найдено: $pv_device${NC}"
-                        pv_devices+=("$pv_device")
-                    fi
-                done
-                #проверяем наличие проблем partition_device_by_uuid_not_found
-                if [[ "$flag_of_not_found_devices" == true ]]; then
+                #заполняем массив pv_devices на основе данных из от uuids из xml-файла
+                #заодно проверяем существуют ли устройства с такими uuid
+                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" pv_devices; then
                     #выходим из case для проверки других точек монтирования
                     continue
                 fi
