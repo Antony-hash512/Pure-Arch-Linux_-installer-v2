@@ -521,8 +521,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
                     echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
                     # добавляем проблему для запланрованного выхода из скрипта
-                    problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
-                    exit_and_show_problems_flag=1
+                    add_problem "partition_device_by_uuid_not_found" "Ошибка устройство с uuid $pv_uuid не найдено"
                     #выходим из case для проверки других точек монтирования
                     continue
                 else
