@@ -288,9 +288,9 @@ sda8                                             d7cf1e1f-e766-4dc1-8110-744c6b9
 		<location>/</location>
 		<way>new_ext4_in_lvm</way>
 		<crypt_mode>none_in_pwd</crypt_mode>
-		<lv-volume>/dev/locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
+		<lv-volume>/dev/double_locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
 		<size>5G</size>
-		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea17</pv-volumes-uuids>
+		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
 	</point>
 </mountpoints>
 
