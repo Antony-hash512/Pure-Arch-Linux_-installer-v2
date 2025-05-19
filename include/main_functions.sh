@@ -903,9 +903,16 @@ open_crypt_container_by_pwd() {
         if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
             success=true
             echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт${NC}"
-            #пробуем активировать LVM-группы на тот случай если они были деактивированы при прошлом закрытии luks
-            vgscan --mknodes  
-            vgchange -ay || echo -e "${RED}Не удалось автоматически активировать LVM-группы${NC}"
+            # пробуем активировать LVM-группы, относящиеся только к этому контейнеру
+            vgscan --mknodes
+            mapper_path="/dev/mapper/$opened_crypt_container_name"
+            vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+            if [ -n "$vg_names" ]; then
+                for vg in $vg_names; do
+                    echo -e "${GRAY}Активируем VG $vg${NC}"
+                    vgchange -ay "$vg" || echo -e "${YELLOW}Не удалось активировать VG $vg${NC}"
+                done
+            fi
         else
             status=$?
             if [ $attempts -lt $max_attempts ]; then
@@ -963,7 +970,14 @@ open_crypt_container_by_file() {
             echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт с помощью файла-ключа${NC}"
             #пробуем активировать LVM-группы на том тот случай если они были деактивированы при прошлом закрытии luks
             vgscan --mknodes  
-            vgchange -ay || echo -e "${RED}Не удалось автоматически активировать LVM-группы${NC}"
+            mapper_path="/dev/mapper/$opened_crypt_container_name"
+            vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+            if [ -n "$vg_names" ]; then
+                for vg in $vg_names; do
+                    echo -e "${GRAY}Активируем VG $vg${NC}"
+                    vgchange -ay "$vg" || echo -e "${YELLOW}Не удалось активировать VG $vg${NC}"
+                done
+            fi
         else
             status=$?
             if [ $attempts -lt $max_attempts ]; then
