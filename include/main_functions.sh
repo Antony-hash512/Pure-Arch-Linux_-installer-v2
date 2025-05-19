@@ -71,9 +71,21 @@ cleanup_all(){
     done
 }
 
+#Функция для закрытия дескрипторов
+close_descriptors() {
+    # узнали максимальное число дескрипторов для процесса
+    max=$(ulimit -n)
+    for ((fd=3; fd<max; fd++)); do
+        # закроем дескриптор, ошибки проигнорируем
+        exec {fd}>&- 2>/dev/null
+    done
+}
+
+
 #Функция для активации LVM-групп, относящихся к открытым крипто-контейнерам
 activate_lvm_groups_for_opened_crypt_containers() {
     local vg_name=$1
+    close_descriptors
     if [ -n "$vg_name" ]; then
         # путь /dev/<vg_name> существует только для активной группы
         if [ ! -e "/dev/$vg_name" ]; then
