@@ -903,15 +903,18 @@ open_crypt_container_by_pwd() {
         if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
             success=true
             echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт${NC}"
-            # пробуем активировать LVM-группы, относящиеся только к этому контейнеру
+            # пробуем активировать LVM-группу, относящуюся к этому контейнеру (только если не активна)
             vgscan --mknodes
             mapper_path="/dev/mapper/$opened_crypt_container_name"
-            vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
-            if [ -n "$vg_names" ]; then
-                for vg in $vg_names; do
-                    echo -e "${GRAY}Активируем VG $vg${NC}"
-                    vgchange -ay "$vg" || echo -e "${YELLOW}Не удалось активировать VG $vg${NC}"
-                done
+            vg_name=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+            if [ -n "$vg_name" ]; then
+                # путь /dev/<vg_name> существует только для активной группы
+                if [ ! -e "/dev/$vg_name" ]; then
+                    echo -e "${GRAY}Активируем VG $vg_name${NC}"
+                    vgchange -ay "$vg_name" || echo -e "${YELLOW}Не удалось активировать VG $vg_name${NC}"
+                else
+                    echo -e "${GRAY}VG $vg_name уже активна${NC}"
+                fi
             fi
         else
             status=$?
@@ -968,15 +971,17 @@ open_crypt_container_by_file() {
         if cryptsetup luksOpen --key-file="$key_file" "$device_name" "$opened_crypt_container_name"; then
             success=true
             echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт с помощью файла-ключа${NC}"
-            #пробуем активировать LVM-группы на том тот случай если они были деактивированы при прошлом закрытии luks
-            vgscan --mknodes  
+            # пробуем активировать LVM-группу, относящуюся к этому контейнеру (только если не активна)
+            vgscan --mknodes
             mapper_path="/dev/mapper/$opened_crypt_container_name"
-            vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
-            if [ -n "$vg_names" ]; then
-                for vg in $vg_names; do
-                    echo -e "${GRAY}Активируем VG $vg${NC}"
-                    vgchange -ay "$vg" || echo -e "${YELLOW}Не удалось активировать VG $vg${NC}"
-                done
+            vg_name=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+            if [ -n "$vg_name" ]; then
+                if [ ! -e "/dev/$vg_name" ]; then
+                    echo -e "${GRAY}Активируем VG $vg_name${NC}"
+                    vgchange -ay "$vg_name" || echo -e "${YELLOW}Не удалось активировать VG $vg_name${NC}"
+                else
+                    echo -e "${GRAY}VG $vg_name уже активна${NC}"
+                fi
             fi
         else
             status=$?
