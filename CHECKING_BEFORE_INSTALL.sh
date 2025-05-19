@@ -37,9 +37,7 @@ EOF
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
 
-* добавить проверку что несколько физических томов lvm входят в одну группу томов
-* закрывать дескрипторы в функциях safe_vgs, safe_lvs, safe_pvs
-* заunset'ить временные массивы
+* добавить проверку что pv lvm из luks входят в целевую группу томов
 * добавить тесты с указанием логических томов lvm через mapper
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
 * протестировать на vm обновлённый функционал (провести все тесты)
@@ -399,37 +397,38 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then
                  #объявляем временный массив для хранения физических томов
-                declare -a pv_devices=()
+                declare -a luks_devices=()
                 #заполняем массив pv_devices на основе данных из от uuids из xml-файла
                 #заодно проверяем существуют ли устройства с такими uuid
-                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" pv_devices; then
+                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" luks_devices; then
                     #выходим из case для проверки других точек монтирования
                     continue
                 fi
                 
 
                 #если все устройства существуют, то открываем крипто-контейнеры
-                for pv_device in "${pv_devices[@]}"; do
+                for luks_device in "${luks_devices[@]}"; do
                     if [[ "$crypt_mode" == "none_in_file" ]]; then
                         #получаем путь к файлу-ключу
                         keyfile=${current_row["keyfile"]}
                         #используем функцию для открытия крипто-контейнера
-                        open_crypt_container_by_file "$pv_device" "$keyfile"
+                        open_crypt_container_by_file "$luks_device" "$keyfile"
                     elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
-                        open_crypt_container_by_pwd "$pv_device"
+                        open_crypt_container_by_pwd "$luks_device"
                     fi
+                    
                 done
                 # Активируем LVM-группу
                 activate_lvm_groups_for_opened_crypt_containers "$vg_name"
               
 
                 echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
-
+                
+                unset luks_devices
             
             fi
             
-            #получаем имя группы томов
-            vg_name=$(get_vg_name_from_fulldevname "$device")
+
             #проверяем существует ли группа томов
             if ! check_vg_exists "$vg_name"; then
                 echo -e "${RED}Группа томов '$vg_name' не существует${NC}" >&2
@@ -500,29 +499,31 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #иначе проверки на наличие группы томов и логического тома не сработают
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
                 #объявляем временный массив для хранения физических томов
-                declare -a pv_devices=()
+                declare -a luks_devices=()
                 #заполняем массив pv_devices на основе данных из от uuids из xml-файла
                 #заодно проверяем существуют ли устройства с такими uuid
-                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" pv_devices; then
+                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" luks_devices; then
                     #выходим из case для проверки других точек монтирования
                     continue
                 fi
                 
                 #если все устройства существуют, то открываем крипто-контейнеры
-                for pv_device in "${pv_devices[@]}"; do
+                for luks_device in "${luks_devices[@]}"; do
                     if [[ "$crypt_mode" == "none_in_file" ]]; then
                          #получаем путь к файлу-ключу
                          keyfile=${current_row["keyfile"]}
                          #используем функцию для открытия крипто-контейнера
-                         open_crypt_container_by_file "$pv_device" "$keyfile"
+                         open_crypt_container_by_file "$luks_device" "$keyfile"
                     elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
-                             open_crypt_container_by_pwd "$pv_device"
+                        open_crypt_container_by_pwd "$luks_device"
                     fi
                 done
                 # Активируем LVM-группу
                 activate_lvm_groups_for_opened_crypt_containers "$vg_name"
 
                 echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+                
+                unset luks_devices
             fi
 
             

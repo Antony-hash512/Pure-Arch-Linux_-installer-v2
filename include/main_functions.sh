@@ -654,6 +654,32 @@ check_ext4_partitions_to_format_with_their_mount_points() {
 
 # Безопасный вызов pvs без утечек дескрипторов
 safe_pvs() {
+    close_descriptors
+    pvs "$@"
+    local ret_val=$?
+    return $ret_val
+}
+
+# Безопасный вызов lvs без утечек дескрипторов
+safe_lvs() {
+    close_descriptors
+    lvs "$@"
+    local ret_val=$?
+    return $ret_val
+}
+
+#Безопасный вызов vgs без утечек дескрипторов
+safe_vgs(){
+    close_descriptors
+    vgs "$@"
+    local ret_val=$?
+    return $ret_val
+}
+
+
+
+# Вызов pvs без утечек дескрипторов
+unsafe_pvs() {
     # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
     export LVM_SUPPRESS_FD_WARNINGS=1
     # Вызываем pvs с переданными аргументами
@@ -664,8 +690,8 @@ safe_pvs() {
     return $ret_val
 }
 
-# Безопасный вызов lvs без утечек дескрипторов
-safe_lvs() {
+# Вызов lvs без утечек дескрипторов
+unsafe_lvs() {
     # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
     export LVM_SUPPRESS_FD_WARNINGS=1
     # Вызываем lvs с переданными аргументами
@@ -676,8 +702,8 @@ safe_lvs() {
     return $ret_val
 }
 
-#Безопасный вызов vgs без утечек дескрипторов
-safe_vgs(){
+#Вызов vgs без утечек дескрипторов
+unsafe_vgs(){
     # Экспортируем переменную, которая указывает LVM не выводить предупреждения о дескрипторах
     export LVM_SUPPRESS_FD_WARNINGS=1
     # Вызываем lvs с переданными аргументами
