@@ -426,6 +426,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #выходим из case для проверки других точек монтирования
                     continue
                 fi
+                #если все устройства существуют, то открываем крипто-контейнеры
                 for pv_device in "${pv_devices[@]}"; do
                     if [[ "$crypt_mode" == "none_in_file" ]]; then
                         #получаем путь к файлу-ключу
@@ -516,28 +517,27 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #нужно сначала открыть luks, если зашифрован именно физический том pv lvm
             #иначе проверки на наличие группы томов и логического тома не сработают
             if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
-                pv_uuid=${current_row["pv-volumes-uuids"]}
-                #проверяем существует ли устройство с таким uuid
-                if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
-                    echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
-                    # добавляем проблему для запланрованного выхода из скрипта
-                    add_problem "partition_device_by_uuid_not_found" "Ошибка устройство с uuid $pv_uuid не найдено"
+                #объявляем временный массив для хранения физических томов
+                declare -a pv_devices=()
+                #заполняем массив pv_devices на основе данных из от uuids из xml-файла
+                #заодно проверяем существуют ли устройства с такими uuid
+                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" pv_devices; then
                     #выходим из case для проверки других точек монтирования
                     continue
-                else
-                    echo -e "${GREEN}Устройство с uuid '$pv_uuid' найдено: $pv_device${NC}"
                 fi
-                if [[ "$crypt_mode" == "none_in_file" ]]; then
-                    #получаем путь к файлу-ключу
-                    keyfile=${current_row["keyfile"]}
-                    #используем функцию для открытия крипто-контейнера
-                    open_crypt_container_by_file "$pv_device" "$keyfile"
-                elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
-                    open_crypt_container_by_pwd "$pv_device"
-                fi
-                current_row["device_for_operations"]=$lv_name;
-                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только один зашифрованный физический том lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
-                echo -e "${YELLOW}Возможность использования нескольких зашифрованных физических томов lvm в данной версии скрипта не предусмотрена${NC}"
+                
+                #если все устройства существуют, то открываем крипто-контейнеры
+                for pv_device in "${pv_devices[@]}"; do
+                    if [[ "$crypt_mode" == "none_in_file" ]]; then
+                         #получаем путь к файлу-ключу
+                         keyfile=${current_row["keyfile"]}
+                         #используем функцию для открытия крипто-контейнера
+                         open_crypt_container_by_file "$pv_device" "$keyfile"
+                    elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
+                             open_crypt_container_by_pwd "$pv_device"
+                    fi
+                done
+                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
             fi
 
 
@@ -580,9 +580,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     ;;
                 "none_in_file")
                     : #эти случаи уже были обработаны в if'ах
+                    current_row["device_for_operations"]=$lv_name
                     ;;
                 "none_in_pwd")
                     : #эти случаи уже были обработаны в if'ах
+                    current_row["device_for_operations"]=$lv_name
                     ;;
                 "file_in_none")
                     #пока что можно просто проверить есть ли свободное место,
