@@ -406,6 +406,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #выходим из case для проверки других точек монтирования
                     continue
                 fi
+                
+
                 #если все устройства существуют, то открываем крипто-контейнеры
                 for pv_device in "${pv_devices[@]}"; do
                     if [[ "$crypt_mode" == "none_in_file" ]]; then
@@ -416,11 +418,16 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
                         open_crypt_container_by_pwd "$pv_device"
                     fi
-
-                    echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
-            
                 done
-            
+                # Активируем LVM-группу только для последнего открытого контейнера
+                if [ ${#pv_devices[@]} -gt 0 ]; then
+                    last_index=$(( ${#pv_devices[@]} - 1 ))
+                    last_pv_device="${pv_devices[$last_index]}"
+                    activate_lvm_groups_for_opened_crypt_containers "$last_pv_device"
+                fi
+
+                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+
             
             fi
             
@@ -517,8 +524,17 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                              open_crypt_container_by_pwd "$pv_device"
                     fi
                 done
+                # Активируем LVM-группу только для последнего открытого контейнера
+                if [ ${#pv_devices[@]} -gt 0 ]; then
+                    last_index=$(( ${#pv_devices[@]} - 1 ))
+                    last_pv_device="${pv_devices[$last_index]}"
+                    activate_lvm_groups_for_opened_crypt_containers "$last_pv_device"
+                fi
+
                 echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
             fi
+
+            
 
 
             #проверяем существует ли группа томов

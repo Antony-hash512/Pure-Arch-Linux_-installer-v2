@@ -71,6 +71,25 @@ cleanup_all(){
     done
 }
 
+#Функция для активации LVM-групп, относящихся к открытым крипто-контейнерам
+activate_lvm_groups_for_opened_crypt_containers() {
+    local device_name=$1
+    # пробуем активировать LVM-группу, относящуюся к этому контейнеру (только если не активна)
+    opened_crypt_container_name=OPENED_CRYPT_CONTAINERS["$device_name"]
+    vgscan --mknodes
+    mapper_path="/dev/mapper/$opened_crypt_container_name"
+    vg_name=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+    if [ -n "$vg_name" ]; then
+        # путь /dev/<vg_name> существует только для активной группы
+        if [ ! -e "/dev/$vg_name" ]; then
+            echo -e "${GRAY}Активируем VG $vg_name${NC}"
+            vgchange -ay "$vg_name" || echo -e "${YELLOW}Не удалось активировать VG $vg_name${NC}"
+        else
+    echo -e "${GRAY}VG $vg_name уже активна${NC}"
+        fi
+    fi
+}
+
 #Функция для вывода логотипа
 show_logo() {
     echo -e "$LOGO"
@@ -439,6 +458,13 @@ fill_in_array_by_pv_devices() {
     local flag_of_not_found_devices=false
 
     IFS=',' read -r -a pv_uuids <<< "$pv_uuids_string"
+
+    #проверяем наличие хотя бы одного uuid
+    if [ ${#pv_uuids[@]} -eq 0 ]; then
+        echo -e "${RED}Не найдены uuid физических томов lvm${NC}" >&2
+        add_problem "syntax_problem_in_xml_file" "Не удалось спарсить хотя бы один uuid'шник luks c pv lvm. Они правильно прописаны в xml?"
+        return 1
+    fi
 
     for pv_uuid in "${pv_uuids[@]}"; do
         if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
