@@ -37,9 +37,8 @@ EOF
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
 
-* задейстовать везде функцию add_problem для добавления проблем в массив problems
+* убрать сообщение о дискрипторе в test9
 * добавить проверку что несколько физических томов lvm входят в одну группу томов
-* актулизировать заметки в obsidian
 * протестировать на vm обновлённый функционал
 * добавить тесты с указанием логических томов lvm через mapper
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
@@ -342,8 +341,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             if ! device=$(check_uuid_exists "$uuid"); then
                 echo -e "${RED}Устройство с uuid '$uuid' не существует${NC}" >&2
                 # добавляем проблему для запланрованного выхода из скрипта
-                problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $uuid не найдено\n"
-                exit_and_show_problems_flag=1
+                add_problem "partition_device_by_uuid_not_found" "Ошибка: устройство с uuid $uuid не найдено"
                 #выходим из case для проверки других точек монтирования
                 continue
             else
@@ -435,8 +433,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             if ! check_vg_exists "$vg_name"; then
                 echo -e "${RED}Группа томов '$vg_name' не существует${NC}" >&2
                 # добавляем проблему для запланрованного выхода из скрипта
-                problems["lvm_group_not_found"]+="Ошибка группа томов $vg_name не найдена\n"
-                exit_and_show_problems_flag=1
+                add_problem "lvm_group_not_found" "Ошибка: группа томов $vg_name не найдена"
                 #выходим из case для проверки других точек монтирования
                 continue
             else
@@ -447,8 +444,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             if ! check_lv_exists_by_full_devname "$device"; then
                 echo -e "${RED}Логический том '$device' не существует${NC}" >&2
                 # добавляем проблему для запланрованного выхода из скрипта
-                problems["lvm_logical_volume_not_found"]+="Ошибка логический том $device не найден\n"
-                exit_and_show_problems_flag=1
+                add_problem "lvm_logical_volume_not_found" "Ошибка: логический том $device не найден"
                 #выходим из case для проверки других точек монтирования
                 continue
             else
@@ -535,8 +531,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             if ! check_vg_exists "$vg_name"; then
                 echo -e "${RED}Группа томов '$vg_name' не существует${NC}" >&2
                 # добавляем проблему для запланрованного выхода из скрипта
-                problems["lvm_group_not_found"]+="Ошибка группа томов $vg_name не найдена\n"
-                exit_and_show_problems_flag=1
+                add_problem "lvm_group_not_found" "Ошибка: группа томов $vg_name не найдена"
                 #выходим из case для проверки других точек монтирования
                 continue
             fi
@@ -546,8 +541,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #а случае ext4 создаётся новый логический том
             if check_lv_exists_by_full_devname "$device"; then
                 echo -e "${RED}Логический том '$device' уже существует${NC}" >&2
-                problems["lvm_logical_volume_name_already_exists"]+="Ошибка логический том $device уже существует\n"
-                exit_and_show_problems_flag=1
+                add_problem "lvm_logical_volume_name_already_exists" "Ошибка: логический том $device уже существует"
+                #выходим из case для проверки других точек монтирования
                 continue
             fi
 
@@ -629,7 +624,7 @@ done
 
 check_problems
 
-#v данный код отвечает за отображение инфы пользователю
+# начало вывода информации пользователю
 
 echo -e "${CYAN}Информация о вносимых изменениях:${NC}"
 echo -e "${GRAY}Построение информации...${NC}"
@@ -729,8 +724,7 @@ while IFS= read -r line; do
                 else
                     #выводим в этой секции на случай, если совпадений было несколько
                     echo -e "!${RED}отредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                    problems["btrfs_subvolume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
-                    exit_and_show_problems_flag=1    
+                    add_problem "btrfs_subvolume_name_already_exists" "Ошибка: в файле конфигурации нужно прописать уникальные имена для новых сабволюмов"
                 fi
                     echo -e "!${BOLD}Планируемые изменения:${NC} $new_btrfs_subvolumes_string" >> $LSBLK_RAW_INFO_UPDATED
 
@@ -789,8 +783,7 @@ while IFS= read -r line; do
                 else
                     #выводим в этой секции на случай, если совпадений было несколько
                     echo -e "!${RED}отредактируйте ${GREEN}${XML_FILE}${NC}${RED} или измените разметку${NC}" >> $LSBLK_RAW_INFO_UPDATED
-                    problems["lvm_logical_volume_name_already_exists"]="в файле конфигурации нужно прописать уникальные имена для новых томов lvm"
-                    exit_and_show_problems_flag=1
+                    add_problem "lvm_logical_volume_name_already_exists" "Ошибка: в файле конфигурации нужно прописать уникальные имена для новых томов lvm"
                 fi
 
                 echo -e "!${BOLD}Планируемые изменения:${NC} $new_lvm_volumes_string" >> $LSBLK_RAW_INFO_UPDATED
@@ -844,8 +837,9 @@ mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 #т.к. bat нет на установочном диске, на случай проблем с установкой будем использовать less
 less -R -F -X -P ' ↑↓ прокрутка | q — выход' "$LSBLK_RAW_INFO"
 
-# ^ end
+
 make_pause
+
 check_problems
  
  #проверяем доступное свободное место в группах томов
@@ -859,9 +853,8 @@ if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
         if [[ "$free_space" -lt "$required_space" ]]; then
             echo "Ошибка: Доступное свободное место в группе томов $vg_name меньше требуемого" >&2
             echo "Увеличте свободное место. После чего перезапустите установку" >&2
-            #exit 1
-            problems["lvm_group_not_enough_free_space"]+="Ошибка свободного места в группе томов $vg_name меньше требуемого (требуется $(convert_bytes_to_gb "$required_space") свободного места, а доступно $(convert_bytes_to_gb "$free_space"))\n"
-            exit_and_show_problems_flag=1
+            #добавляем проблему для запланрованного выхода из скрипта
+            add_problem "lvm_group_not_enough_free_space" "Ошибка: свободного места в группе томов $vg_name меньше требуемого (требуется $(convert_bytes_to_gb "$required_space") свободного места, а доступно $(convert_bytes_to_gb "$free_space"))"
         else
             echo "свободного места в группе томов $vg_name достаточно"
         fi
