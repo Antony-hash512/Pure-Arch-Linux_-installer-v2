@@ -903,6 +903,9 @@ open_crypt_container_by_pwd() {
         if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
             success=true
             echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт${NC}"
+            #пробуем активировать LVM-группы на тот случай если они были деактивированы при прошлом закрытии luks
+            vgscan --mknodes  
+            vgchange -ay || echo -e "${RED}Не удалось автоматически активировать LVM-группы${NC}"
         else
             status=$?
             if [ $attempts -lt $max_attempts ]; then
@@ -958,6 +961,9 @@ open_crypt_container_by_file() {
         if cryptsetup luksOpen --key-file="$key_file" "$device_name" "$opened_crypt_container_name"; then
             success=true
             echo -e "${GREEN}Крипто-контейнер LUKS успешно открыт с помощью файла-ключа${NC}"
+            #пробуем активировать LVM-группы на том тот случай если они были деактивированы при прошлом закрытии luks
+            vgscan --mknodes  
+            vgchange -ay || echo -e "${RED}Не удалось автоматически активировать LVM-группы${NC}"
         else
             status=$?
             if [ $attempts -lt $max_attempts ]; then
