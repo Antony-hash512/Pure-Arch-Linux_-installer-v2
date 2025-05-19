@@ -473,7 +473,94 @@
 		<iso>true</iso>
 	</install_location>
 
-	<!-- тесты для случаев, где нужно указать uuid'ы будут добавлене чуть позже -->
+	<install_location name="vm_test7" description="Тестовая установка на VM 7">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>format_ext4</way>
+        		<crypt_mode>none</crypt_mode>
+        		<uuid>7e4a08f1-cde8-4f97-aef0-2645e2691f2f</uuid>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest7</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test8" description="Тестовая установка на VM 8">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>format_ext4</way>
+        		<crypt_mode>pwd</crypt_mode>
+        		<uuid>7e4a08f1-cde8-4f97-aef0-2645e2691f2f</uuid>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest8</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test9" description="Тестовая установка на VM 9">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>new_subvol_in_btrfs_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/double_locked_vg/btrfs_in_double_locked_lvm</lv-volume>
+        		<subvolume>@arch</subvolume>
+        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest9</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test10" description="Тестовая установка на VM 10">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>new_ext4_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
+        		<size>5G</size>
+        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea17</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest10</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
 
 </install_locations>
 
