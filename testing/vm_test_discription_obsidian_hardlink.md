@@ -51,6 +51,22 @@ sr1                                                2025-03-01-17-40-22-00
 
 ```
 
+#### код (mapper)
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_subvol_in_btrfs_in_lvm</way>
+		<crypt_mode>none_in_pwd</crypt_mode>
+		<lv-volume>/dev/mapper/locked_vg-btrfs_in_locked_lvm</lv-volume>
+		<subvolume>@arch</subvolume>
+		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+	</point>
+</mountpoints>
+
+```
+
+
 ####  описание 
 здесь внутри LUKS находится pv lvm ожидается, что Luks откроется на начальном этапе работы скрипта и всё сработает как если бы шифрования не было,
 но этого почему то не происходит
@@ -100,6 +116,20 @@ line=$(echo "$line" | sed -E 's/│ +/│·/g')
 </mountpoints>
 
 ```
+#### код (mapper)
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_ext4_in_lvm</way>
+		<crypt_mode>none_in_pwd</crypt_mode>
+		<lv-volume>/dev/mapper/locked_vg-new_ext4_from_test2</lv-volume>
+		<size>5G</size>
+		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+	</point>
+</mountpoints>
+
+```
 
 #### описание
 
@@ -114,6 +144,19 @@ line=$(echo "$line" | sed -E 's/│ +/│·/g')
 		<way>new_subvol_in_btrfs_in_lvm</way>
 		<crypt_mode>none_in_none</crypt_mode>
 		<lv-volume>/dev/opened_vg/btrfs_in_opened_lvm</lv-volume>
+		<subvolume>@arch</subvolume>
+	</point>
+</mountpoints>
+
+```
+#### код (mapper)
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_subvol_in_btrfs_in_lvm</way>
+		<crypt_mode>none_in_none</crypt_mode>
+		<lv-volume>/dev/mapper/opened_vg-btrfs_in_opened_lvm</lv-volume>
 		<subvolume>@arch</subvolume>
 	</point>
 </mountpoints>
@@ -134,6 +177,20 @@ line=$(echo "$line" | sed -E 's/│ +/│·/g')
 		<way>new_subvol_in_btrfs_in_lvm</way>
 		<crypt_mode>pwd_in_none</crypt_mode>
 		<lv-volume>/dev/opened_vg/luks_in_opened_lvm</lv-volume>
+		<subvolume>@arch</subvolume>
+	</point>
+</mountpoints>
+
+```
+
+#### код (mapper)
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_subvol_in_btrfs_in_lvm</way>
+		<crypt_mode>pwd_in_none</crypt_mode>
+		<lv-volume>/dev/mapper/opened_vg-luks_in_opened_lvm</lv-volume>
 		<subvolume>@arch</subvolume>
 	</point>
 </mountpoints>
@@ -162,6 +219,20 @@ line=$(echo "$line" | sed -E 's/│ +/│·/g')
 
 ```
 
+#### код (mapper)
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_ext4_in_lvm</way>
+		<crypt_mode>pwd_in_none</crypt_mode>
+		<lv-volume>/dev/mapper/opened_vg-new_encrypted_ext4_in_open_lvm</lv-volume>
+		<size>5G</size>
+	</point>
+</mountpoints>
+
+```
+
 #### описание
 в открытом lvm запланирован к созданию новый luks для размещения нового ext4 внутри, всё отображается нормально
 ### test6
@@ -173,6 +244,20 @@ line=$(echo "$line" | sed -E 's/│ +/│·/g')
 		<way>new_ext4_in_lvm</way>
 		<crypt_mode>none_in_none</crypt_mode>
 		<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
+		<size>5G</size>
+	</point>
+</mountpoints>
+
+```
+
+#### код (mapper)
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_ext4_in_lvm</way>
+		<crypt_mode>none_in_none</crypt_mode>
+		<lv-volume>/dev/mapper/opened_vg-new_ext4_in_open_lvm</lv-volume>
 		<size>5G</size>
 	</point>
 </mountpoints>
@@ -296,3 +381,37 @@ sda8                                             d7cf1e1f-e766-4dc1-8110-744c6b9
 
 ```
 
+### test11
+11 и 12: что будет если добавить лишний uuid'шник (другой группы)
+btrfs
+#### код
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_subvol_in_btrfs_in_lvm</way>
+		<crypt_mode>none_in_pwd</crypt_mode>
+		<lv-volume>/dev/double_locked_vg/btrfs_in_double_locked_lvm</lv-volume>
+		<subvolume>@arch</subvolume>
+		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+	</point>
+</mountpoints>
+
+```
+
+### test12
+ext4
+#### код
+```xml
+<mountpoints>
+	<point type="new">
+		<location>/</location>
+		<way>new_ext4_in_lvm</way>
+		<crypt_mode>none_in_pwd</crypt_mode>
+		<lv-volume>/dev/double_locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
+		<size>5G</size>
+		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+	</point>
+</mountpoints>
+
+```

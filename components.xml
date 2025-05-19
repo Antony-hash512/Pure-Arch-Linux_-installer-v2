@@ -310,7 +310,29 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	
+	<install_location name="vm_test1_mapper" description="Тестовая установка на VM 1 (mapper)">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_pwd</crypt_mode>
+				<lv-volume>/dev/mapper/locked_vg-btrfs_in_locked_lvm</lv-volume>
+				<subvolume>@arch</subvolume>
+				<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest1</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>	
 	<install_location name="vm_test2" description="Тестовая установка на VM 2">
 		<mountpoints>
 			<point type="new">
@@ -318,6 +340,29 @@
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_pwd</crypt_mode>
 				<lv-volume>/dev/locked_vg/new_ext4_from_test2</lv-volume>
+				<size>5G</size>
+				<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest2</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test2_mapper" description="Тестовая установка на VM 2 (mapper)">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_pwd</crypt_mode>
+				<lv-volume>/dev/mapper/locked_vg-new_ext4_from_test2</lv-volume>
 				<size>5G</size>
 				<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
 			</point>
@@ -357,7 +402,28 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-
+    <install_location name="vm_test3_mapper" description="Тестовая установка на VM 3 (mapper)">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/mapper/opened_vg-btrfs_in_opened_lvm</lv-volume>
+				<subvolume>@arch</subvolume>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest3</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
     <install_location name="vm_test4" description="Тестовая установка на VM 4">
 		<mountpoints>
 			<point type="new">
@@ -365,6 +431,28 @@
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
 				<lv-volume>/dev/opened_vg/luks_in_opened_lvm</lv-volume>
+				<subvolume>@arch</subvolume>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest4</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	    <install_location name="vm_test4_mapper" description="Тестовая установка на VM 4 (mapper)">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<lv-volume>/dev/mapper/opened_vg-luks_in_opened_lvm</lv-volume>
 				<subvolume>@arch</subvolume>
 			</point>
 		</mountpoints>
@@ -403,6 +491,28 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
+	<install_location name="vm_test5_mapper" description="Тестовая установка на VM 5 (mapper)">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>pwd_in_none</crypt_mode>
+				<lv-volume>/dev/mapper/opened_vg-new_encrypted_ext4_in_open_lvm</lv-volume>
+				<size>5G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest5</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
 	
 	<install_location name="vm_test6" description="Тестовая установка на VM 6">
 		<mountpoints>
@@ -411,6 +521,28 @@
 				<way>new_ext4_in_lvm</way>
 				<crypt_mode>none_in_none</crypt_mode>
 				<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
+				<size>5G</size>
+			</point>
+		</mountpoints>
+		<hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest6</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+		<install_location name="vm_test6_mapper" description="Тестовая установка на VM 6 (mapper)">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/mapper/opened_vg-new_ext4_in_open_lvm</lv-volume>
 				<size>5G</size>
 			</point>
 		</mountpoints>
@@ -515,6 +647,29 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
+	<install_location name="vm_test9_mapper" description="Тестовая установка на VM 9 (mapper)">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>new_subvol_in_btrfs_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/mapper/double_locked_vg-btrfs_in_double_locked_lvm</lv-volume>
+        		<subvolume>@arch</subvolume>
+        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest9</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
 	<install_location name="vm_test9" description="Тестовая установка на VM 9">
         <mountpoints>
         	<point type="new">
@@ -556,6 +711,52 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest10</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test11" description="Тестовая установка на VM 11">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>new_subvol_in_btrfs_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/double_locked_vg/btrfs_in_double_locked_lvm</lv-volume>
+        		<subvolume>@arch</subvolume>
+        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest11</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/boot/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test12" description="Тестовая установка на VM 12">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>new_ext4_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/double_locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
+        		<size>5G</size>
+        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest12</bootlabel>
 			<dev>/dev/sda1</dev>
 			<new_location>/boot/efi</new_location>
 		</efi>
