@@ -37,7 +37,11 @@ EOF
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
 
-* сделать возможным указать несколько pv-volume по uuid с разделением через запятую
+* сделать возможным указать несколько pv-volume по uuid с разделением через запятую для второго случая через функцию fill_in_array_by_pv_devices
+* задейстовать функцию fill_in_array_by_pv_devices для первого случая
+* задейстовать функцию add_problem для добавления проблем в массив problems
+* добавить проверку что несколько физических томов lvm входят в одну группу томов
+* актулизировать заметки в obsidian
 * протестировать на vm обновлённый функционал
 * добавить тесты с указанием логических томов lvm через mapper
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
@@ -396,37 +400,47 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #при этом пользователя надо предупредить о возможной дыре в безопасности, 
             #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
             
-            if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then                
-                pv_uuid=${current_row["pv-volumes-uuids"]}
-                #проверяем существует ли устройство с таким uuid
-                if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
+            if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then
+                #обяъвляем временный массив для хранения uuid физических томов
+                declare -a pv_uuids=()
+                declare -a pv_devices=()
+                #локальный флаг о не найденных устройствах
+                flag_of_not_found_devices=false
+                #разделяем строку pv-volumes-uuids по запятой и добавляем в массив
+                IFS=',' read -r -a pv_uuids <<< "${current_row["pv-volumes-uuids"]}"
+                #проходим по массиву и проверяем существует ли устройство с таким uuid
+                for pv_uuid in "${pv_uuids[@]}"; do
+                    if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
                     echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
-                    # добавляем проблему для запланрованного выхода из скрипта
-                    problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
-                    exit_and_show_problems_flag=1
+                        # добавляем проблему для запланрованного выхода из скрипта
+                        problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
+                        exit_and_show_problems_flag=1
+                        flag_of_not_found_devices=true
+                    else
+                        echo -e "${GREEN}Устройство с uuid '$pv_uuid' найдено: $pv_device${NC}"
+                        pv_devices+=("$pv_device")
+                    fi
+                done
+                #проверяем наличие проблем partition_device_by_uuid_not_found
+                if [[ "$flag_of_not_found_devices" == true ]]; then
                     #выходим из case для проверки других точек монтирования
                     continue
-                else
-                    echo -e "${GREEN}Устройство с uuid '$pv_uuid' найдено: $pv_device${NC}"
                 fi
+                for pv_device in "${pv_devices[@]}"; do
+                    if [[ "$crypt_mode" == "none_in_file" ]]; then
+                        #получаем путь к файлу-ключу
+                        keyfile=${current_row["keyfile"]}
+                        #используем функцию для открытия крипто-контейнера
+                        open_crypt_container_by_file "$pv_device" "$keyfile"
+                    elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
+                        open_crypt_container_by_pwd "$pv_device"
+                    fi
 
-
-
-                if [[ "$crypt_mode" == "none_in_file" ]]; then
-                    #получаем путь к файлу-ключу
-                    keyfile=${current_row["keyfile"]}
-                    #используем функцию для открытия крипто-контейнера
-                    open_crypt_container_by_file "$pv_device" "$keyfile"
-                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
-                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
-                elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
-                    open_crypt_container_by_pwd "$pv_device"
-                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
-                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
-                fi
-                current_row["device_for_operations"]=$lv_name;
-                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только один зашифрованный физический том lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
-                echo -e "${YELLOW}Возможность использования нескольких зашифрованных физических томов lvm в данной версии скрипта пока что не предусмотрена${NC}"
+                    echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+            
+                done
+            
+            
             fi
             
             #получаем имя группы томов
@@ -453,8 +467,10 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 continue
             else
                 echo -e "${GREEN}Логический том '$device' найден${NC}"
-            fi            
-         
+            fi
+
+                        
+
             case "$crypt_mode" in
                 "none_in_none")
                     current_row["device_for_operations"]=$lv_name
@@ -462,10 +478,12 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 "none_in_file")
                     #уже было обработано в if'ах, которые нужно было обязательно сделать
                     #до проверки группы томов и логического тома на их наличие
-                    :
+                    current_row["device_for_operations"]=$lv_name;
                     ;;
                 "none_in_pwd")
-                    :
+                    #уже было обработано в if'ах, которые нужно было обязательно сделать
+                    #до проверки группы томов и логического тома на их наличие
+                    current_row["device_for_operations"]=$lv_name;
                     ;;
                 "file_in_none")
                     #получаем путь к файлу-ключу

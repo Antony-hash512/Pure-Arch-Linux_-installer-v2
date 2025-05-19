@@ -76,7 +76,7 @@ show_logo() {
     echo -e "$LOGO"
 }
 
-# Функция для проверки существования указанного install_location_id
+#Функция для проверки существования указанного install_location_id
 check_install_location_exists() {
     local id="$1"
     # Напрямую вызываем парсер, так как переданный ID не является текущим INSTALL_LOCATION_ID
@@ -127,7 +127,15 @@ request_component_id() {
     echo "$component_id"
 }
 
-#функция для перевода в байты
+#Функция для добавления проблемы в массив problems
+add_problem() {
+     local key=$1 msg=$2
+     problems["$key"]+="$msg\n"
+     exit_and_show_problems_flag=1
+}
+
+
+#Функция для перевода в байты
 convert_to_bytes() {
     local size=$1
     
@@ -423,6 +431,32 @@ get_vg_name_for_pv() {
     fi
 }
 
+#Функция для заполнения массива pv_devices на основе данных из от uuids из xml-файла
+fill_in_array_by_pv_devices() {
+    local -a pv_uuids
+    local pv_uuids_string=$1
+    local -n pv_devices_ref=$2
+    local flag_of_not_found_devices=false
+
+    IFS=',' read -r -a pv_uuids <<< "$pv_uuids_string"
+
+    for pv_uuid in "${pv_uuids[@]}"; do
+        if ! pv_device=$(check_uuid_exists "$pv_uuid"); then
+            echo -e "${RED}Устройство с uuid '$pv_uuid' не существует${NC}" >&2
+            flag_of_not_found_devices=true
+            problems["partition_device_by_uuid_not_found"]+="Ошибка устройство с uuid $pv_uuid не найдено\n"
+            exit_and_show_problems_flag=1
+        else
+            pv_devices_ref+=("$pv_device")
+        fi
+    done
+
+    if [[ "$flag_of_not_found_devices" == true ]]; then
+        return 1
+    else
+        return 0
+    fi
+}
 
 #Функция для для заполнения ассоциативного массива
 #помимо строки с  названием девайса функция принимает на вход
