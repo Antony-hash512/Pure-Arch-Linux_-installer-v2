@@ -73,19 +73,28 @@ cleanup_all(){
 
 #Функция для активации LVM-групп, относящихся к открытым крипто-контейнерам
 activate_lvm_groups_for_opened_crypt_containers() {
-    local device_name=$1
-    # пробуем активировать LVM-группу, относящуюся к этому контейнеру (только если не активна)
-    opened_crypt_container_name=OPENED_CRYPT_CONTAINERS["$device_name"]
-    vgscan --mknodes
-    mapper_path="/dev/mapper/$opened_crypt_container_name"
-    vg_name=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+    local vg_name=$1
     if [ -n "$vg_name" ]; then
         # путь /dev/<vg_name> существует только для активной группы
         if [ ! -e "/dev/$vg_name" ]; then
             echo -e "${GRAY}Активируем VG $vg_name${NC}"
             vgchange -ay "$vg_name" || echo -e "${YELLOW}Не удалось активировать VG $vg_name${NC}"
         else
-    echo -e "${GRAY}VG $vg_name уже активна${NC}"
+            echo -e "${GRAY}VG $vg_name уже активна${NC}"
+        fi
+
+        # активируем логические тома группы
+        local lv_names
+        lv_names=$(safe_lvs --noheadings -o lv_name "$vg_name" 2>/dev/null | tr -d ' ')
+        if [ -n "$lv_names" ]; then
+            for lv in $lv_names; do
+                if [ ! -e "/dev/$vg_name/$lv" ]; then
+                    echo -e "${GRAY}Активируем LV $vg_name/$lv${NC}"
+                    lvchange -ay "$vg_name/$lv" || echo -e "${YELLOW}Не удалось активировать LV $vg_name/$lv${NC}"
+                else
+                    echo -e "${GRAY}LV $vg_name/$lv уже активен${NC}"
+                fi
+            done
         fi
     fi
 }

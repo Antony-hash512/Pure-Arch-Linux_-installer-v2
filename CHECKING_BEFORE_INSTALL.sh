@@ -385,6 +385,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             current_row["device"]=$device
             lv_name=$device
             btrfs_device=$lv_name #аллиас т.к. по смыслу это одно и тоже
+            vg_name=$(get_vg_name_from_fulldevname "$lv_name")
 
             #сначала нужно отдельно обработать случаи, когда физический том lvm зашифрован
             #в этом случае нужно будет сначала открыть крипто-контейнер
@@ -419,12 +420,9 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                         open_crypt_container_by_pwd "$pv_device"
                     fi
                 done
-                # Активируем LVM-группу только для последнего открытого контейнера
-                if [ ${#pv_devices[@]} -gt 0 ]; then
-                    last_index=$(( ${#pv_devices[@]} - 1 ))
-                    last_pv_device="${pv_devices[$last_index]}"
-                    activate_lvm_groups_for_opened_crypt_containers "$last_pv_device"
-                fi
+                # Активируем LVM-группу
+                activate_lvm_groups_for_opened_crypt_containers "$vg_name"
+              
 
                 echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
 
@@ -524,12 +522,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                              open_crypt_container_by_pwd "$pv_device"
                     fi
                 done
-                # Активируем LVM-группу только для последнего открытого контейнера
-                if [ ${#pv_devices[@]} -gt 0 ]; then
-                    last_index=$(( ${#pv_devices[@]} - 1 ))
-                    last_pv_device="${pv_devices[$last_index]}"
-                    activate_lvm_groups_for_opened_crypt_containers "$last_pv_device"
-                fi
+                # Активируем LVM-группу
+                activate_lvm_groups_for_opened_crypt_containers "$vg_name"
 
                 echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
             fi
