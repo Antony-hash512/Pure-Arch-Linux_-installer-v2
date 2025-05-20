@@ -1007,7 +1007,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     ;;
             esac
             #форматируем раздел
-            if mkfs.ext4 ${current_row["device_for_operation"]}; then
+            if mkfs.ext4 ${current_row["device_for_operations"]}; then
                 echo -e "${GREEN}Раздел успешно отформатирован.${NC}"
             else
                 echo -e "${RED}Ошибка: не удалось отформатировать раздел.${NC}" >&2
