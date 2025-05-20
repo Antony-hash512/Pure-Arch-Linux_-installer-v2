@@ -998,12 +998,12 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 "pwd")
                     create_and_open_crypt_container_with_new_pwd ${current_row["device"]}
                     #получаем имя раздела для монтирования
-                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    current_row["device_for_operations"]=$current_row["opened_crypt_container_fullname"]
                     ;;
                 "file")
                     create_and_open_crypt_container_with_file ${current_row["device"]} ${current_row["keyfile"]}
                     #получаем имя раздела для монтирования
-                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    current_row["device_for_operations"]=$current_row["opened_crypt_container_fullname"]
                     ;;
             esac
             #форматируем раздел
@@ -1023,7 +1023,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             fi
             
             #монтируем раздел
-            if mount ${current_row["device_for_operation"]} $INST_DIR$mount_point; then
+            if mount ${current_row["device_for_operations"]} $INST_DIR$mount_point; then
                 echo -e "${GREEN}Раздел успешно смонтирован в $INST_DIR$mount_point.${NC}"
             else
                 echo -e "${RED}Ошибка: не удалось смонтировать раздел в $INST_DIR$mount_point.${NC}" >&2
@@ -1034,7 +1034,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #в обоих этих случаях набор операций идентичен
             #в этих случаях поле device_for_operation уже получено
             #в предыдущем цикле для всех опций шифрования
-            btrfs_device=${current_row["device_for_operation"]}
+            btrfs_device=${current_row["device_for_operations"]}
             subvol_name=${current_row["subvolume"]}
             echo "btrfs_device: $btrfs_device"
             echo "subvol_name: $subvol_name"
@@ -1097,17 +1097,22 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #используем функцию для создания и открытия крипто-контейнера
                     create_and_open_crypt_container_with_new_pwd "$lv_name"
                     #получаем имя раздела для монтирования
-                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    current_row["device_for_operations"]=$current_row["opened_crypt_container_fullname"]
                     ;;
                 "file_in_none")
                     #используем функцию для создания и открытия крипто-контейнера
                     create_and_open_crypt_container_with_file "$lv_name" "$current_row["keyfile"]"
                     #получаем имя раздела для монтирования
-                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    current_row["device_for_operations"]=$current_row["opened_crypt_container_fullname"]
                     ;; 
             esac
-            #монтируем том lvm или содержимое контейнера luks в каталог установки (внутри chroot'а)
-            mount $current_row["device_for_operation"] $INST_DIR$mount_point
+            # монтируем том lvm или содержимое контейнера luks в каталог установки (внутри chroot'а)
+            if mount "${current_row["device_for_operations"]}" "$INST_DIR$mount_point"; then
+                echo -e "${GREEN}Том LVM или содержимое контейнера LUKS успешно смонтировано в $INST_DIR$mount_point.${NC}"
+            else
+                echo -e "${RED}Ошибка: не удалось смонтировать том LVM или содержимое контейнера LUKS в $INST_DIR$mount_point.${NC}" >&2
+                exit 1
+            fi
             ;;
     esac
 
