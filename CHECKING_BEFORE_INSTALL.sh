@@ -419,7 +419,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     fi
                     #получаем имя физического тома из ассоциативного массива OPENED_CRYPT_CONTAINERS
                     #(был добавлен при выполнении одной из предыдущих функций)
-                    pv_device=${OPENED_CRYPT_CONTAINERS["$luks_device"]}
+                    pv_device="/dev/mapper/${OPENED_CRYPT_CONTAINERS["$luks_device"]}"
                     #проверяем является ли это физическим томом lvm
                     if ! check_device_is_pv "$pv_device"; then
                         #пишем предупреждение:
