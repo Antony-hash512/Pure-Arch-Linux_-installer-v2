@@ -37,7 +37,6 @@ EOF
 #  * существующий проблемах, например нехватки свободного место и т.д.
 : <<'TODO'
 
-* зайстовать функцию во втором случае, если всё норм
 * сделать запрос на подтверждение перед началом установки (слово INSTALL капсом)
 * добавить ключ для только просмотра изменений без установки
 * перенести логику, отвечающую за установку из старого скрипта
@@ -404,7 +403,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     continue
                 fi
                 
-                #открываем все luks-контейнеры
+                #открываем все luks-контейнеры через процедуру
                 open_all_luks_devices
                 
                 unset luks_devices
@@ -490,22 +489,9 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     continue
                 fi
                 
-                #если все устройства существуют, то открываем крипто-контейнеры
-                for luks_device in "${luks_devices[@]}"; do
-                    if [[ "$crypt_mode" == "none_in_file" ]]; then
-                         #получаем путь к файлу-ключу
-                         keyfile=${current_row["keyfile"]}
-                         #используем функцию для открытия крипто-контейнера
-                         open_crypt_container_by_file "$luks_device" "$keyfile"
-                    elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
-                        open_crypt_container_by_pwd "$luks_device"
-                    fi
-                done
-                # Активируем LVM-группу
-                activate_lvm_groups_for_opened_crypt_containers "$vg_name"
+                #открываем все luks-контейнеры через процедуру
+                open_all_luks_devices
 
-                echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
-                
                 unset luks_devices
             fi
 
