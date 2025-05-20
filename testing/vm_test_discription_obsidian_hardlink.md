@@ -1,6 +1,7 @@
 #pure_arch_linux
 
 [[Arch Linux Installer v2]]
+[[Arch Linux Installer v2 templates]]
 
 ## разметка
 ```

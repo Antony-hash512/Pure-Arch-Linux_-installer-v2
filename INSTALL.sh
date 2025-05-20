@@ -35,22 +35,36 @@ EOF
 #  * логические тома lvm, которые планируются к созданию (+ точки монирования)
 #  * крипто-контейны, luks, которые планируются к созданию и что в них планируется разместить
 #  * существующий проблемах, например нехватки свободного место и т.д.
+#5) выполняем установку системы после явного подтверждения пользователем
+
 : <<'TODO'
 
 
-* перенести логику, отвечающую за установку из старого скрипта
+* добавить логику добавления в CRYPT_VOLUMES для общего случая
+(или понять какая в новом скрипте ему альтернатива)
 * протестировать установку на vm
 * добавить ключ для только просмотра изменений без установки
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
+* добавить полноценную поддержку extra точек монтирования (туда ничего не уставнавливается,
+они просто прописываются в /etc/fstab) + тесты для них
 * зарелизить бету !!!! <-- ВАЖНО НАКОНЕЦ-ТО НАДО ЗАРЕЛИЗИТЬ ГОТОВЫЙ MVP
 * ввести ключ для автоматической установки формата вывода lsblk
 * написать функцию, для проверки гарантированного свободного места в btrfs томах
 * создать функцию, которая будет проверять корректность данных в xml-файле
 * протестировать написанные функции (опционально)
 
-Другие TODO находятся в файлах prev_ver_of_install.sh
+* реализовать поддержку старых ноутбуков с legacy bios
+* написать документацию
 
-их я перенесу сюда, когда закончу с этой болванкой путем переноса сюда всех нароботок
+* добавить проверку хука при установке шифрования до установки системы
+* допилить реализацию softpack_tweaks
+* добавить копирование и распакову архивов для root
+* уточнить, инфу про необязательносить выноса /boot в отдельный раздел и возможность его шифрования
+* релизовать и протестировать поддержку других систем инициализации на случай установки Artix
+* если не передумаю, сделать возможным установку не из Arch-подобных систем с использованием chroot вместо arch-chroot
+* если не передумаю вернуть создание скриптов для автоматического удаления из прошлой версии
+    * разобраться что не так с удалением сабволюмов через автоматический скрипт
+
 TODO
 
 # Подключаем файл с цветовыми переменными
@@ -70,7 +84,7 @@ for arg in "$@"; do
     fi
 done
 
-# восстанавливаем позиционные параметры без --log
+# восстанавливаем позиционные параметры (без --log и т.д.)
 set -- "${filtered_args[@]}"
 
 if $enable_log; then
@@ -94,12 +108,31 @@ fi
 
 # проверяем ключи парсинга xml-файла
 INSTALL_LOCATION_ID=""
-while getopts "i:" opt; do
+SOFTPACK_ID=""
+DRIVERS_ID=""
+SETTINGS_ID=""
+
+while getopts "i:s:d:o:" opt; do
   case $opt in
     i)
       # проверка на наличие в xml-файле будет проведена позже
       INSTALL_LOCATION_ID="$OPTARG"
       echo -e "Аргумент после ключа -i: $INSTALL_LOCATION_ID прочитан"
+      ;;
+    s)
+      # проверка на наличие в xml-файле будет проведена позже
+      SOFT_PACK_ID="$OPTARG"
+      echo -e "Аргумент после ключа -s: $SOFT_PACK_ID прочитан"
+      ;;
+    d)
+      # проверка на наличие в xml-файле будет проведена позже
+      DRIVERS_ID="$OPTARG"
+      echo -e "Аргумент после ключа -d: $DRIVERS_ID прочитан"
+      ;;
+    o)
+      # проверка на наличие в xml-файле будет проведена позже
+      SETTINGS_ID="$OPTARG"
+      echo -e "Аргумент после ключа -o: $SETTINGS_ID прочитан"
       ;;
     \?)
       echo -e "${RED}Неверный параметр -$OPTARG${NC}" >&2
@@ -142,6 +175,9 @@ export AUTODIR="autocreated_scripts"
 export XML_FILE="components.xml"
 export XML_PARSER="get_data_from_components_xml.py"
 export CHROOT_SCRIPT="run_inside_chroot.sh"
+
+# Получаем путь к каталогу, где находится скрипт
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 # Формат вывода lsblk по умолчанию
 export LSBLK_FORMAT="NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
@@ -202,6 +238,9 @@ show_logo
 echo -e "${YELLOW}Перед использованием скрипта также должен быть настроен доступ в интернет и выпонена необходимая минимальная разбивка разделов на диске (подробности в документации).${NC}"
 read -p "Enter - продолжить; ctrl+C - прервать"
 
+#Обновление времени
+timedatectl set-ntp true
+
 #1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
 if [[ "$TTY_WIDTH" -lt 150 ]]; then
     request_lsblk_format
@@ -230,7 +269,7 @@ done
 # Если INSTALL_LOCATION_ID не был задан через ключ -i или указанное значение не найдено
 if [[ -z "$INSTALL_LOCATION_ID" ]]; then
     # Выбор места установки
-    INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID места установки")
+    INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID мест установки")
 else
     # если уже задан значит было получено из ключа -i
     # проверяем существует ли указанное место установки
@@ -265,10 +304,8 @@ done
 # пишем код как будто то бы тега names уже больше не существует
 
 # ассоциативный массив, который хранит строки с описанием запланированных изменений
-#todo: проверить, нужно ли этот массив, если удалять то вместе со всеми использованиями
 declare -A pending_commands_description
-# скорее всего не понадобится т.к. функционал по отображения информации о создании новых luks
-# уже реализуется в соответствующих функциях
+
 
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -277,6 +314,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     type=${current_row["type"]}
     crypt_mode=${current_row["crypt_mode"]}
     
+    if [[ "$i" -eq 0 && "$mount_point" != "/" ]]; then
+        echo -e "${RED}Критическая ошибка: первой в $XML_FILE в разделе с точками монтирования должна быть /${NC}" >&2
+        exit 1
+    fi
+
     #device=${current_row["device"]} #device выпилен из xml-файла
     #вместо него будет использоваться uuid или lv-volume в зависимости от type
     
@@ -845,5 +887,237 @@ if [[ "$user_input" != "INSTALL" ]]; then
     exit 1
 fi
 
+#5) ЗАПУСК УСТАНОВКИ
+
 echo -e "${GREEN}Начинаем установку системы...${NC}"
 
+# получаем от пользователя остальные параметры, если они не были переданы в скрипт
+if [[ -z "$SOFTPACK_ID" ]]; then
+    SOFTPACK_ID=$(request_component_id "softpack" "Введите ID устанавливаемого набора софта")
+else
+    # если уже задан значит было получено из ключа -s
+    # проверяем существует ли указанный набор софта
+    if ! check_softpack_exists "$SOFTPACK_ID"; then
+        echo -e "${RED}Указанный через ключ -s набор софта '$SOFTPACK_ID' не найден в файле ${GREEN}$XML_FILE${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}Используем указанный набор софта из ключа -s: $SOFTPACK_ID${NC}"
+fi
+
+if [[ -z "$DRIVERS_ID" ]]; then
+    DRIVERS_ID=$(request_component_id "driverspack" "Введите ID устанавливаемого набора драйверов")
+else
+    # если уже задан значит было получено из ключа -d
+    # проверяем существует ли указанный набор драйверов
+    if ! check_driverspack_exists "$DRIVERS_ID"; then
+        echo -e "${RED}Указанный через ключ -d набор драйверов '$DRIVERS_ID' не найден в файле ${GREEN}$XML_FILE${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}Используем указанный набор драйверов из ключа -d: $DRIVERS_ID${NC}"
+fi
+
+if [[ -z "$SETTINGS_ID" ]]; then
+    SETTINGS_ID=$(request_component_id "settings" "Введите ID настроек")
+else
+    # если уже задан значит было получено из ключа -o
+    # проверяем существует ли указанные настройки
+    if ! check_settings_exists "$SETTINGS_ID"; then
+        echo -e "${RED}Указанные через ключ -o настройки '$SETTINGS_ID' не найдены в файле ${GREEN}$XML_FILE${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}Используем указанные настройки из ключа -o: $SETTINGS_ID${NC}"
+fi
+
+# откуда устанавливается система
+if [[ $(parse_xml install_location get_tweak_iso) == "true" ]]; then
+    INSTALL_FROM="iso"
+else
+    INSTALL_FROM="other_system"
+fi
+
+
+
+#создаём временный каталог для монтирования системы
+INST_DIR=$(mktemp -d)
+
+# случаи для legacy будут добавлены потом
+EFI_DEV="$(parse_xml install_location get_efi_dev)"
+EFI_NEW_LOCATION="$(parse_xml install_location get_efi_new_location)"
+EFI_SYS_NAME="$(parse_xml install_location get_efi_bootlabel)"
+
+#получаем список пакетов для pacstrap
+SOFT_PACK1="$(parse_xml softpack get_pkgs_pacstrap)"
+
+# Показываем пользователю список записей EFI
+echo -e "${YELLOW}Список записей EFI:${NC}"
+efibootmgr
+
+# Проверяем уникальность имени и предлагаем варианты
+while true; do
+    if efibootmgr | grep -q "$EFI_SYS_NAME"; then
+        echo -e "${RED}Загрузчик с именем ${MAGENTA}$EFI_SYS_NAME${RED} уже существует.${NC}"
+        read -p "Хотите перезаписать существующий загрузчик? (type YES using Capital letters): " overwrite
+        if [[ $overwrite =~ ^YES$ ]]; then
+            echo -e "${GREEN}Будет выполнена перезапись существующего загрузчика.${NC}"
+            break
+        else
+            read -p "Введите другое имя загрузчика в EFI-разделе: " EFI_SYS_NAME
+        fi
+    else
+        echo -e "${GREEN}Имя загрузчика ${MAGENTA}$EFI_SYS_NAME${GREEN} уникально и будет использовано.${NC}"
+        break
+    fi
+done
+
+#проходимся по массиву новых точек монтирования ещё раз, для монитрования в рабочий каталого перед установкой
+for row in "${NEW_MOUNTPOINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    #получаем короткие алиасы переменных из xml-файла
+    mount_point=${current_row["mount_point"]}
+    type=${current_row["type"]}
+    crypt_mode=${current_row["crypt_mode"]}
+
+    case $type in
+        "format_ext4")
+            :
+            case $crypt_mode in
+                "none")
+                    :
+                    # поле device_for_operation уже получено в предыдущем цикле
+                    ;;
+                "pwd")
+                    create_and_open_crypt_container_with_new_pwd ${current_row["device"]}
+                    #получаем имя раздела для монтирования
+                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    ;;
+                "file")
+                    create_and_open_crypt_container_with_file ${current_row["device"]} ${current_row["keyfile"]}
+                    #получаем имя раздела для монтирования
+                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    ;;
+            esac
+            #форматируем раздел
+            mkfs.ext4 ${current_row["device_for_operation"]}
+            #создаём каталог $INST_DIR$mount_point если он не существует
+            mkdir -p $INST_DIR$mount_point
+            #монтируем раздел
+            mount ${current_row["device_for_operation"]} $INST_DIR$mount_point
+            ;;
+        "new_subvol_in_btrfs" | "new_subvol_in_btrfs_in_lvm")
+            #в обоих этих случаях набор операций идентичен
+            #в этих случаях поле device_for_operation уже получено
+            #в предыдущем цикле для всех опций шифрования
+            btrfs_device=${current_row["device_for_operation"]}
+            subvol_name=${current_row["subvolume"]}
+            #создаём подтом
+            btrfs subvolume create "${ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
+            #создаём каталог $INST_DIR$mount_point если он не существует
+            mkdir -p $INST_DIR$mount_point
+            #монтируем подтом в каталог установки (внутри chroot'а)
+            mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point
+            ;;
+        "new_ext4_in_lvm")
+            size_of_lv=${current_row["size"]}
+            lv_name=${current_row["lv-volume"]}
+            device=$lv_name
+            vg_name=$(get_vg_name_from_fulldevname "$device")
+            #получаем имя логического тома
+            #именно таким способом т.к. не известно было ли прописано
+            #через mapper или нет, поэтому обычный basename тут не подходит
+            lv_basename=$(get_lv_name_from_fulldevname "$device")
+            #создаём том lvm
+            lvcreate -L $size_of_lv -n $lv_basename $vg_name
+            #создаём каталог $INST_DIR$mount_point если он не существует
+            mkdir -p $INST_DIR$mount_point
+            case $crypt_mode in
+                "none_in_none" | "none_in_pwd" | "none_in_file")
+                    #в этих случаях поле device_for_operation уже получено
+                    :
+                    ;;
+                "pwd_in_none")
+                    #используем функцию для создания и открытия крипто-контейнера
+                    create_and_open_crypt_container_with_new_pwd "$lv_name"
+                    #получаем имя раздела для монтирования
+                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    ;;
+                "file_in_none")
+                    #используем функцию для создания и открытия крипто-контейнера
+                    create_and_open_crypt_container_with_file "$lv_name" "$current_row["keyfile"]"
+                    #получаем имя раздела для монтирования
+                    current_row["device_for_operation"]=$current_row["opened_crypt_container_fullname"]
+                    ;; 
+            esac
+            #монтируем том lvm или содержимое контейнера luks в каталог установки (внутри chroot'а)
+            mount $current_row["device_for_operation"] $INST_DIR$mount_point
+            ;;
+    esac
+
+done
+
+
+#монтируем EFI-раздел
+mkdir -p $INST_DIR/$EFI_NEW_LOCATION
+mount $EFI_DEV $INST_DIR/$EFI_NEW_LOCATION
+
+# Установка основных пакетов
+pacstrap $INST_DIR $SOFT_PACK1
+
+# Генерация fstab
+genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
+
+#если массив CRYPT_VOLUMES существует
+if [[ -v CRYPT_VOLUMES[@] ]]; then
+    for ((i=0; i<${#CRYPT_VOLUMES[@]}; i++)); do
+        lv_name="${CRYPT_VOLUMES[i]}"
+        #Настройка зашифрованного раздела
+        echo "cryptroot UUID=$(blkid -s UUID -o value $lv_name) none luks" >> $INST_DIR/etc/crypttab
+        echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$lv_name:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+
+    done
+fi
+
+#копирование дополнительных файлов, для выполнения внутри системы (должны быть в одном каталоге с этим)
+cp $SCRIPT_DIR/$CHROOT_SCRIPT $INST_DIR
+cp $SCRIPT_DIR/$XML_PARSER $INST_DIR
+cp $SCRIPT_DIR/$XML_FILE $INST_DIR
+
+#получаем список архивов для распаковки в домашнюю папку пользователя
+ARCHIVES_4HOME="$(parse_xml softpack get_archs4home)"
+
+#копирование и распоковка архивов с файлами для домашнего каталога (будут распаковываны в chroot'е)
+for archive in $ARCHIVES_4HOME; do
+    cp $SCRIPT_DIR/$archive $INST_DIR
+done
+
+#-------------------------------
+# Chroot в новую систему
+# передаём в скрипт idшники установки и имя загрузчика в EFI-разделе
+arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DRIVERSPACK_ID\" \"$INSTALL_LOCATION_ID\" \"$SETTINGS_ID\" \"$EFI_SYS_NAME\""
+#-------------------------------
+
+#удаляем выполнившуюся в chroot'е копию второго скрипта
+rm $INST_DIR/$CHROOT_SCRIPT
+rm $INST_DIR/$XML_PARSER
+rm $INST_DIR/$XML_FILE
+
+
+#размонтируем раздел EFI
+umount $INST_DIR/$EFI_NEW_LOCATION
+
+# Размонтирование всех разделов
+umount -R $INST_DIR
+if [ -z "$(ls -A $INST_DIR)" ]; then
+    rmdir $INST_DIR
+else
+    echo -e "${RED}Каталог $INST_DIR не пустой. Удаление не выполнено.${NC}"
+fi
+
+echo -e "${GREEN}ALL DONE${NC}"
+
+
+if [[ $INSTALL_FROM == "other_system" ]]; then
+    echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
+    read -p "Нажмите Enter для выхода..."
+else
+    echo "Установка завершена. Перезагрузите компьютер."
+fi

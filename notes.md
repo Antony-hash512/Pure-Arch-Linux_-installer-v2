@@ -42,3 +42,15 @@ read -r -a names <<< "${name//_in_/ }"
 LENGTH_OF_LINE_IN_LSBLK_RAW_INFO=$(wc -L < $LSBLK_RAW_INFO)
 ```
 
+```bash
+# Определяем количество массивов вида new_pointX автоматически
+ALL_NEW_POINTS=()
+for var in $(compgen -A variable | grep -E '^new_point[0-9]+$'); do
+    ALL_NEW_POINTS+=("$var")
+done
+
+ALL_EXTRA_POINTS=()
+for var in $(compgen -A variable | grep -E '^extra_point[0-9]+$'); do
+    ALL_EXTRA_POINTS+=("$var")
+done
+```
