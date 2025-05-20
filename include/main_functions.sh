@@ -484,6 +484,8 @@ fill_in_array_by_pv_devices() {
     
     #удаляем пробелы в строке, табуляции, переносы строк и возвраты каретки
     pv_uuids_string=$(echo "$pv_uuids_string" | tr -d '\r\n\t ')
+    #удаляем запятую в конце строки, если после неё ничего нет
+    pv_uuids_string=$(echo "$pv_uuids_string" | sed 's/,$//')
 
     IFS=',' read -r -a pv_uuids <<< "$pv_uuids_string"
 
@@ -1377,7 +1379,7 @@ function request_lsblk_format() {
     fi
 }
 
-# Добавляю функции для проверки физических томов LVM
+# Функция для проверки существования физического тома lvm
 check_device_is_pv() {
     local device_name=$1
     if safe_pvs "$device_name" &>/dev/null; then
@@ -1387,6 +1389,7 @@ check_device_is_pv() {
     fi
 }
 
+# Функция для проверки физического тома lvm в группе томов
 check_pv_in_vg() {
     local device_name=$1
     local vg_name=$2
@@ -1399,4 +1402,53 @@ check_pv_in_vg() {
     else
         return 1
     fi
+}
+
+# Процедура для открытия всех luks-контейнеров c pv lvm,
+# полученных из прописанных uuidшников в xml-файле
+# Включает себя действия, которые дублируются 
+# в обоих случаях *_in_lvm для crypt_mode = none_in_*
+open_all_luks_devices(){
+    #требует заданных переменных:
+    #OPENED_CRYPT_CONTAINERS - массив с открытыми luks-контейнерами
+    #luks_devices - массив с устройствами, которые нужно открыть
+    #vg_name - имя группы томов
+    #crypt_mode - режим открытия luks-контейнеров
+    #current_row - текущая значения в цикле точек монтирования
+    
+    #если все устройства существуют, то открываем крипто-контейнеры
+    for luks_device in "${luks_devices[@]}"; do
+        if [[ "$crypt_mode" == "none_in_file" ]]; then
+            #получаем путь к файлу-ключу
+            keyfile=${current_row["keyfile"]}
+            #используем функцию для открытия крипто-контейнера
+            open_crypt_container_by_file "$luks_device" "$keyfile"
+        elif [[ "$crypt_mode" == "none_in_pwd" ]]; then
+            open_crypt_container_by_pwd "$luks_device"
+        fi
+        #получаем имя физического тома из ассоциативного массива OPENED_CRYPT_CONTAINERS
+        #(был добавлен при выполнении одной из предыдущих функций)
+        pv_device="/dev/mapper/${OPENED_CRYPT_CONTAINERS["$luks_device"]}"
+        #проверяем является ли это физическим томом lvm
+        if ! check_device_is_pv "$pv_device"; then
+            #пишем предупреждение:
+            echo -e "${RED}Открытое устройство '$pv_device' не является физическим томом lvm${NC}" >&2
+            echo -e "${RED}Рекомендуется перепроверить данные в xml-файле ${YELLOW}(ctrl+c для выхода)${NC}" >&2
+            #не выходим автоматически т.к. это просто лишний открытый крипто-контейнер, не критично
+            make_pause
+        else
+            #проверяем в правильную ли группу томов он входит
+            if ! check_pv_in_vg "$pv_device" "$vg_name"; then
+                echo -e "${RED}Физический том '$pv_device' не входит в группу томов '$vg_name'${NC}" >&2
+                echo -e "${RED}Рекомендуется перепроверить данные в xml-файле ${YELLOW}(ctrl+c для выхода)${NC}" >&2
+                #не выходим автоматически т.к. это просто лишний открытый крипто-контейнер, не критично
+                make_pause
+            fi
+        fi 
+    done
+    # Активируем LVM-группу
+    activate_lvm_groups_for_opened_crypt_containers "$vg_name"
+    # Предупреждаем пользователя о подводном камне
+    echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+                
 }
