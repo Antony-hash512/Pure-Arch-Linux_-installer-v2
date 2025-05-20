@@ -156,12 +156,6 @@ fi
 
 
 #1) задаём различные переменные и константы
-# Подключаем функции
-source include/main_functions.sh
-source include/shared_functions.sh
-# используем trap для вызова функции cleanup_all при любом выходе из скрипта
-trap 'cleanup_all' EXIT
-
 
 # Заранее вычисленные степени 1024
 export MB=1048576  # 1024^2
@@ -175,9 +169,19 @@ export AUTODIR="autocreated_scripts"
 export XML_FILE="components.xml"
 export XML_PARSER="get_data_from_components_xml.py"
 export CHROOT_SCRIPT="run_inside_chroot.sh"
+export SHARED_FUNCTIONS="include/shared_functions.sh"
+export MAIN_FUNCTIONS="include/main_functions.sh"
 
 # Получаем путь к каталогу, где находится скрипт
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
+# Подключаем функции
+source $MAIN_FUNCTIONS
+source $SHARED_FUNCTIONS
+# используем trap для вызова функции cleanup_all при любом выходе из скрипта
+trap 'cleanup_all' EXIT
+
+
 
 # Формат вывода lsblk по умолчанию
 export LSBLK_FORMAT="NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
@@ -1154,6 +1158,7 @@ fi
 cp $SCRIPT_DIR/$CHROOT_SCRIPT $INST_DIR
 cp $SCRIPT_DIR/$XML_PARSER $INST_DIR
 cp $SCRIPT_DIR/$XML_FILE $INST_DIR
+cp $SCRIPT_DIR/$SHARED_FUNCTIONS $INST_DIR
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
 ARCHIVES_4HOME="$(parse_xml softpack get_archs4home)"
@@ -1173,6 +1178,7 @@ arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DR
 rm $INST_DIR/$CHROOT_SCRIPT
 rm $INST_DIR/$XML_PARSER
 rm $INST_DIR/$XML_FILE
+rm $INST_DIR/$SHARED_FUNCTIONS
 
 
 #размонтируем раздел EFI

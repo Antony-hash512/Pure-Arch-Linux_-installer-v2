@@ -6,12 +6,13 @@ SETTINGS_ID=$4
 EFI_SYS_NAME=$5
 
 XML_PARSER="get_data_from_components_xml.py"
+SHARED_FUNCTIONS="shared_functions.sh"
 
 #первым делом устанавливаем python3 в новую систему т.к. нужен для продолжения парсинга xml-файла
 pacman -Syu python3 --noconfirm
 
 
-source include/shared_functions.sh
+source $SHARED_FUNCTIONS
 
 
 DRIVERS_PACK="$(parse_xml driverspack get_pkgs_pacman)"
