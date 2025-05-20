@@ -1178,7 +1178,7 @@ arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DR
 rm $INST_DIR/$CHROOT_SCRIPT
 rm $INST_DIR/$XML_PARSER
 rm $INST_DIR/$XML_FILE
-rm $INST_DIR/$SHARED_FUNCTIONS
+rm $INST_DIR/$(basename $SHARED_FUNCTIONS)
 
 
 #размонтируем раздел EFI
