@@ -938,7 +938,17 @@ fi
 
 
 #создаём временный каталог для монтирования системы
-INST_DIR=$(mktemp -d)
+#INST_DIR=$(mktemp -d)
+#добавляем к имени каталога текущую дату и время для уникальности
+INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
+mkdir -p $INST_DIR 
+#проверка, что этот каталог не смонтирован
+if mount | grep -q $INST_DIR; then
+    echo "Ошибка: каталог $INST_DIR уже смонтирован" >&2
+    exit 1
+fi
+
+
 
 # случаи для legacy будут добавлены потом
 EFI_DEV="$(parse_xml install_location get_efi_dev)"
