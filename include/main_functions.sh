@@ -1373,3 +1373,27 @@ function request_lsblk_format() {
         echo -e "${YELLOW}Используется формат по умолчанию:${NC} $LSBLK_FORMAT"
     fi
 }
+
+# Добавляю функции для проверки физических томов LVM
+check_device_is_pv() {
+    local device_name=$1
+    if safe_pvs "$device_name" &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_pv_in_vg() {
+    local device_name=$1
+    local vg_name=$2
+    local pv_vg
+    if ! pv_vg=$(safe_pvs --noheadings -o vg_name "$device_name" 2>/dev/null | tr -d ' '); then
+        return 1
+    fi
+    if [[ "$pv_vg" == "$vg_name" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
