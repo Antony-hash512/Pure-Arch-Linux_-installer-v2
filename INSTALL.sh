@@ -1019,6 +1019,10 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #в предыдущем цикле для всех опций шифрования
             btrfs_device=${current_row["device_for_operation"]}
             subvol_name=${current_row["subvolume"]}
+            echo "btrfs_device: $btrfs_device"
+            echo "subvol_name: $subvol_name"
+            echo "ALL_BTRFS_MOUNTPOINTS: ${ALL_BTRFS_MOUNTPOINTS[@]}"
+            
             #создаём подтом
             btrfs subvolume create "${ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
             #создаём каталог $INST_DIR$mount_point если он не существует
