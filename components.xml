@@ -724,7 +724,10 @@
         		<crypt_mode>none_in_pwd</crypt_mode>
         		<lv-volume>/dev/double_locked_vg/btrfs_in_double_locked_lvm</lv-volume>
         		<subvolume>@arch</subvolume>
-        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167,1eb58acd-e999-489f-a592-5fc8815bc037,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167,1eb58acd-e999-489f-a592-5fc8815bc038</pv-volumes-uuids>
+        		<pv-volumes-uuids>
+				d8526a70-78a1-40a9-b138-90a248ee6ef6, d7cf1e1f-e766-4dc1-8110-744c6b9caea1,
+				7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167, 1eb58acd-e999-489f-a592-5fc8815bc037,
+				7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
         	</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>

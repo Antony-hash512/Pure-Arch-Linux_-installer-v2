@@ -481,6 +481,9 @@ fill_in_array_by_pv_devices() {
     local pv_uuids_string=$1
     local -n pv_devices_ref=$2
     local flag_of_not_found_devices=false
+    
+    #удаляем пробелы в строке, табуляции, переносы строк и возвраты каретки
+    pv_uuids_string=$(echo "$pv_uuids_string" | tr -d '\r\n\t ')
 
     IFS=',' read -r -a pv_uuids <<< "$pv_uuids_string"
 
