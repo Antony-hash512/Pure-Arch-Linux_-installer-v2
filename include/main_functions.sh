@@ -981,7 +981,8 @@ open_crypt_container_by_pwd() {
         
     while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
         ((attempts++))
-        echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
+        #echo -e "${YELLOW}Попытка $attempts из $max_attempts. Введите пароль для контейнера $device_name${NC}"
+        echo -e "${YELLOW}Введите пароль для контейнера $device_name${NC}"
             
         if cryptsetup luksOpen "$device_name" "$opened_crypt_container_name"; then
             success=true
@@ -1036,7 +1037,8 @@ open_crypt_container_by_file() {
     # Пытаемся открыть LUKS-контейнер с помощью файла-ключа
     while [ $attempts -lt $max_attempts ] && [ "$success" = false ]; do
         ((attempts++))
-        echo -e "${YELLOW}Попытка $attempts из $max_attempts. Открываем контейнер $device_name с помощью файла-ключа...${NC}"
+        #echo -e "${YELLOW}Попытка $attempts из $max_attempts. Открываем контейнер $device_name с помощью файла-ключа...${NC}"
+        echo -e "${YELLOW}Открываем контейнер $device_name с помощью файла-ключа...${NC}"
         
         if cryptsetup luksOpen --key-file="$key_file" "$device_name" "$opened_crypt_container_name"; then
             success=true
