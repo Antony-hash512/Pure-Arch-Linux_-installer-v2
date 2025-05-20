@@ -39,7 +39,7 @@ EOF
 
 : <<'TODO'
 
-
+* исправить баги для тестов без шифрования
 * добавить логику добавления в CRYPT_VOLUMES для общего случая
 (или понять какая в новом скрипте ему альтернатива)
 * протестировать установку на vm
@@ -1007,11 +1007,28 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     ;;
             esac
             #форматируем раздел
-            mkfs.ext4 ${current_row["device_for_operation"]}
+            if mkfs.ext4 ${current_row["device_for_operation"]}; then
+                echo -e "${GREEN}Раздел успешно отформатирован.${NC}"
+            else
+                echo -e "${RED}Ошибка: не удалось отформатировать раздел.${NC}" >&2
+                exit 1
+            fi
+            
             #создаём каталог $INST_DIR$mount_point если он не существует
-            mkdir -p $INST_DIR$mount_point
+            if mkdir -p $INST_DIR$mount_point; then
+                echo -e "${GREEN}Каталог $INST_DIR$mount_point успешно создан или уже существует.${NC}"
+            else
+                echo -e "${RED}Ошибка: при создании каталога $INST_DIR$mount_point.${NC}" >&2
+                exit 1
+            fi
+            
             #монтируем раздел
-            mount ${current_row["device_for_operation"]} $INST_DIR$mount_point
+            if mount ${current_row["device_for_operation"]} $INST_DIR$mount_point; then
+                echo -e "${GREEN}Раздел успешно смонтирован в $INST_DIR$mount_point.${NC}"
+            else
+                echo -e "${RED}Ошибка: не удалось смонтировать раздел в $INST_DIR$mount_point.${NC}" >&2
+                exit 1
+            fi
             ;;
         "new_subvol_in_btrfs" | "new_subvol_in_btrfs_in_lvm")
             #в обоих этих случаях набор операций идентичен
@@ -1024,11 +1041,28 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             echo "ALL_BTRFS_MOUNTPOINTS: ${ALL_BTRFS_MOUNTPOINTS[@]}"
             
             #создаём подтом
-            btrfs subvolume create "${ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"
+            if btrfs subvolume create "${ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"; then
+                echo -e "${GREEN}Подтом успешно создан.${NC}"
+            else
+                echo -e "${RED}Ошибка: не удалось создать подтом.${NC}" >&2
+                exit 1
+            fi
+            
             #создаём каталог $INST_DIR$mount_point если он не существует
-            mkdir -p $INST_DIR$mount_point
+            if mkdir -p $INST_DIR$mount_point; then
+                echo -e "${GREEN}Каталог $INST_DIR$mount_point успешно создан или уже существует.${NC}"
+            else
+                echo -e "${RED}Ошибка: при создании каталога $INST_DIR$mount_point.${NC}" >&2
+                exit 1
+            fi
+            
             #монтируем подтом в каталог установки (внутри chroot'а)
-            mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point
+            if mount -o subvol=$subvol_name $btrfs_device $INST_DIR$mount_point; then
+                echo -e "${GREEN}Подтом успешно смонтирован в $INST_DIR$mount_point.${NC}"
+            else
+                echo -e "${RED}Ошибка: не удалось смонтировать подтом в $INST_DIR$mount_point.${NC}" >&2
+                exit 1
+            fi
             ;;
         "new_ext4_in_lvm")
             size_of_lv=${current_row["size"]}
@@ -1040,9 +1074,20 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #через mapper или нет, поэтому обычный basename тут не подходит
             lv_basename=$(get_lv_name_from_fulldevname "$device")
             #создаём том lvm
-            lvcreate -L $size_of_lv -n $lv_basename $vg_name
+            if lvcreate -L $size_of_lv -n $lv_basename $vg_name; then
+                echo -e "${GREEN}Том LVM успешно создан: $lv_basename.${NC}"
+            else
+                echo -e "${RED}Ошибка: не удалось создать том LVM.${NC}" >&2
+                exit 1
+            fi
+            
             #создаём каталог $INST_DIR$mount_point если он не существует
-            mkdir -p $INST_DIR$mount_point
+            if mkdir -p $INST_DIR$mount_point; then
+                echo -e "${GREEN}Каталог $INST_DIR$mount_point успешно создан или уже существует.${NC}"
+            else
+                echo -e "${RED}Ошибка: при создании каталога $INST_DIR$mount_point.${NC}" >&2
+                exit 1
+            fi
             case $crypt_mode in
                 "none_in_none" | "none_in_pwd" | "none_in_file")
                     #в этих случаях поле device_for_operation уже получено
@@ -1070,8 +1115,18 @@ done
 
 
 #монтируем EFI-раздел
-mkdir -p $INST_DIR/$EFI_NEW_LOCATION
-mount $EFI_DEV $INST_DIR/$EFI_NEW_LOCATION
+if mkdir -p $INST_DIR/$EFI_NEW_LOCATION; then
+    echo -e "${GREEN}Каталог $INST_DIR/$EFI_NEW_LOCATION успешно создан или уже существует.${NC}"
+else
+    echo -e "${RED}Ошибка: при создании каталога $INST_DIR/$EFI_NEW_LOCATION.${NC}" >&2
+    exit 1
+fi
+if mount $EFI_DEV $INST_DIR/$EFI_NEW_LOCATION; then
+    echo -e "${GREEN}EFI-раздел успешно смонтирован в $INST_DIR/$EFI_NEW_LOCATION.${NC}"
+else
+    echo -e "${RED}Ошибка: не удалось смонтировать EFI-раздел в $INST_DIR/$EFI_NEW_LOCATION.${NC}" >&2
+    exit 1
+fi
 
 # Установка основных пакетов
 pacstrap $INST_DIR $SOFT_PACK1
@@ -1116,10 +1171,20 @@ rm $INST_DIR/$XML_FILE
 
 
 #размонтируем раздел EFI
-umount $INST_DIR/$EFI_NEW_LOCATION
+if umount $INST_DIR/$EFI_NEW_LOCATION; then
+    echo -e "${GREEN}EFI-раздел успешно размонтирован.${NC}"
+else
+    echo -e "${RED}Ошибка: не удалось размонтировать EFI-раздел.${NC}" >&2
+    exit 1
+fi
 
 # Размонтирование всех разделов
-umount -R $INST_DIR
+if umount -R $INST_DIR; then
+    echo -e "${GREEN}Все разделы успешно размонтированы.${NC}"
+else
+    echo -e "${RED}Ошибка: не удалось размонтировать все разделы.${NC}" >&2
+    exit 1
+fi
 if [ -z "$(ls -A $INST_DIR)" ]; then
     rmdir $INST_DIR
 else
