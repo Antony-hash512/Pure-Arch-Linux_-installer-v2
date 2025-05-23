@@ -4,8 +4,10 @@ autocreated_scripts/*
 errors/*
 cash-repo/*
 git_configs/*
+old_diffs/*
 CREATE_TAR.sh
 log.txt
+
 
 # - Libreoffice lock files
 .~lock.*#
