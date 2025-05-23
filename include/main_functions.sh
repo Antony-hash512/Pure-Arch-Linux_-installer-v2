@@ -71,7 +71,7 @@ cleanup_all(){
     done
 }
 
-#Функция для закрытия дескрипторов
+#Функция для закрытия дескрипторов (не используется)
 close_descriptors() {
     # узнали максимальное число дескрипторов для процесса
     max=$(ulimit -n)
@@ -120,11 +120,12 @@ show_logo() {
     echo -e "$LOGO"
 }
 
-#Функция для проверки существования указанного install_location_id
-check_install_location_exists() {
-    local id="$1"
+#Функция для проверки существования указанного id в xml файле
+check_xml_id_exists() {
+    local component_type="$1"
+    local id="$2"
     # Напрямую вызываем парсер, так как переданный ID не является текущим INSTALL_LOCATION_ID
-    if [[ -n "$(python3 $XML_PARSER install_location "$id" check_id_exists 2>/dev/null)" ]]; then
+    if [[ -n "$(python3 $XML_PARSER "$component_type" "$id" check_id_exists 2>/dev/null)" ]]; then
         return 0  # ID существует
     else
         return 1  # ID не существует
@@ -170,6 +171,71 @@ request_component_id() {
     # Возвращаем выбранный ID
     echo "$component_id"
 }
+
+#Функция для проверки ключа и запроса у пользователя, если ключ не был передан
+check_key_and_request_component_id() {
+    local component_type="$1"
+    local key
+    local current_value
+    local prompt_text
+
+    case "$component_type" in
+        "install_location")
+            key="i"
+            current_value="$INSTALL_LOCATION_ID"
+            prompt_text="Введите ID установки"
+            ;;
+        "softpack")
+            key="s"
+            current_value="$SOFTPACK_ID"
+            prompt_text="Введите ID набора софта"
+            ;;
+        "driverspack")
+            key="d"
+            current_value="$DRIVERS_ID"
+            prompt_text="Введите ID набора драйверов"
+            ;;
+        "settings")
+            key="o"
+            current_value="$SETTINGS_ID"
+            prompt_text="Введите ID настроек"
+            ;;
+        *)
+            echo -e "${RED}Неизвестный тип компонента: $component_type${NC}" >&2
+            exit 1
+            ;;
+    esac
+
+    if [[ -z "$current_value" ]]; then
+        # Выбор места установки
+        current_value=$(request_component_id "$component_type" "$prompt_text")
+    else
+        # если уже задан значит было получено из ключа -i
+        # проверяем существует ли указанное место установки
+        if ! check_xml_id_exists "$component_type" "$current_value"; then
+            echo -e "${RED}Указанное через ключ -$key место установки '$current_value' не найдено в файле ${GREEN}$XML_FILE${NC}" >&2
+            exit 1
+        fi
+        echo -e "${GREEN}Используем указанное место установки из ключа -$key: $current_value${NC}" > /dev/tty
+    fi
+    # возвращаем значение (в процедурном стиле, для удобства использования,
+    # чтобы не было необходимости прописывать эти id'шники при вызове)
+    case "$component_type" in
+        "install_location")
+            INSTALL_LOCATION_ID="$current_value"
+            ;;
+        "softpack")
+            SOFTPACK_ID="$current_value"
+            ;;
+        "driverspack")
+            DRIVERS_ID="$current_value"
+            ;;
+        "settings")
+            SETTINGS_ID="$current_value"
+            ;;
+    esac
+}
+
 
 #Функция для добавления проблемы в массив problems
 add_problem() {

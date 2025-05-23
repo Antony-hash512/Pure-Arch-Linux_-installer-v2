@@ -66,17 +66,41 @@ EOF
 
 TODO
 
-# Подключаем файл с цветовыми переменными
-source include/colors.sh
-
-# Обработка аргументов командной строки
+# Переменные для обработки некоторых аргументов командной строки
 LOG_KEY="--log"
 LOG_FILE="log.txt"
 VIEW_ONLY_KEY="--view-only"
-VIEW_ONLY=false
+VIEW_ONLY_FLAG=false
+HELP_KEY="--help"
 
-# пренудительная установка кириллического шрифта
-function force_cyrillic_font {
+# Заранее вычисленные степени 1024
+export MB=1048576  # 1024^2
+export GB=1073741824  # 1024^3
+export TB=1099511627776  # 1024^4
+export PB=1125899906842624  # 1024^5
+export EB=1152921504606846976  # 1024^6
+
+# Строковые константы
+export AUTODIR="autocreated_scripts"
+export XML_FILE="components.xml"
+export XML_PARSER="get_data_from_components_xml.py"
+export CHROOT_SCRIPT="run_inside_chroot.sh"
+export SHARED_FUNCTIONS="include/shared_functions.sh"
+export MAIN_FUNCTIONS="include/main_functions.sh"
+export COLORS_CONSTANTS="include/colors.sh"
+
+# Получаем путь к каталогу, где находится скрипт
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
+# Подключаем файл с цветовыми переменными
+source $COLORS_CONSTANTS
+
+# Подключаем функции
+source $MAIN_FUNCTIONS
+source $SHARED_FUNCTIONS
+
+#Функция для принудительной установки кириллического шрифта в tty (если нужно)
+force_cyrillic_font() {
     local font_name="cyr-sun16"
     local test_text="test тест"
     if [[ "$TERM" == "linux" ]] && command -v setfont &>/dev/null; then
@@ -86,7 +110,10 @@ function force_cyrillic_font {
         echo -e "${YELLOW}была использована команда setfont $font_name для гарантированного отображения кириллического шрифта${NC}"
     fi
 }
+# принудительная установка кириллического шрифта в tty (если нужно)
 force_cyrillic_font
+#будет убрано в англ.версии
+
 
 # проверяем версию баша
 if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
@@ -101,6 +128,9 @@ if [[ "$EUID" -ne 0 ]]; then
     echo -e "\033[31mОШИБКА: Этот скрипт должен быть запущен от имени суперпользователя (root)\033[0m" >&2
     exit 1
 fi
+
+# используем trap для вызова функции cleanup_all при любом выходе из скрипта
+trap 'cleanup_all' EXIT
 
 function long_flag_was_used {
     echo -e "${GREEN}Длинный флаг $1 был использован${NC}"
@@ -122,7 +152,7 @@ for arg in "$@"; do
         enable_log
         long_flag_was_used "$LOG_KEY"
     elif [[ "$arg" == "$VIEW_ONLY_KEY" ]]; then
-        VIEW_ONLY=true
+        VIEW_ONLY_FLAG=true
         long_flag_was_used "$VIEW_ONLY_KEY"
     else
         filtered_args+=("$arg")
@@ -137,6 +167,7 @@ INSTALL_LOCATION_ID=""
 SOFTPACK_ID=""
 DRIVERS_ID=""
 SETTINGS_ID=""
+
 
 while getopts "i:s:d:o:" opt; do
   case $opt in
@@ -165,32 +196,6 @@ while getopts "i:s:d:o:" opt; do
       ;;
   esac
 done
-
-#1) задаём различные переменные и константы
-
-# Заранее вычисленные степени 1024
-export MB=1048576  # 1024^2
-export GB=1073741824  # 1024^3
-export TB=1099511627776  # 1024^4
-export PB=1125899906842624  # 1024^5
-export EB=1152921504606846976  # 1024^6
-
-# Строковые константы
-export AUTODIR="autocreated_scripts"
-export XML_FILE="components.xml"
-export XML_PARSER="get_data_from_components_xml.py"
-export CHROOT_SCRIPT="run_inside_chroot.sh"
-export SHARED_FUNCTIONS="include/shared_functions.sh"
-export MAIN_FUNCTIONS="include/main_functions.sh"
-
-# Получаем путь к каталогу, где находится скрипт
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
-
-# Подключаем функции
-source $MAIN_FUNCTIONS
-source $SHARED_FUNCTIONS
-# используем trap для вызова функции cleanup_all при любом выходе из скрипта
-trap 'cleanup_all' EXIT
 
 
 
@@ -277,23 +282,10 @@ done
 
 
 #2) получаем от пользователя данные какие компоненты использовать
+check_key_and_request_component_id "install_location"
+# остальные будут запрашиваться после начала установки системы
+# пока что они не требуются
 
-
-# Если INSTALL_LOCATION_ID не был задан через ключ -i или указанное значение не найдено
-if [[ -z "$INSTALL_LOCATION_ID" ]]; then
-    # Выбор места установки
-    INSTALL_LOCATION_ID=$(request_component_id "install_location" "Введите ID мест установки")
-else
-    # если уже задан значит было получено из ключа -i
-    # проверяем существует ли указанное место установки
-    if ! check_install_location_exists "$INSTALL_LOCATION_ID"; then
-        echo -e "${RED}Указанное через ключ -i место установки '$INSTALL_LOCATION_ID' не найдено в файле ${GREEN}$XML_FILE${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}Используем указанное место установки из ключа -i: $INSTALL_LOCATION_ID${NC}"
-fi
-# Имена других компонентов будут точно так же получены из ключей или запрошены у пользовтеля
-# когда начнётся работа над частью скрипта, которая отвечает за установку
 
 #2.1) получаем данные и xml-файла
 #получаем информацию содержащуюся в xml-файле
@@ -889,7 +881,7 @@ fi
 
 check_problems
 
-if [[ "$VIEW_ONLY" == "true" ]]; then
+if [[ "$VIEW_ONLY_FLAG" == "true" ]]; then
     echo -e "${GREEN}Этап просмотра и сверки планируемых изменений завершён${NC}"
     exit 0
 fi
@@ -910,42 +902,10 @@ fi
 
 echo -e "${GREEN}Начинаем установку системы...${NC}"
 
-# получаем от пользователя остальные параметры, если они не были переданы в скрипт
-if [[ -z "$SOFTPACK_ID" ]]; then
-    SOFTPACK_ID=$(request_component_id "softpack" "Введите ID устанавливаемого набора софта")
-else
-    # если уже задан значит было получено из ключа -s
-    # проверяем существует ли указанный набор софта
-    if ! check_softpack_exists "$SOFTPACK_ID"; then
-        echo -e "${RED}Указанный через ключ -s набор софта '$SOFTPACK_ID' не найден в файле ${GREEN}$XML_FILE${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}Используем указанный набор софта из ключа -s: $SOFTPACK_ID${NC}"
-fi
-
-if [[ -z "$DRIVERS_ID" ]]; then
-    DRIVERS_ID=$(request_component_id "driverspack" "Введите ID устанавливаемого набора драйверов")
-else
-    # если уже задан значит было получено из ключа -d
-    # проверяем существует ли указанный набор драйверов
-    if ! check_driverspack_exists "$DRIVERS_ID"; then
-        echo -e "${RED}Указанный через ключ -d набор драйверов '$DRIVERS_ID' не найден в файле ${GREEN}$XML_FILE${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}Используем указанный набор драйверов из ключа -d: $DRIVERS_ID${NC}"
-fi
-
-if [[ -z "$SETTINGS_ID" ]]; then
-    SETTINGS_ID=$(request_component_id "settings" "Введите ID настроек")
-else
-    # если уже задан значит было получено из ключа -o
-    # проверяем существует ли указанные настройки
-    if ! check_settings_exists "$SETTINGS_ID"; then
-        echo -e "${RED}Указанные через ключ -o настройки '$SETTINGS_ID' не найдены в файле ${GREEN}$XML_FILE${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}Используем указанные настройки из ключа -o: $SETTINGS_ID${NC}"
-fi
+# получаем от пользователя остальные параметры, если они не были переданы в скрипт через ключи
+check_key_and_request_component_id "softpack"
+check_key_and_request_component_id "driverspack"
+check_key_and_request_component_id "settings"
 
 # откуда устанавливается система
 if [[ $(parse_xml install_location get_tweak_iso) == "true" ]]; then
@@ -953,7 +913,6 @@ if [[ $(parse_xml install_location get_tweak_iso) == "true" ]]; then
 else
     INSTALL_FROM="other_system"
 fi
-
 
 
 #создаём временный каталог для монтирования системы
