@@ -308,7 +308,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block keyboard encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest1</bootlabel>
@@ -331,7 +331,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 keyboard encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block keyboard encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest1</bootlabel>
