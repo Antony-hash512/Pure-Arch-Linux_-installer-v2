@@ -189,6 +189,7 @@ if [[ $ADD_FILES_TO_HOME = "true" ]]; then
     #испльзуем цикл для распаковки всех архивов
     for archive in $ARCHIVES_4HOME; do
         tar --numeric-owner -xvf "/$archive" -C /home/$USERNAME
+        chown -R $MY_UID:$MY_UID /home/$USERNAME/
         rm "/$archive"
     done
 fi
