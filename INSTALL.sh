@@ -71,43 +71,67 @@ TODO
 source include/colors.sh
 
 # Обработка аргументов командной строки
-# логирование (если задан ключ --log)
-enable_log=false
-view_only=false
+LOG_KEY="--log"
+LOG_FILE="log.txt"
+VIEW_ONLY_KEY="--view-only"
+VIEW_ONLY=false
 
-# фильтрация --log из аргументов
+# пренудительная установка кириллического шрифта
+function force_cyrillic_font {
+    local font_name="cyr-sun16"
+    local test_text="test тест"
+    if [[ "$TERM" == "linux" ]] && command -v setfont &>/dev/null; then
+        echo "$test_text"
+        setfont "$font_name"
+        echo "$test_text"
+        echo -e "${YELLOW}была использована команда setfont $font_name для гарантированного отображения кириллического шрифта${NC}"
+    fi
+}
+force_cyrillic_font
+
+# проверяем версию баша
+if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
+    echo -e "${GREEN}Версия Bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}${NC}"
+else
+    echo -e "${RED}Требуется версия Bash 4.3 или выше (используется версия ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]})${NC}" >&2
+    exit 1
+fi
+
+#проверяем на права суперпользователя
+if [[ "$EUID" -ne 0 ]]; then
+    echo -e "\033[31mОШИБКА: Этот скрипт должен быть запущен от имени суперпользователя (root)\033[0m" >&2
+    exit 1
+fi
+
+function long_flag_was_used {
+    echo -e "${GREEN}Длинный флаг $1 был использован${NC}"
+}
+function enable_log {
+    if [[ ! -f "$LOG_FILE" ]]; then
+        touch "$LOG_FILE"
+        chmod 666 "$LOG_FILE"
+    fi
+    # добавляем в лог текущую дату и время
+    echo "--------------------------------Дата и время: $(date)--------------------------------" >> "$LOG_FILE"
+    exec > >(tee -a "$LOG_FILE") 2>&1
+}
+
+# фильтрация длинных флагов из аргументов
 filtered_args=()
 for arg in "$@"; do
-    if [[ "$arg" == "--log" ]]; then
-        enable_log=true
-    elif [[ "$arg" == "--view-only" ]]; then
-        view_only=true
+    if [[ "$arg" == "$LOG_KEY" ]]; then
+        enable_log
+        long_flag_was_used "$LOG_KEY"
+    elif [[ "$arg" == "$VIEW_ONLY_KEY" ]]; then
+        VIEW_ONLY=true
+        long_flag_was_used "$VIEW_ONLY_KEY"
     else
         filtered_args+=("$arg")
     fi
 done
 
-# восстанавливаем позиционные параметры (без --log и т.д.)
+# восстанавливаем позиционные параметры (без длинных флагов)
 set -- "${filtered_args[@]}"
-
-if $enable_log; then
-    #если файл log.txt не существует, то создаём его с правами 666
-    if [[ ! -f log.txt ]]; then
-        touch log.txt
-        chmod 666 log.txt
-    fi
-    #добавляем в лог текущую дату и время
-    echo "--------------------------------Дата и время: $(date)--------------------------------" >> log.txt
-    exec > >(tee -a log.txt) 2>&1
-fi
-
-# пренудительная установка кириллического шрифта
-if [[ "$TERM" == "linux" ]] && command -v setfont &>/dev/null; then
-    echo "test тест"
-    setfont cyr-sun16
-    echo "test тест"
-    echo -e "${YELLOW}была использована команда setfont cyr-sun16 для гарантированного отображения кириллического шрифта${NC}"
-fi
 
 # проверяем ключи парсинга xml-файла
 INSTALL_LOCATION_ID=""
@@ -142,21 +166,6 @@ while getopts "i:s:d:o:" opt; do
       ;;
   esac
 done
-
-# проверяем версию баша
-if (( BASH_VERSINFO[0] > 4 )) || { (( BASH_VERSINFO[0] == 4 )) && (( BASH_VERSINFO[1] > 3 )); }; then
-    echo -e "${GREEN}Версия Bash: ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]}${NC}"
-else
-    echo -e "${RED}Требуется версия Bash 4.3 или выше (используется версия ${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}.${BASH_VERSINFO[2]})${NC}" >&2
-    exit 1
-fi
-
-#проверяем на права суперпользователя
-if [[ "$EUID" -ne 0 ]]; then
-    echo -e "\033[31mОШИБКА: Этот скрипт должен быть запущен от имени суперпользователя (root)\033[0m" >&2
-    exit 1
-fi
-
 
 #1) задаём различные переменные и константы
 
@@ -222,9 +231,7 @@ problems["no_free_space_for_new_subvolume"]=""
 
 
 #флаг для запланрованного выхода из скрипта
-exit_and_show_problems_flag=0
-
-
+EXIT_AND_SHOW_PROBLEMS_FLAG=0
 
 #создаём ассоциативный массив, который будет находить хотя бы одну точку монтирования по имени устройства btrfs
 declare -A ALL_BTRFS_MOUNTPOINTS
@@ -883,7 +890,7 @@ fi
 
 check_problems
 
-if [[ "$view_only" == "true" ]]; then
+if [[ "$VIEW_ONLY" == "true" ]]; then
     echo -e "${GREEN}Этап просмотра и сверки планируемых изменений завершён${NC}"
     exit 0
 fi
