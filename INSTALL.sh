@@ -687,6 +687,7 @@ while IFS= read -r line; do
 
         #используем функцию get_btrfs_subvolumes
         #если вывод пустой, то выводим сообщение об отсутствии сабволюмов и не делаем дальнейших проверок
+        add_btrfs_mountpoint_to_array "$device_fullname"
         existing_subvolumes_strings=$(get_btrfs_subvolumes "$device_fullname")
         if [[ -z "$existing_subvolumes_strings" ]]; then
             echo -e "${GRAY}На устройстве $device_fullname нет сабволюмов${NC}" >> $LSBLK_RAW_INFO_UPDATED

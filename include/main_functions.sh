@@ -464,7 +464,15 @@ get_device_basename4lsblk() {
 #Функция для получения точки монтирования для btrfs устройства
 #точка монтирования будет автоматически создана, если устройство не смонтировано
 #после завершения работы скрипта устройство будет размонтировано засчёт заворачивания в trap
+#используем трюк с дополнительной функцией, для "бегства" из подпроцесса (сабшелла)
 get_btrfs_mountpoint() {
+    local btrfs_device=$1
+    local btrfs_mountpoint=""
+    add_btrfs_mountpoint_to_array "$btrfs_device"
+    echo "${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
+}
+
+add_btrfs_mountpoint_to_array() {
     local btrfs_device=$1 #требуется указать полный путь к устройству
     local btrfs_mountpoint=""
     # проверяем, что устройство btrfs является логическим томом LVM, а не в основной разметке диска и не в luks
@@ -500,10 +508,12 @@ get_btrfs_mountpoint() {
             btrfs_mountpoint=$(findmnt -l -n -o TARGET "$btrfs_device" | sed -n '1p')
         fi
         #добавляем точку монтирования в массив ALL_BTRFS_MOUNTPOINTS
-        ALL_BTRFS_MOUNTPOINTS[$btrfs_device]="$btrfs_mountpoint"
+        ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]="$btrfs_mountpoint"
     fi
-    echo "$btrfs_mountpoint"
+    #echo "$btrfs_mountpoint"
 }
+
+
 
 #Функция для получения списка сабволюмов для btrfs устройства
 #использует внутри себя функцию get_btrfs_mountpoint со всем её функционалом
