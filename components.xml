@@ -438,8 +438,15 @@
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>pwd_in_none</crypt_mode>
 				<lv-volume>/dev/opened_vg/luks_in_opened_lvm</lv-volume>
-				<subvolume>@arch</subvolume>
+				<subvolume>@arch4</subvolume>
 			</point>
+			<point type="new">
+                <location>/boot</location>
+                <way>new_subvol_in_btrfs</way>
+                <crypt_mode>none</crypt_mode>
+                <subvolume>@boot_arch4</subvolume>
+                <uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+            </point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
