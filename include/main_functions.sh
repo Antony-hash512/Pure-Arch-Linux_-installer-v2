@@ -1550,12 +1550,15 @@ open_all_luks_devices(){
 configure_crypt_volumes_by_uuid(){
     local crypt_uuid=$1
     local keyfile=$2
+    # Генерируем уникальное имя контейнера на основе UUID
+    local uuid_name=${crypt_uuid//-/_}
+    local mapper_name="crypt_${uuid_name}"
     if [[ -z "$keyfile" ]]; then
-        echo "cryptroot UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
+        echo "$mapper_name UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
     else
-        echo "cryptroot UUID=$crypt_uuid $keyfile luks" >> $INST_DIR/etc/crypttab
+        echo "$mapper_name UUID=$crypt_uuid $keyfile luks" >> $INST_DIR/etc/crypttab
     fi
-    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:$mapper_name root=/dev/mapper/$mapper_name\"" >> $INST_DIR/etc/default/grub
 }
 
 #Функция для настройки зашифрованных разделов по полному имени устройства
