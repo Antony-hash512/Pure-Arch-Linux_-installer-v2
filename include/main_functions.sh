@@ -467,7 +467,12 @@ get_device_basename4lsblk() {
 get_btrfs_mountpoint() {
     local btrfs_device=$1 #требуется указать полный путь к устройству
     local btrfs_mountpoint=""
-    
+    # проверяем, что устройство btrfs является логическим томом LVM, а не в основной разметке диска и не в luks
+    if safe_lvs "$btrfs_device" &>/dev/null; then
+        #стандартизируем путь к устройству
+        btrfs_device=$(standardize_lvm_format "$btrfs_device")
+    fi
+
     #проверяем есть ли запись в массиве ALL_BTRFS_MOUNTPOINTS
     if [[ -n "${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}" ]]; then
         btrfs_mountpoint="${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
