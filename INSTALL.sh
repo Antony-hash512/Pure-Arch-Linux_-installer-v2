@@ -1018,6 +1018,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             echo "btrfs_device: $btrfs_device"
             echo "subvol_name: $subvol_name"
             # получаем временную точку монтирования для btrfs-устройства
+            # add_btrfs_mountpoint_to_array "$btrfs_device"
             btrfs_mountpoint=$(get_btrfs_mountpoint "$btrfs_device")
             echo "btrfs_mountpoint: $btrfs_mountpoint"
             echo "ALL_BTRFS_MOUNTPOINTS: ${ALL_BTRFS_MOUNTPOINTS[@]}"
