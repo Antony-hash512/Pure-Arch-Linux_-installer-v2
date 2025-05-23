@@ -1016,10 +1016,13 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             subvol_name=${current_row["subvolume"]}
             echo "btrfs_device: $btrfs_device"
             echo "subvol_name: $subvol_name"
+            # получаем временную точку монтирования для btrfs-устройства
+            btrfs_mountpoint=$(get_btrfs_mountpoint "$btrfs_device")
+            echo "btrfs_mountpoint: $btrfs_mountpoint"
             echo "ALL_BTRFS_MOUNTPOINTS: ${ALL_BTRFS_MOUNTPOINTS[@]}"
             
             #создаём подтом
-            if btrfs subvolume create "${ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]}/$subvol_name"; then
+            if btrfs subvolume create "${btrfs_mountpoint}/$subvol_name"; then
                 echo -e "${GREEN}Подтом успешно создан.${NC}"
             else
                 echo -e "${RED}Ошибка: не удалось создать подтом.${NC}" >&2
