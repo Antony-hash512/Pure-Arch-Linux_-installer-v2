@@ -44,7 +44,6 @@ EOF
 (или понять какая в новом скрипте ему альтернатива)
 * протестировать установку на vm
 * пересобрать архивы с ключём --numeric-owner
-* добавить ключ для только просмотра изменений без установки
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
 * добавить полноценную поддержку extra точек монтирования (туда ничего не уставнавливается,
 они просто прописываются в /etc/fstab) + тесты для них
@@ -74,12 +73,15 @@ source include/colors.sh
 # Обработка аргументов командной строки
 # логирование (если задан ключ --log)
 enable_log=false
+view_only=false
 
 # фильтрация --log из аргументов
 filtered_args=()
 for arg in "$@"; do
     if [[ "$arg" == "--log" ]]; then
         enable_log=true
+    elif [[ "$arg" == "--view-only" ]]; then
+        view_only=true
     else
         filtered_args+=("$arg")
     fi
@@ -880,6 +882,12 @@ if [[ "$ALL_LVM_VOLUMES_REQUIRED_SPACE_IS_USED" == "true" ]]; then
 fi
 
 check_problems
+
+if [[ "$view_only" == "true" ]]; then
+    echo -e "${GREEN}Этап просмотра и сверки планируемых изменений завершён${NC}"
+    exit 0
+fi
+
 
 make_pause
 
