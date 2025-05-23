@@ -862,8 +862,17 @@ ask_user_action() {
     local default_action="$3"  # Действие по умолчанию при некорректном вводе
     
     IFS='|' read -ra opt_array <<< "$options"
-    local num_options=${#opt_array[@]}
-    
+
+    ask_user_action_with_array "$prompt" "opt_array" "$default_action"
+}
+
+# Функция для выбора действия пользователем с массивом вариантов
+ask_user_action_with_array() {
+    local prompt="$1"      # Текст приглашения
+    local -n opt_array="$2"  # ссылка на массив вариантов
+    local default_action="$3"  # Действие по умолчанию при некорректном вводе
+    local num_options=${#opt_array[@]} # количество вариантов
+
     echo -e "${YELLOW}$prompt${NC}"
     for ((i=0; i<num_options; i++)); do
         local idx=$((i+1))
