@@ -39,8 +39,8 @@ EOF
 
 : <<'TODO'
 
-* исправить баги для тестов без шифрования (что там с btrfs?)
-* добавить логику добавления в CRYPT_VOLUMES для общего случая
+
+* заменить массивы CRYPT_UUIDS и CRYPT_LV_VOLUMES на функции
 (или понять какая в новом скрипте ему альтернатива)
 * протестировать установку на vm
 * пересобрать архивы с ключём --numeric-owner
@@ -242,6 +242,12 @@ declare -A ALL_BTRFS_MOUNTPOINTS
 
 #создаём ассоциативный массив, который будет хранить имена открытых крипто-контейнеров
 declare -A OPENED_CRYPT_CONTAINERS
+
+#создаём массив для хранения uuid зашифрованных разделов
+declare -a CRYPT_UUIDS
+
+#создаём массив для хранения имен логических томов (будут преобразованы в uuid)
+declare -a CRYPT_LV_VOLUMES
 
 #создаём массив для хранения имен новых точек монтирования
 declare -a NEW_MOUNTPOINTS
@@ -1122,16 +1128,23 @@ pacstrap $INST_DIR $SOFT_PACK1
 # Генерация fstab
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
-#если массив CRYPT_VOLUMES существует
-if [[ -v CRYPT_VOLUMES[@] ]]; then
-    for ((i=0; i<${#CRYPT_VOLUMES[@]}; i++)); do
-        lv_name="${CRYPT_VOLUMES[i]}"
-        #Настройка зашифрованного раздела
-        echo "cryptroot UUID=$(blkid -s UUID -o value $lv_name) none luks" >> $INST_DIR/etc/crypttab
-        echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$lv_name:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+#настраиваем зашифрованные разделы
+for ((i=0; i<${#CRYPT_UUIDS[@]}; i++)); do
+    crypt_uuid="${CRYPT_UUIDS[i]}"
+    #Настройка зашифрованного раздела
+    echo "cryptroot UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
+    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$crypt_uuid:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+done
 
-    done
-fi
+for ((i=0; i<${#CRYPT_LV_VOLUMES[@]}; i++)); do
+    lv_name="${CRYPT_LV_VOLUMES[i]}"
+    # Получаем UUID для логического тома
+    crypt_uuid=$(blkid -s UUID -o value "$lv_name")
+    #Настройка зашифрованного раздела
+    echo "cryptroot UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
+    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+done
+
 
 #копирование дополнительных файлов, для выполнения внутри системы (должны быть в одном каталоге с этим)
 cp $SCRIPT_DIR/$CHROOT_SCRIPT $INST_DIR

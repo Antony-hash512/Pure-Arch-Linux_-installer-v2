@@ -1043,7 +1043,7 @@ check_and_update_crypt_container_info() {
     local map_name=$(lsblk -l -n -o NAME,TYPE,PKNAME | awk -v dev="$bname" '$2=="crypt" && $3==dev {print $1; exit}')
     if [[ -n "$map_name" ]]; then
         echo -e "${YELLOW}${BOLD}Крипто-контейнер для ${GREEN}$device_name${YELLOW} уже открыт в системе как ${GREEN}$map_name${NC}, пропускаем открытие${NC}" > /dev/tty
-        OPENED_CRYPT_CONTAINERS["$device_name"]="$map_name"
+        #OPENED_CRYPT_CONTAINERS["$device_name"]="$map_name" уже и так сохранятеся в функции save_crypt_container_info
         save_crypt_container_info "$device_name" "$map_name"
         return 0
     else
@@ -1544,3 +1544,5 @@ open_all_luks_devices(){
     echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
                 
 }
+
+
