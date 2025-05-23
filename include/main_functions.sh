@@ -175,7 +175,7 @@ request_component_id() {
 add_problem() {
      local key=$1 msg=$2
      problems["$key"]+="$msg\n"
-     exit_and_show_problems_flag=1
+     EXIT_AND_SHOW_PROBLEMS_FLAG=1
 }
 
 
@@ -1310,7 +1310,7 @@ check_uuid_exists() {
 
 #функция для проверки проблем и выхода из скрипта
 function check_problems() {
-    if [[ "$exit_and_show_problems_flag" == 1 ]]; then
+    if [[ "$EXIT_AND_SHOW_PROBLEMS_FLAG" == 1 ]]; then
         echo -e "${RED}На текущем этапе проверки были выявлены следующие проблемы:${NC}"
         for problem in "${!problems[@]}"; do
             echo -e "$problem: ${RED}${problems[$problem]}${NC}"
