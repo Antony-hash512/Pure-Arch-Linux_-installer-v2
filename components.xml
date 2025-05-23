@@ -300,7 +300,7 @@
 			<point type="new">
 				<location>/boot</location>
 				<way>new_subvol_in_btrfs</way>
-				<crypt_mode>none_in_none</crypt_mode>
+				<crypt_mode>none</crypt_mode>
 				<subvolume>@boot_arch1</subvolume>
 				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
 			</point>
