@@ -1545,4 +1545,26 @@ open_all_luks_devices(){
                 
 }
 
+#Функция для настройки зашифрованных разделов по uuid
+configure_crypt_volumes_by_uuid(){
+    local crypt_uuid=$1
+    local keyfile=$2
+    if [[ -z "$keyfile" ]]; then
+        echo "cryptroot UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
+    else
+        echo "cryptroot UUID=$crypt_uuid $keyfile luks" >> $INST_DIR/etc/crypttab
+    fi
+    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+}
 
+#Функция для настройки зашифрованных разделов по полному имени устройства
+configure_crypt_volumes_by_device_fullname(){
+    local crypt_fullname=$1
+    local keyfile=$2
+    local crypt_uuid=$(blkid -s UUID -o value "$crypt_fullname")
+    if [[ -z "$keyfile" ]]; then
+        configure_crypt_volumes_by_uuid "$crypt_uuid"
+    else
+        configure_crypt_volumes_by_uuid "$crypt_uuid" "$keyfile"
+    fi
+}

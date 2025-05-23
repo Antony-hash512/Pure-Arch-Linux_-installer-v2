@@ -1128,21 +1128,15 @@ pacstrap $INST_DIR $SOFT_PACK1
 # Генерация fstab
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
-#настраиваем зашифрованные разделы
-for ((i=0; i<${#CRYPT_UUIDS[@]}; i++)); do
-    crypt_uuid="${CRYPT_UUIDS[i]}"
-    #Настройка зашифрованного раздела
-    echo "cryptroot UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
-    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=$crypt_uuid:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
-done
-
-for ((i=0; i<${#CRYPT_LV_VOLUMES[@]}; i++)); do
-    lv_name="${CRYPT_LV_VOLUMES[i]}"
-    # Получаем UUID для логического тома
-    crypt_uuid=$(blkid -s UUID -o value "$lv_name")
-    #Настройка зашифрованного раздела
-    echo "cryptroot UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
-    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:cryptroot root=/dev/mapper/cryptroot\"" >> $INST_DIR/etc/default/grub
+# настройка зашифрованных разделов
+for row in "${NEW_MOUNTPOINTS[@]}"; do
+    declare -n current_row="$row"
+    crypt_mode=${current_row["crypt_mode"]}
+    if [[ $crypt_mode == *"pwd"* ]]; then
+        configure_crypt_volumes_by_device_fullname "${current_row["opened_crypt_container_fullname"]}"
+    elif [[ $crypt_mode == *"file"* ]]; then
+        configure_crypt_volumes_by_device_fullname "${current_row["opened_crypt_container_fullname"]}" "${current_row["keyfile"]}"
+    fi
 done
 
 
