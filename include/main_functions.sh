@@ -863,6 +863,7 @@ save_crypt_container_info() {
     # Дописываем поля для последующего быстрого доступа
     current_row["opened_crypt_container_name"]="$opened_crypt_container_name"
     current_row["opened_crypt_container_fullname"]="/dev/mapper/$opened_crypt_container_name"
+    current_row["luks_device_fullname"]="$device_name"
     
     # Если был передан файл-ключ, сохраняем и его
     if [ -n "$key_file" ]; then

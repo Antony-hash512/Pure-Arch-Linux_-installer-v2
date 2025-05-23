@@ -39,7 +39,7 @@ EOF
 
 : <<'TODO'
 
-* исправить баг: нужно записывать в конфиги uuid не раздела внутри luks, а "наружний" uuid самого luks
+* протестировать исправление бага: нужно записывать в конфиги uuid не раздела внутри luks, а "наружний" uuid самого luks
 * протестировать установку на vm
 * пересобрать архивы с ключём --numeric-owner
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
@@ -1131,9 +1131,9 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
     crypt_mode=${current_row["crypt_mode"]}
     if [[ $crypt_mode == *"pwd"* ]]; then
-        configure_crypt_volumes_by_device_fullname "${current_row["opened_crypt_container_fullname"]}"
+        configure_crypt_volumes_by_device_fullname "${current_row["luks_device_fullname"]}"
     elif [[ $crypt_mode == *"file"* ]]; then
-        configure_crypt_volumes_by_device_fullname "${current_row["opened_crypt_container_fullname"]}" "${current_row["keyfile"]}"
+        configure_crypt_volumes_by_device_fullname "${current_row["luks_device_fullname"]}" "${current_row["keyfile"]}"
     fi
 done
 
