@@ -294,8 +294,15 @@
 				<way>new_subvol_in_btrfs_in_lvm</way>
 				<crypt_mode>none_in_pwd</crypt_mode>
 				<lv-volume>/dev/locked_vg/btrfs_in_locked_lvm</lv-volume>
-				<subvolume>@arch</subvolume>
+				<subvolume>@arch1</subvolume>
 				<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>

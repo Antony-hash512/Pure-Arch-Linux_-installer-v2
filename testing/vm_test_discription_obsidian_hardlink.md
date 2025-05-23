@@ -14,7 +14,7 @@ sda
 │ ├─opened_vg-btrfs_in_opened_lvm                  4aba42d2-db82-49f5-a1ac-efd35d85d97d
 │ └─opened_vg-luks_in_opened_lvm                   1eb58acd-e999-489f-a592-5fc8815bc037
 │   └─luks_inside_lvm                              a742f7f7-e6a3-4f74-b05c-87f836510256
-├─sda4                                             5a684c53-53cd-4419-b7b1-04ea97ba09d3
+├─sda4                                             5a684c53-53cd-4419-b7b1-04ea97ba09d3   #opened btrfs
 ├─sda5                                             f0ecf279-3df6-43e1-b508-0075960299f2
 │ └─luks_on_sda5                                   e26d96e5-d4b6-4022-8edd-4aa04113fbd4
 ├─sda6                                             7e4a08f1-cde8-4f97-aef0-2645e2691f2f
@@ -28,7 +28,18 @@ sr0                                                2025-03-13-19-41-48-00
 sr1                                                2025-03-01-17-40-22-00
 ```
 
+## возможные варианты открытых boot для зашифрованных разделов
 
+```XML
+<point type="new">
+    <location>/boot</location>
+    <way>new_subvol_in_btrfs</way>
+    <crypt_mode>none_in_none</crypt_mode>
+    <subvolume>@boot_arch1</subvolume>
+    <uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+</point>
+
+```
 
 ## тестирование предпросмотра
 
