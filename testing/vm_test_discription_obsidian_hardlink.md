@@ -498,3 +498,31 @@ GRUB_CMDLINE_LINUX="\
 ```bash
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
+Согласно [форуму Arch Linux](https://bbs.archlinux.org/viewtopic.php?id=301301), для LVM поверх LUKS правильный формат параметров ядра:
+
+```bash
+cryptdevice=UUID=<luks_uuid>:<mapper_name> root=<путь_к_корневому_LV>
+```
+
+Посмотрим, что генерирует твоя функция `configure_crypt_volumes_by_ref`:
+
+Read file: include/main_functions.sh
+Вижу проблему! Для UUID `7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167` функция генерирует mapper с именем `luks-7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167`, но система ищет `/dev/mapper/locked_vg-btrfs_in_locked_lvm`.
+
+**Проблема**: Имя mapper'а не совпадает с тем, что ожидает LVM. В конфигурации `vm_test1` LV называется `/dev/mapper/locked_vg-btrfs_in_locked_lvm`, но LUKS открывается как `luks-7fbfe88c...`.
+
+Нужно исправить логику. Согласно [форуму Arch Linux](https://bbs.archlinux.org/viewtopic.php?id=301301), правильная последовательность для LVM поверх LUKS:
+
+1. `cryptdevice=UUID=<luks_uuid>:volgroup0` (где `volgroup0` - имя для открытого LUKS)
+2. `root=/dev/volgroup0/lv_root` (путь к LV внутри открытого LUKS)
+
+Но в твоём случае нужно открыть LUKS как `locked_vg`, чтобы LVM мог найти группу томов. Исправим:
+
+
+Отлично! Теперь функция будет генерировать правильные имена mapper'ов. Для конфигурации `vm_test1` с `lv-volume="/dev/mapper/locked_vg-btrfs_in_locked_lvm"` она извлечёт VG имя `locked_vg` и использует его как имя mapper'а.
+
+Это значит что будет сгенерировано:
+- `cryptdevice=UUID=7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167:locked_vg`
+- `root=/dev/locked_vg/btrfs_in_locked_lvm`
+
+Это правильный подход согласно примеру с форума Arch Linux. Теперь попробуй запустить установку снова - система должна правильно найти и открыть LUKS, а затем активировать LVM группу `locked_vg`.
