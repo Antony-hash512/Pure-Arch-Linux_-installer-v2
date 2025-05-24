@@ -1583,6 +1583,11 @@ configure_crypt_volumes_by_ref(){
         fi
         echo "$luks_name"
     }
+    get_name_inside_luks(){
+        local uuid=$1
+        echo "luks-${uuid}"
+    }
+    
 
     # Собираем массив UUID: для LVM-PV может быть несколько, иначе один
     declare -a uuids
