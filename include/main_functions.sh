@@ -1580,7 +1580,7 @@ configure_crypt_volumes_by_ref(){
             echo "  cryptdevice=UUID=$uuid:$(get_mapper_name "$uuid")\\" >> $INST_DIR/etc/default/grub
         done
         if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
-            echo "  root=${current_row["lv-volume"]}\"" >> $INST_DIR/etc/default/grub
+            echo "  root=${current_row["lv-volume"]}" >> $INST_DIR/etc/default/grub
         else
             echo "  root=/dev/mapper/$(get_mapper_name "${uuids[0]}")" >> $INST_DIR/etc/default/grub
         fi
