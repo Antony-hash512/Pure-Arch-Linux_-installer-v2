@@ -1570,10 +1570,18 @@ configure_crypt_volumes_by_ref(){
     local type=${current_row["type"]}
 
     # Вспомогательная функция для генерации имени mapper-а
-    get_mapper_name(){
+    get_luks_name(){
         local uuid=$1
-        # Для случая LVM поверх LUKS используем систематическое имя
-        echo "luks-${uuid}"
+        local luks_name=""
+        
+        if [[ "$type" == *"_in_lvm"*  ]]; then
+            # Для LVM поверх LUKS используем имя VG из lv-volume
+            luks_name=$(standardize_lvm_format_to_mapper "${current_row["lv-volume"]}")
+        else
+            # Для обычного LUKS используем стандартное имя
+            luks_name=$(check_uuid_exists "$uuid")
+        fi
+        echo "$luks_name"
     }
 
     # Собираем массив UUID: для LVM-PV может быть несколько, иначе один
@@ -1588,19 +1596,19 @@ configure_crypt_volumes_by_ref(){
 
     # Пишем строки в /etc/crypttab
     for uuid in "${uuids[@]}"; do
-        mapper=$(get_mapper_name "$uuid")
+        luks_name=$(get_luks_name "$uuid")
         if [[ $crypt_mode == *"pwd"* ]]; then
-            echo "$mapper UUID=$uuid none luks" >> "$INST_DIR/etc/crypttab"
+            echo "$luks_name UUID=$uuid none luks" >> "$INST_DIR/etc/crypttab"
         elif [[ $crypt_mode == *"file"* ]]; then
-            echo "$mapper UUID=$uuid ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+            echo "$luks_name UUID=$uuid ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
         fi
     done
 
     # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
     echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
     for uuid in "${uuids[@]}"; do
-        mapper=$(get_mapper_name "$uuid")
-        echo "  cryptdevice=UUID=$uuid:$mapper\\" >> "$INST_DIR/etc/default/grub"
+        luks_name=$(get_luks_name "$uuid")
+        echo "  cryptdevice=UUID=$uuid:$luks_name\\" >> "$INST_DIR/etc/default/grub"
     done
 
     # Добавляем root= — либо на LV, либо на первый mapper (когда в массиве uuids и так один элемент)
@@ -1610,8 +1618,8 @@ configure_crypt_volumes_by_ref(){
         echo "  root=$lvpath\\" >> "$INST_DIR/etc/default/grub"
     else
         # Для LUKS на уровне логического тома - корень на mapper'е
-        mapper0=$(get_mapper_name "${uuids[0]}")
-        echo "  root=/dev/mapper/$mapper0\\" >> "$INST_DIR/etc/default/grub"
+        luks_name=$(get_luks_name "${uuids[0]}")
+        echo "  root=/dev/mapper/$luks_name\\" >> "$INST_DIR/etc/default/grub"
     fi
 
     # Для Btrfs-корня указываем subvol
