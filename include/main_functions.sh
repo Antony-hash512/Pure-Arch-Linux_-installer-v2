@@ -47,29 +47,28 @@ cleanup_all(){
     rm -f $LSBLK_RAW_INFO
     rm -f $LSBLK_RAW_INFO_UPDATED
     
-    #временно отключено для дебага
-    ## Деактивируем LVM-группы и тома, связанные с открытыми крипто-контейнерами
-    #for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
-    #    mapper_name=${OPENED_CRYPT_CONTAINERS[$device]}
-    #    mapper_path="/dev/mapper/$mapper_name"
-    #    vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
-    #    if [ -n "$vg_names" ]; then
-    #        for vg in $vg_names; do
-    #            echo -e "${GRAY}Деактивируем VG $vg для $mapper_path${NC}"
-    #            vgchange -an "$vg" || echo -e "${YELLOW}Не удалось деактивировать VG $vg${NC}"
-    #        done
-    #    fi
-    #done
+    # Деактивируем LVM-группы и тома, связанные с открытыми крипто-контейнерами
+    for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
+        mapper_name=${OPENED_CRYPT_CONTAINERS[$device]}
+        mapper_path="/dev/mapper/$mapper_name"
+        vg_names=$(safe_pvs "$mapper_path" --noheadings -o vg_name 2>/dev/null | tr -d ' ')
+        if [ -n "$vg_names" ]; then
+            for vg in $vg_names; do
+                echo -e "${GRAY}Деактивируем VG $vg для $mapper_path${NC}"
+                vgchange -an "$vg" || echo -e "${YELLOW}Не удалось деактивировать VG $vg${NC}"
+            done
+        fi
+    done
 
-    ##закрываем открытые крипто-контейнеры с проверкой и выводом сообщений об успешном закрытии или ошибке
-    #for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
-    #    cryptsetup luksClose "${OPENED_CRYPT_CONTAINERS[$device]}"
-    #    if [ $? -eq 0 ]; then
-    #        echo -e "${GREEN}Крипто-контейнер $device успешно закрыт${NC}"
-    #    else
-    #        echo -e "${RED}При попытке закрыть крипто-контейнер $device возникла ошибка${NC}" >&2
-    #    fi
-    #done
+    #закрываем открытые крипто-контейнеры с проверкой и выводом сообщений об успешном закрытии или ошибке
+    for device in "${!OPENED_CRYPT_CONTAINERS[@]}"; do
+        cryptsetup luksClose "${OPENED_CRYPT_CONTAINERS[$device]}"
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Крипто-контейнер $device успешно закрыт${NC}"
+        else
+            echo -e "${RED}При попытке закрыть крипто-контейнер $device возникла ошибка${NC}" >&2
+        fi
+    done
 }
 
 #Функция для закрытия дескрипторов (не используется)
@@ -1573,14 +1572,17 @@ configure_crypt_volumes_by_ref(){
     # Вспомогательная функция для генерации имени mapper-а
     get_mapper_name(){
         local uuid=$1
-        echo "crypt_${uuid//-/_}"
+        # Для случая LVM поверх LUKS используем систематическое имя
+        echo "luks-${uuid}"
     }
 
     # Собираем массив UUID: для LVM-PV может быть несколько, иначе один
     declare -a uuids
     if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
+        # Это случай LVM поверх LUKS - UUID'ы из физических томов
         uuids=($(echo "${current_row["pv-volumes-uuids"]}" | tr ',' '\n'))
     else
+        # Обычный LUKS на уровне логического тома
         uuids=($(blkid -s UUID -o value "$luks_device_fullname"))
     fi
 
@@ -1603,9 +1605,11 @@ configure_crypt_volumes_by_ref(){
 
     # Добавляем root= — либо на LV, либо на первый mapper (когда в массиве uuids и так один элемент)
     if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
+        # Для LVM поверх LUKS - корень на логическом томе
         lvpath=$(standardize_lvm_format "${current_row["lv-volume"]}")
         echo "  root=$lvpath\\" >> "$INST_DIR/etc/default/grub"
     else
+        # Для LUKS на уровне логического тома - корень на mapper'е
         mapper0=$(get_mapper_name "${uuids[0]}")
         echo "  root=/dev/mapper/$mapper0\\" >> "$INST_DIR/etc/default/grub"
     fi
