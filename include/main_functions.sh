@@ -1558,7 +1558,7 @@ configure_crypt_volumes_by_ref(){
     }
 
     #декларируем массив uuids
-    declare -A uuids
+    declare -a uuids
 
     if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
         pv_uuids_string=${current_row["pv-volumes-uuids"]}
