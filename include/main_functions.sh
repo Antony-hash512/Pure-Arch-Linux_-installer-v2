@@ -1552,7 +1552,7 @@ configure_crypt_volumes_by_ref(){
     local crypt_mode=${current_row["crypt_mode"]}
     local mount_point=${current_row["mount_point"]}
     local type=${current_row["type"]}
-    function mapper_name(){
+    function get_mapper_name(){
         local crypt_uuid=$1
         echo "crypt_${crypt_uuid//-/_}"
     }
@@ -1568,21 +1568,21 @@ configure_crypt_volumes_by_ref(){
     fi
     for uuid in "${uuids[@]}"; do
         if [[ $crypt_mode == *"pwd"* ]]; then
-           echo "$(mapper_name "$uuid") UUID=$uuid none luks" >> $INST_DIR/etc/crypttab
+           echo "$(get_mapper_name "$uuid") UUID=$uuid none luks" >> $INST_DIR/etc/crypttab
         elif [[ $crypt_mode == *"file"* ]]; then
-            echo "$(mapper_name "$uuid") UUID=$uuid ${current_row["keyfile"]} luks" >> $INST_DIR/etc/crypttab
+            echo "$(get_mapper_name "$uuid") UUID=$uuid ${current_row["keyfile"]} luks" >> $INST_DIR/etc/crypttab
         fi  
     done
 
     if [[ "$mount_point" == "/" ]]; then
         echo "GRUB_CMDLINE_LINUX=\"\\" >> $INST_DIR/etc/default/grub
         for uuid in "${uuids[@]}"; do   
-            echo "  cryptdevice=UUID=$uuid:$(mapper_name "$uuid")\\" >> $INST_DIR/etc/default/grub
+            echo "  cryptdevice=UUID=$uuid:$(get_mapper_name "$uuid")\\" >> $INST_DIR/etc/default/grub
         done
         if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
             echo "  root=${current_row["lv-volume"]}\"" >> $INST_DIR/etc/default/grub
         else
-            echo "  root=/dev/mapper/$mapper_name" >> $INST_DIR/etc/default/grub
+            echo "  root=/dev/mapper/$(get_mapper_name "${uuids[0]}")" >> $INST_DIR/etc/default/grub
         fi
         if [[ $type == *"btrfs"* ]]; then
             echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> $INST_DIR/etc/default/grub
