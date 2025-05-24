@@ -32,7 +32,7 @@
 		<softpack_tweaks>hyrpland userdirs multilibs paru flatpack fish</softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux-zen linux-zen-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl uv git gitu htop 7zip unrar rsync lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl uv git gitu htop 7zip unrar zstd rsync lvm2 cryptsetup</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
@@ -63,8 +63,8 @@
 		
 		<extrafiles>
 			<home>
-				<archive>homefiles.tar.gz</archive>
-				<archive>homefiles_hyprland.tar.gz</archive>
+				<archive>homefiles.tar.zst</archive>
+				<archive>homefiles_hyprland.tar.zst</archive>
 			</home>
 		</extrafiles>
 	</softpack>
@@ -74,7 +74,7 @@
 		<softpack_tweaks>hyrpland userdirs multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay</bundle>
@@ -94,8 +94,8 @@
 		
 		<extrafiles>
 			<home>
-				<archive>homefiles.tar.gz</archive>
-				<archive>homefiles_hyprland.tar.gz</archive>
+				<archive>homefiles.tar.zst</archive>
+				<archive>homefiles_hyprland.tar.zst</archive>
 			</home>
 		</extrafiles>
 	</softpack>
@@ -105,7 +105,7 @@
 		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
@@ -126,8 +126,8 @@
 		
 		<extrafiles>
 			<home>
-				<archive>homefiles.tar.gz</archive>
-				<archive>homefiles_gnome.tar.gz</archive>
+				<archive>homefiles.tar.zst</archive>
+				<archive>homefiles_gnome.tar.zst</archive>
 			</home>
 		</extrafiles>
 	</softpack>
@@ -137,7 +137,7 @@
 		<softpack_tweaks>openbox multilibs</softpack_tweaks>
 		<pakages>
 			<pacstrap>base base-devel linux linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
@@ -155,8 +155,8 @@
 		
 		<extrafiles>
 			<home>
-				<archive>homefiles.tar.gz</archive>
-				<archive>homefiles_openbox.tar.gz</archive>
+				<archive>homefiles.tar.zst</archive>
+				<archive>homefiles_openbox.tar.zst</archive>
 			</home>
 		</extrafiles>
 	</softpack>
@@ -166,7 +166,7 @@
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl uv git gitu htop 7zip unrar rsync wipe snapper lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl uv git gitu htop 7zip unrar zstd rsync wipe snapper lvm2 cryptsetup</bundle>
 			<bundle>nvim nano vim micro diffutils</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
 			<bundle>base-devel rust cmake</bundle>
@@ -176,7 +176,7 @@
 		</pakages>
 		<extrafiles>
 			<home>
-				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles.tar.zst</archive>
 			</home>
 		</extrafiles>
 	</softpack>
@@ -186,14 +186,14 @@
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less htop lvm2 cryptsetup</bundle>
+			<bundle>networkmanager btrfs-progs mc yazi man-db less htop lvm2 cryptsetup</bundle>
 			<bundle>nvim nano vim micro tree</bundle>
 			<bundle>ntfs-3g dosfstools os-prober</bundle>
 			<bundle>terminus-font</bundle>
 		</pakages>
 		<extrafiles>
 			<home>
-				<archive>homefiles.tar.gz</archive>
+				<archive>homefiles.tar.zst</archive>
 			</home>
 		</extrafiles>
 	</softpack>
