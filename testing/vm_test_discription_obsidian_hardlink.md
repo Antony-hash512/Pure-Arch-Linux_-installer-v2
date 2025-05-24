@@ -446,3 +446,55 @@ ext4
 Тогда initramfs сначала откроет LUKS-контейнер, потом активирует VG, а потом уже смонтирует ваш Btrfs-сабволюм как корневой. Сейчас же он пытается смонтировать расшифрованный PV как FS и падает.
 
 ```
+
+
+
+Нет, для дополнительных зашифрованных томов (например вашего `/home`) параметр `root=` в загрузчике больше не нужен. Параметр `cryptdevice=… root=…` в GRUB-CMDLINE служит только для первого (корневого) контейнера, который распаковывает и монтирует initramfs. Все остальные LUKS-тома вы разблокируете уже после загрузки — с помощью строк в `/etc/crypttab`, а затем монтируете их через `/etc/fstab`. 
+
+Итого:
+
+1. В `GRUB_CMDLINE_LINUX` оставляем только  
+   ```  
+   cryptdevice=UUID=<UUID_корня>:crypt_root root=/dev/mapper/crypt_root  
+   ```  
+2. В `/etc/crypttab` добавляем для `/home` (или любого другого):  
+   ```  
+   crypt_home UUID=<UUID_домашнего_тома> <ключ|none> luks  
+   ```  
+3. В `/etc/fstab` прописываем уже готовый `/dev/mapper/crypt_home` на точку `/home`.  
+
+Система systemd сама подхватит `crypttab` и разблокирует ваш домашний том после монтирования корня.
+
+
+  А надо так:
+
+	cryptdevice="UUID=7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167:crypt_pv \
+	rootflags=subvol=@arch1 \
+    root=/dev/locked_vg/btrfs_in_locked_lvm" 
+
+
+Если у вас корень лежит на логическом томе, который собран из двух зашифрованных PV, то GRUB должен до запуска `lvm2`-хука раскрыть оба контейнера. Для этого в `GRUB_CMDLINE_LINUX` указывают по одному `cryptdevice=` на каждый PV, а затем один `root=` на ваш LV. Пример:
+
+```bash
+# /etc/default/grub
+GRUB_CMDLINE_LINUX="\
+  cryptdevice=UUID=<UUID_PV1>:crypt_pv1 \
+  cryptdevice=UUID=<UUID_PV2>:crypt_pv2 \
+  root=/dev/locked_vg/root_lv\
+"
+```
+
+Где  
+• `<UUID_PV1>` и `<UUID_PV2>` — это UUID LUKS-заголовков двух физических разделов (см. `blkid -s UUID /dev/sdXN`).  
+• `crypt_pv1` и `crypt_pv2` — произвольные, но уникальные имена для мапперов (они станут `/dev/mapper/crypt_pv1` и `/dev/mapper/crypt_pv2`).  
+• `/dev/locked_vg/root_lv` — путь до вашего корневого логического тома (можно так же `/dev/mapper/locked_vg-root_lv`).
+
+Важно, чтобы в `mkinitcpio.conf` были хуки
+
+  hooks=(… encrypt lvm2 …)
+
+тогда сначала откроются оба LUKS-PV, потом активируется VG, и только затем будет смонтирован ваш LV как корень. После правки `GRUB_CMDLINE_LINUX` не забудьте пересобрать конфиг:
+
+```bash
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```

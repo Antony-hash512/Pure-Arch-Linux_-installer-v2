@@ -1546,29 +1546,74 @@ open_all_luks_devices(){
                 
 }
 
-#Функция для настройки зашифрованных разделов по uuid
-configure_crypt_volumes_by_uuid(){
-    local crypt_uuid=$1
-    local keyfile=$2
-    # Генерируем уникальное имя контейнера на основе UUID
-    local uuid_name=${crypt_uuid//-/_}
-    local mapper_name="crypt_${uuid_name}"
-    if [[ -z "$keyfile" ]]; then
-        echo "$mapper_name UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
+configure_crypt_volumes_by_ref(){
+    local current_row=$1
+    local luks_device_fullname=${current_row["luks_device_fullname"]}
+    local crypt_mode=${current_row["crypt_mode"]}
+    local mount_point=${current_row["mount_point"]}
+    local type=${current_row["type"]}
+    function mapper_name(){
+        local crypt_uuid=$1
+        echo "crypt_${crypt_uuid//-/_}"
+    }
+
+    #декларируем массив uuids
+    declare -A uuids
+
+    if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
+        pv_uuids_string=${current_row["pv-volumes-uuids"]}
+        uuids=($(echo "$pv_uuids_string" | tr ',' '\n'))
     else
-        echo "$mapper_name UUID=$crypt_uuid $keyfile luks" >> $INST_DIR/etc/crypttab
+        uuids=("$(blkid -s UUID -o value "$luks_device_fullname")")
     fi
-    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:$mapper_name root=/dev/mapper/$mapper_name\"" >> $INST_DIR/etc/default/grub
+    for uuid in "${uuids[@]}"; do
+        if [[ $crypt_mode == *"pwd"* ]]; then
+           echo "$(mapper_name "$uuid") UUID=$uuid none luks" >> $INST_DIR/etc/crypttab
+        elif [[ $crypt_mode == *"file"* ]]; then
+            echo "$(mapper_name "$uuid") UUID=$uuid ${current_row["keyfile"]} luks" >> $INST_DIR/etc/crypttab
+        fi  
+    done
+
+    if [[ "$mount_point" == "/" ]]; then
+        echo "GRUB_CMDLINE_LINUX=\"\\" >> $INST_DIR/etc/default/grub
+        for uuid in "${uuids[@]}"; do   
+            echo "  cryptdevice=UUID=$uuid:$(mapper_name "$uuid")\\" >> $INST_DIR/etc/default/grub
+        done
+        if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
+            echo "  root=${current_row["lv-volume"]}\"" >> $INST_DIR/etc/default/grub
+        else
+            echo "  root=/dev/mapper/$mapper_name" >> $INST_DIR/etc/default/grub
+        fi
+        if [[ $type == *"btrfs"* ]]; then
+            echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> $INST_DIR/etc/default/grub
+        fi
+        echo "\"" >> $INST_DIR/etc/default/grub
+    fi
 }
 
-#Функция для настройки зашифрованных разделов по полному имени устройства
-configure_crypt_volumes_by_device_fullname(){
-    local crypt_fullname=$1
-    local keyfile=$2
-    local crypt_uuid=$(blkid -s UUID -o value "$crypt_fullname")
-    if [[ -z "$keyfile" ]]; then
-        configure_crypt_volumes_by_uuid "$crypt_uuid"
-    else
-        configure_crypt_volumes_by_uuid "$crypt_uuid" "$keyfile"
-    fi
-}
+#Функция для настройки зашифрованных разделов по uuid
+# configure_crypt_volumes_by_uuid(){
+#    local crypt_uuid=$1
+#    local keyfile=$2
+#    # Генерируем уникальное имя контейнера на основе UUID
+#    local uuid_name=${crypt_uuid//-/_}
+#    local mapper_name="crypt_${uuid_name}"
+#    if [[ -z "$keyfile" ]]; then
+#        echo "$mapper_name UUID=$crypt_uuid none luks" >> $INST_DIR/etc/crypttab
+#    else
+#        echo "$mapper_name UUID=$crypt_uuid $keyfile luks" >> $INST_DIR/etc/crypttab
+#    fi
+#    echo "GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$crypt_uuid:$mapper_name root=/dev/mapper/$mapper_name\"" >> $INST_DIR/etc/default/grub
+#}
+#
+##Функция для настройки зашифрованных разделов по полному имени устройства
+#configure_crypt_volumes_by_device_fullname(){
+#    local crypt_fullname=$1
+#    local keyfile=$2
+#    local crypt_uuid=$(blkid -s UUID -o value "$crypt_fullname")
+#    if [[ -z "$keyfile" ]]; then
+#        configure_crypt_volumes_by_uuid "$crypt_uuid"
+#    else
+#        configure_crypt_volumes_by_uuid "$crypt_uuid" "$keyfile"
+#    fi
+#}

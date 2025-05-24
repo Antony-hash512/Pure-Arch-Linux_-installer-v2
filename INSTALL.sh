@@ -1128,10 +1128,8 @@ genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
     crypt_mode=${current_row["crypt_mode"]}
-    if [[ $crypt_mode == *"pwd"* ]]; then
-        configure_crypt_volumes_by_device_fullname "${current_row["luks_device_fullname"]}"
-    elif [[ $crypt_mode == *"file"* ]]; then
-        configure_crypt_volumes_by_device_fullname "${current_row["luks_device_fullname"]}" "${current_row["keyfile"]}"
+    if [[ $crypt_mode == *"pwd"* || $crypt_mode == *"file"* ]]; then
+        configure_crypt_volumes_by_ref "current_row"
     fi
 done
 
