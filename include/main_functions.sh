@@ -1547,7 +1547,7 @@ open_all_luks_devices(){
 }
 
 configure_crypt_volumes_by_ref(){
-    local current_row=$1
+    local -n current_row=$1
     local luks_device_fullname=${current_row["luks_device_fullname"]}
     local crypt_mode=${current_row["crypt_mode"]}
     local mount_point=${current_row["mount_point"]}
