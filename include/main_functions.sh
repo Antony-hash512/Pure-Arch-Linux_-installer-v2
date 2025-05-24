@@ -352,6 +352,21 @@ standardize_lvm_format() {
         echo "$device"
     fi
 }
+#Аналогичная функция для преобразования формата lvm в формат mapper (наоборот)
+standardize_lvm_format_to_mapper() {
+    local device=$1
+    #если в начале строки стоит /dev/mapper/
+    if [[ "$device" =~ ^/dev/mapper/ ]]; then
+        echo "$device"
+    else
+        vg_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\1|')
+        lv_name=$(echo "$device" | sed -r 's|/dev/([^/]+)/([^/]+)$|\2|')
+        #заменяем все дефисы на двойные дефисы
+        vg_name=$(echo "$vg_name" | sed 's/-/--/g')
+        lv_name=$(echo "$lv_name" | sed 's/-/--/g')
+        echo "/dev/mapper/$vg_name-$lv_name"
+    fi
+}
 
 #Функция для получения имени логического тома из полного имени устройства
 #(без проверки на существование устройства т.к. может быть использовано для имён устройств,
@@ -1580,7 +1595,7 @@ configure_crypt_volumes_by_ref(){
             echo "  cryptdevice=UUID=$uuid:$(get_mapper_name "$uuid")\\" >> $INST_DIR/etc/default/grub
         done
         if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
-            echo "  root=${current_row["lv-volume"]}" >> $INST_DIR/etc/default/grub
+            echo "  root=$(standardize_lvm_format_to_mapper "${current_row["lv-volume"]}")" >> $INST_DIR/etc/default/grub
         else
             echo "  root=/dev/mapper/$(get_mapper_name "${uuids[0]}")" >> $INST_DIR/etc/default/grub
         fi
