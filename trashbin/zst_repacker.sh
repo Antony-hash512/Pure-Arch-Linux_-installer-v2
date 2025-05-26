@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/bash
 
 #задаём степень сжатия
 COMPRESSION_LEVEL=$2

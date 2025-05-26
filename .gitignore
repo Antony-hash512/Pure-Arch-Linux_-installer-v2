@@ -5,7 +5,8 @@ errors/*
 cash-repo/*
 git_configs/*
 old_diffs/*
-CREATE_TAR.sh
+tar_zsts_contents/*
+!tar_zsts_contents/.gitkeep
 log.txt
 
 
