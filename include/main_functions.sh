@@ -1042,14 +1042,11 @@ handle_keyfile_selection() {
     return 0
 }
 
-# Функция для генерации уникального имени открытого LUKS-контейнера
+# Функция для генерации уникального имени для устройства из LUKS-контейнера, основанного внешнем uuid контейнера
 generate_crypt_container_name() {
     local device_name="$1"
-    local basename=$(basename "$device_name") #basename работает с ещё не созданными устройствами, поэтому проблемы тут быть не должно
-    local timestamp=$(date +%s_%N)
-    local random=$RANDOM
-    
-    echo "opened_luks_${basename}_${timestamp}_${random}"
+    local uuid=$(blkid -s UUID -o value "$device_name")
+    echo "luks-${uuid}"
 }
 
 # Функция для проверки, открыт ли контейнер и обновлении информации о нём
@@ -1561,7 +1558,7 @@ open_all_luks_devices(){
                 
 }
 
-#Функция для настройки крипто-контейнеров и корня в grub
+#Функция для настройки крипто-контейнеров и корня в grub (нужно переписать заново с нуля)
 configure_crypt_volumes_by_ref(){
     local -n current_row=$1
     local luks_device_fullname=${current_row["luks_device_fullname"]}
@@ -1574,12 +1571,12 @@ configure_crypt_volumes_by_ref(){
         local uuid=$1
         local luks_name=""
         
-        if [[ "$type" == *"_in_lvm"*  ]]; then
-            # Для LVM поверх LUKS используем имя VG из lv-volume
+        if [[ "$type" == *"_in_lvm"*  && "$crypt_mode" == *"none_in_"*]]; then
+            # Для LVM используем имя VG из lv-volume
             luks_name=$(standardize_lvm_format_to_mapper "${current_row["lv-volume"]}")
         else
             # Для обычного LUKS используем стандартное имя
-            luks_name=$(check_uuid_exists "$uuid")
+            luks_name="/dev/mapper/luks-${uuid}" #стандартное имя для внутренностей luks-контейнера, в таком же формате, как оно было создано
         fi
         echo "$luks_name"
     }
@@ -1592,10 +1589,10 @@ configure_crypt_volumes_by_ref(){
     # Собираем массив UUID: для LVM-PV может быть несколько, иначе один
     declare -a uuids
     if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
-        # Это случай LVM поверх LUKS - UUID'ы из физических томов
+        # Это случай LVM внутри LUKS - UUID'ы из физических томов
         uuids=($(echo "${current_row["pv-volumes-uuids"]}" | tr ',' '\n'))
     else
-        # Обычный LUKS на уровне логического тома
+        # Обычный LUKS на уровне суперблока
         uuids=($(blkid -s UUID -o value "$luks_device_fullname"))
     fi
 
