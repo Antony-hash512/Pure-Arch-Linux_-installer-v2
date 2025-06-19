@@ -1558,8 +1558,72 @@ open_all_luks_devices(){
                 
 }
 
-#Функция для настройки крипто-контейнеров и корня в grub (нужно переписать заново с нуля)
+#Функция для настройки крипто-контейнеров и корня в grub
+# данная функция предназначена для выполнения только в не none и в не none_in_none случаях
 configure_crypt_volumes_by_ref(){
+    local -n current_row=$1
+    local luks_device_fullname=${current_row["luks_device_fullname"]}
+    local opened_crypt_container_fullname=${current_row["opened_crypt_container_fullname"]}
+    local crypt_mode=${current_row["crypt_mode"]}
+    local mount_point=${current_row["mount_point"]}
+    local type=${current_row["type"]}
+
+    #проверяем точку монтирования
+    if [[ "$mount_point" == "/" ]]; then
+        #  настраиваем параметры ядра в grub по разному для каждого из случаев
+        if [[ "$type" == *"_in_lvm"*  ]]; then
+            :
+            if [[ "$crypt_mode" == *"none_in_"* ]]; then
+            #LVM внутри LUKS
+            #собирать массив с uuidшниками физических томов lvm нужно только в этом случае
+            #в Arch Wiki написано, что несколько pv lvm в режиме busybox не работает
+            #но всё пока что тестируется с одним pv lvm
+                :
+            elif [[ "$crypt_mode" == *"_in_none"* ]]; then
+            #LUKS внутри LVM
+            #cryptdevice=UUID=_device-UUID_:root root=/dev/mapper/root
+            #`_device-UUID_` нужно заменить на UUID суперблока LUKS, в этом примере это UUID `/dev/MyVolGroup/cryptroot`
+            #`root` в /dev/mapper/root нужно заменить на имя логического тома, в этом примере это luks-uuid
+            #нужно также учесть случай с btrfs, когда нужно будет добавить rootflags=subvol=
+                :
+                # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
+                # там экранированы открывающая кавычка и слеш для перехода на новую строку
+                echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
+                # тут не будет цикла, т.к. в этом случае будет только один uuid (и даже логический том, который можно прописать просто по названию без uuid)
+                echo "  cryptdevice=$luks_device_fullname root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+                # Для Btrfs-корня указываем subvol
+                if [[ $type == *"btrfs"* ]]; then
+                    echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
+                fi
+
+                # Закрываем кавычки
+                echo "\"" >> "$INST_DIR/etc/default/grub"
+            fi
+        else
+            #обычный LUKS на разделе
+            :
+        fi
+        
+    fi
+    #нужно также правильно разбирать случай с /boot, когда будет добавлена возможность его шифрования
+
+    #добавляем записи в /etc/crypttab
+    #Внимание! /etc/crypttab настраивается только для systemd, для OpenRC нужно будет другая настройка
+    #Хотя в Arch Wiki /etc/crypttab приписывается только для не коренных разделов, gemini сказал,
+    #это устаревшая инструкция, и нужно прописать и для корневого раздела
+
+    #т.к. в моих базовых тестах присутствуют только / и не зашифрованный /boot
+    #а прописывать в /etc/crypttab корневой раздел хоть и рекомендуется, но не обязательно
+    #я пока что только провильно настрою параметры ядра для корневого раздела
+    #c учётом ключевой разницы между lvm on luks и luks on lvm -- по разному
+    #для каждого из этих случаев
+
+}
+
+
+
+#Функция для настройки крипто-контейнеров и корня в grub (нужно переписать заново с нуля)
+configure_crypt_volumes_by_ref_old(){
     local -n current_row=$1
     local luks_device_fullname=${current_row["luks_device_fullname"]}
     local crypt_mode=${current_row["crypt_mode"]}
@@ -1577,6 +1641,7 @@ configure_crypt_volumes_by_ref(){
         else
             # Для обычного LUKS используем стандартное имя
             luks_name="/dev/mapper/luks-${uuid}" #стандартное имя для внутренностей luks-контейнера, в таком же формате, как оно было создано
+
         fi
         echo "$luks_name"
     }
