@@ -1647,7 +1647,7 @@ configure_crypt_volumes_by_ref_old(){
         local uuid=$1
         local luks_name=""
         
-        if [[ "$type" == *"_in_lvm"*  && "$crypt_mode" == *"none_in_"*]]; then
+        if [[ "$type" == *"_in_lvm"*  && "$crypt_mode" == *"none_in_"* ]]; then
             # Для LVM используем имя VG из lv-volume
             luks_name=$(standardize_lvm_format_to_mapper "${current_row["lv-volume"]}")
         else
