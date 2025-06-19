@@ -1564,6 +1564,7 @@ configure_crypt_volumes_by_ref(){
     local -n current_row=$1
     local luks_device_fullname=${current_row["luks_device_fullname"]}
     local opened_crypt_container_fullname=${current_row["opened_crypt_container_fullname"]}
+    local opened_crypt_container_name=${current_row["opened_crypt_container_name"]}
     local crypt_mode=${current_row["crypt_mode"]}
     local mount_point=${current_row["mount_point"]}
     local type=${current_row["type"]}
@@ -1572,25 +1573,36 @@ configure_crypt_volumes_by_ref(){
     if [[ "$mount_point" == "/" ]]; then
         #  настраиваем параметры ядра в grub по разному для каждого из случаев
         if [[ "$type" == *"_in_lvm"*  ]]; then
-            :
             if [[ "$crypt_mode" == *"none_in_"* ]]; then
             #LVM внутри LUKS
             #собирать массив с uuidшниками физических томов lvm нужно только в этом случае
             #в Arch Wiki написано, что несколько pv lvm в режиме busybox не работает
-            #но всё пока что тестируется с одним pv lvm
-                :
+            #но всё пока что всё тестируется тестируется с одним pv lvm
+                uuids=($(echo "${current_row["pv-volumes-uuids"]}" | tr ',' '\n'))
+                # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
+                # там экранированы открывающая кавычка и слеш для перехода на новую строку
+                echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
+                for uuid in "${uuids[@]}"; do
+                    echo "  cryptdevice=UUID=$uuid:luks-$uuid\\" >> "$INST_DIR/etc/default/grub"
+                done
+                echo "  root=${current_row["lv-volume"]}\\" >> "$INST_DIR/etc/default/grub"
+                # Для Btrfs-корня указываем subvol
+                if [[ $type == *"btrfs"* ]]; then
+                    echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
+                fi
+                # Закрываем кавычки
+                echo "\"" >> "$INST_DIR/etc/default/grub"
             elif [[ "$crypt_mode" == *"_in_none"* ]]; then
             #LUKS внутри LVM
             #cryptdevice=UUID=_device-UUID_:root root=/dev/mapper/root
             #`_device-UUID_` нужно заменить на UUID суперблока LUKS, в этом примере это UUID `/dev/MyVolGroup/cryptroot`
             #`root` в /dev/mapper/root нужно заменить на имя логического тома, в этом примере это luks-uuid
             #нужно также учесть случай с btrfs, когда нужно будет добавить rootflags=subvol=
-                :
                 # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
                 # там экранированы открывающая кавычка и слеш для перехода на новую строку
                 echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
                 # тут не будет цикла, т.к. в этом случае будет только один uuid (и даже логический том, который можно прописать просто по названию без uuid)
-                echo "  cryptdevice=$luks_device_fullname root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+                echo "  cryptdevice=$luks_device_fullname:$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
                 # Для Btrfs-корня указываем subvol
                 if [[ $type == *"btrfs"* ]]; then
                     echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
