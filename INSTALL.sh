@@ -38,8 +38,9 @@ EOF
 #5) выполняем установку системы после явного подтверждения пользователем
 
 : <<'TODO'
-* разобраться почему не выполняются тесты 2 и 5 для связки ext4+luks+lvm2
-* дописать настройки шифрования для настоек без lvm2
+* проверить тест 2
+* почистить код от лишних комментариев
+* дописать настройки шифрования для настоек без lvm2 в функции configure_crypt_volumes_by_ref
 * сделать возможность использования хуков на базе systemd, а не только busybox
 * навести порядок с хуками (очедность lvm2 encrypt/ encrypt lvm2 ситуативна)
 * сделать правильную распаковку архивов
@@ -588,6 +589,14 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             size_of_lv=${current_row["size"]}
             case "$crypt_mode" in
                 "none_in_none")
+                    ## создаём файловую систему ext4 на логическом томе
+                    #if mkfs.ext4 -F "$device"; then
+                    #    echo -e "${GREEN}Файловая система ext4 успешно создана на LV $device.${NC}"
+                    #else
+                    #    echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на LV $device.${NC}" >&2
+                    #    exit 1
+                    #fi
+                    # получаем имя раздела для монтирования
                     current_row["device_for_operations"]=$lv_name
                     ;;
                 "none_in_file")
@@ -1103,12 +1112,12 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #используем функцию для создания и открытия крипто-контейнера
                     create_and_open_crypt_container_with_new_pwd "$lv_name"
                     # создаём файловую систему ext4 на открытом контейнере
-                    if mkfs.ext4 "${current_row["opened_crypt_container_fullname"]}"; then
-                         echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
-                     else
-                         echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
-                         exit 1
-                     fi
+                    #if mkfs.ext4 "${current_row["opened_crypt_container_fullname"]}"; then
+                    #     echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
+                    # else
+                    #     echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
+                    #     exit 1
+                    # fi
                     # получаем имя раздела для монтирования
                     current_row["device_for_operations"]="${current_row["opened_crypt_container_fullname"]}"
                     ;;
@@ -1116,16 +1125,24 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     #используем функцию для создания и открытия крипто-контейнера
                     create_and_open_crypt_container_with_file "$lv_name" "${current_row["keyfile"]}"
                     # создаём файловую систему ext4 на открытом контейнере
-                    if mkfs.ext4 "${current_row["opened_crypt_container_fullname"]}"; then
-                         echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
-                     else
-                         echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
-                         exit 1
-                     fi
+                    #if mkfs.ext4 "${current_row["opened_crypt_container_fullname"]}"; then
+                    #     echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
+                    # else
+                    #     echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
+                    #     exit 1
+                    # fi
                     # получаем имя раздела для монтирования
                     current_row["device_for_operations"]="${current_row["opened_crypt_container_fullname"]}"
                     ;; 
             esac
+            # создаём файловую систему ext4 на открытом контейнере
+            if mkfs.ext4 "${current_row["device_for_operations"]}"; then
+                 echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
+            else
+                 echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
+                 exit 1
+            fi
+            
             # монтируем том lvm или содержимое контейнера luks в каталог установки (внутри chroot'а)
             if mount "${current_row["device_for_operations"]}" "$INST_DIR$mount_point"; then
                 echo -e "${GREEN}Том LVM или содержимое контейнера LUKS успешно смонтировано в $INST_DIR$mount_point.${NC}"
