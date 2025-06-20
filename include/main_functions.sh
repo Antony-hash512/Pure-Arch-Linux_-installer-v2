@@ -1585,7 +1585,7 @@ configure_crypt_volumes_by_ref(){
                 for uuid in "${uuids[@]}"; do
                     echo "  cryptdevice=UUID=$uuid:luks-$uuid\\" >> "$INST_DIR/etc/default/grub"
                 done
-                echo "  root=${current_row["lv-volume"]}\\" >> "$INST_DIR/etc/default/grub"
+                echo "  root=$(standardize_lvm_format ${current_row["lv-volume"]})\\" >> "$INST_DIR/etc/default/grub"
                 # Для Btrfs-корня указываем subvol
                 if [[ $type == *"btrfs"* ]]; then
                     echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"

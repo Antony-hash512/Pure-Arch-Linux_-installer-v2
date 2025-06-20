@@ -371,7 +371,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
@@ -394,7 +394,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
@@ -417,7 +417,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest3</bootlabel>
@@ -439,7 +439,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest3</bootlabel>
@@ -468,7 +468,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 encrypt filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest4</bootlabel>
@@ -490,7 +490,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 encrypt filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest4</bootlabel>
@@ -520,7 +520,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 encrypt filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest5</bootlabel>
@@ -542,7 +542,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 encrypt filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest5</bootlabel>
@@ -565,7 +565,7 @@
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck</hooks>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest6</bootlabel>
