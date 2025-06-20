@@ -1133,8 +1133,7 @@ genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
 # настройка зашифрованных разделов
 
-echo "debug: сейчас будет выполнена настройка зашифрованных разделов" >/dev/tty
-make_pause
+
 
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
