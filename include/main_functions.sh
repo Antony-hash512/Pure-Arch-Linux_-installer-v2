@@ -1604,10 +1604,6 @@ configure_crypt_volumes_by_ref(){
                 echo "\"" >> "$INST_DIR/etc/default/grub"
             elif [[ "$crypt_mode" == *"_in_none"* ]]; then
             #LUKS внутри LVM
-            #cryptdevice=UUID=_device-UUID_:root root=/dev/mapper/root
-            #`_device-UUID_` нужно заменить на UUID суперблока LUKS, в этом примере это UUID `/dev/MyVolGroup/cryptroot`
-            #`root` в /dev/mapper/root нужно заменить на имя логического тома, в этом примере это luks-uuid
-            #нужно также учесть случай с btrfs, когда нужно будет добавить rootflags=subvol=
                 if [[ $crypt_mode == *"pwd"* ]]; then
                     echo "$opened_crypt_container_name $luks_device_fullname none luks" >> "$INST_DIR/etc/crypttab"
                 elif [[ $crypt_mode == *"file"* ]]; then
@@ -1633,95 +1629,5 @@ configure_crypt_volumes_by_ref(){
         fi
         
     fi
-    #нужно также правильно разбирать случай с /boot, когда будет добавлена возможность его шифрования
-
-    #добавляем записи в /etc/crypttab
-    #Внимание! /etc/crypttab настраивается только для systemd, для OpenRC нужно будет другая настройка
-    #Хотя в Arch Wiki /etc/crypttab приписывается только для не коренных разделов, gemini сказал,
-    #это устаревшая инструкция, и нужно прописать и для корневого раздела
-
-    #т.к. в моих базовых тестах присутствуют только / и не зашифрованный /boot
-    #а прописывать в /etc/crypttab корневой раздел хоть и рекомендуется, но не обязательно
-    #я пока что только провильно настрою параметры ядра для корневого раздела
-    #c учётом ключевой разницы между lvm on luks и luks on lvm -- по разному
-    #для каждого из этих случаев
-
 }
 
-
-
-#Функция для настройки крипто-контейнеров и корня в grub (нужно переписать заново с нуля)
-configure_crypt_volumes_by_ref_old(){
-    local -n current_row=$1
-    local luks_device_fullname=${current_row["luks_device_fullname"]}
-    local crypt_mode=${current_row["crypt_mode"]}
-    local mount_point=${current_row["mount_point"]}
-    local type=${current_row["type"]}
-
-    # Вспомогательная функция для генерации имени mapper-а
-    get_luks_name(){
-        local uuid=$1
-        local luks_name=""
-        
-        if [[ "$type" == *"_in_lvm"*  && "$crypt_mode" == *"none_in_"* ]]; then
-            # Для LVM используем имя VG из lv-volume
-            luks_name=$(standardize_lvm_format_to_mapper "${current_row["lv-volume"]}")
-        else
-            # Для обычного LUKS используем стандартное имя
-            luks_name="/dev/mapper/luks-${uuid}" #стандартное имя для внутренностей luks-контейнера, в таком же формате, как оно было создано
-
-        fi
-        echo "$luks_name"
-    }
-    get_name_inside_luks(){
-        local uuid=$1
-        echo "luks-${uuid}"
-    }
-    
-
-    # Собираем массив UUID: для LVM-PV может быть несколько, иначе один
-    declare -a uuids
-    if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
-        # Это случай LVM внутри LUKS - UUID'ы из физических томов
-        uuids=($(echo "${current_row["pv-volumes-uuids"]}" | tr ',' '\n'))
-    else
-        # Обычный LUKS на уровне суперблока
-        uuids=($(blkid -s UUID -o value "$luks_device_fullname"))
-    fi
-
-    # Пишем строки в /etc/crypttab
-    for uuid in "${uuids[@]}"; do
-        luks_name=$(get_luks_name "$uuid")
-        if [[ $crypt_mode == *"pwd"* ]]; then
-            echo "$luks_name UUID=$uuid none luks" >> "$INST_DIR/etc/crypttab"
-        elif [[ $crypt_mode == *"file"* ]]; then
-            echo "$luks_name UUID=$uuid ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
-        fi
-    done
-
-    # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
-    echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
-    for uuid in "${uuids[@]}"; do
-        luks_name=$(get_luks_name "$uuid")
-        echo "  cryptdevice=UUID=$uuid:$luks_name\\" >> "$INST_DIR/etc/default/grub"
-    done
-
-    # Добавляем root= — либо на LV, либо на первый mapper (когда в массиве uuids и так один элемент)
-    if [[ "$type" == *"_in_lvm"* && "$crypt_mode" == *"none_in_"* ]]; then
-        # Для LVM поверх LUKS - корень на логическом томе
-        lvpath=$(standardize_lvm_format "${current_row["lv-volume"]}")
-        echo "  root=$lvpath\\" >> "$INST_DIR/etc/default/grub"
-    else
-        # Для LUKS на уровне логического тома - корень на mapper'е
-        luks_name=$(get_luks_name "${uuids[0]}")
-        echo "  root=/dev/mapper/$luks_name\\" >> "$INST_DIR/etc/default/grub"
-    fi
-
-    # Для Btrfs-корня указываем subvol
-    if [[ $type == *"btrfs"* ]]; then
-        echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
-    fi
-
-    # Закрываем кавычки
-    echo "\"" >> "$INST_DIR/etc/default/grub"
-}

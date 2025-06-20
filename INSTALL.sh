@@ -38,8 +38,8 @@ EOF
 #5) выполняем установку системы после явного подтверждения пользователем
 
 : <<'TODO'
-* почистить код от лишних комментариев
 * дописать настройки шифрования для настоек без lvm2 в функции configure_crypt_volumes_by_ref
+* в этой же функции: /etc/crypttab для не коренных разделов
 * сделать возможность использования хуков на базе systemd, а не только busybox
 * навести порядок с хуками (очедность lvm2 encrypt/ encrypt lvm2 ситуативна)
 * сделать правильную распаковку архивов
@@ -288,7 +288,7 @@ for pkg in "${packages[@]}"; do
 done
 # "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
-# можно автоматически определять есть ли хоть где-нибудь шифрование или (очень пригодится в финальной части скрипта)
+# можно автоматически определять есть ли хоть где-нибудь шифрование (хотя от этой установки вреда всё равно не будет)
 
 
 #2) получаем от пользователя данные какие компоненты использовать
@@ -313,10 +313,7 @@ done
 
 #3) проходимся по массиву точек монтирования, открываем крипто-контейнеры,
 # в которых уже есть существующая структура
-# в новом формате xml-файла тег names будет полностью изъят,
-# вместо него будет использоваться обязательный тег device и опциональные теги subvolume и pv-volume
-# для btrfs и pv внутри luks соответственно
-# пишем код как будто то бы тега names уже больше не существует
+
 
 # ассоциативный массив, который хранит строки с описанием запланированных изменений
 declare -A pending_commands_description
@@ -368,17 +365,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 "file")
                     # пояснение: пока не делаем что либо, то тех пор пока
                     #пользователь подтвердит начало установки, до этого измененения на диск мы не вносим
-                    #будем использовать функцию для создания и открытия крипто-контейнера
-                    #create_and_open_crypt_container_by_file "$ext4_partition" "$keyfile"
-                    #запишим в качестве девайса для операций, то что ранее было записано функцией save_crypt_container_info
-                    #которая была вызвана внутри create_and_open_crypt_container_by_file
                     pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
  
                     ;;
                 "pwd")
-                    #будем использовать функцию для создания и открытия крипто-контейнера
-                    #create_and_open_crypt_container_with_new_pwd "$ext4_partition"
-                    #сохраним открытый крипто-контейнер в качестве девайса для операций
+                    #  аналогично предыдущему случаю
                     pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
                     ;;
                 *)
@@ -444,8 +435,8 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #иначе проверки на наличие группы томов и логического тома не сработают
             
             #в таких режимах от пользователя также требуется указать партишн с luks в котором лежит pv lvm
-            #т.к. названия группы томов и логического тома ожидается получить от пользователя, то в данном случае
-            #в качестве девайса для операций будет использоваться то, что указал пользователь, а не открытый крипто-контейнер
+            #в случае последующих if'ов в качестве девайса для операций будет использоваться прописанный в xml lv lvm,
+            #а не открытый крипто-контейнер, т.к. там pv lvm, а не lv lvm
             #lvm в данном случае сам всё найдёт по имени группы томов, которой принадлежит в физический том из крипто-контейнера
             #при этом пользователя надо предупредить о возможной дыре в безопасности, 
             #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
@@ -589,60 +580,21 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             size_of_lv=${current_row["size"]}
             case "$crypt_mode" in
                 "none_in_none")
-                    ## создаём файловую систему ext4 на логическом томе
-                    #if mkfs.ext4 -F "$device"; then
-                    #    echo -e "${GREEN}Файловая система ext4 успешно создана на LV $device.${NC}"
-                    #else
-                    #    echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на LV $device.${NC}" >&2
-                    #    exit 1
-                    #fi
-                    # получаем имя раздела для монтирования
                     current_row["device_for_operations"]=$lv_name
                     ;;
-                "none_in_file")
+                "none_in_file"|"none_in_pwd")
                     : #эти случаи уже были обработаны в if'ах
                     current_row["device_for_operations"]=$lv_name
                     ;;
-                "none_in_pwd")
-                    : #эти случаи уже были обработаны в if'ах
-                    current_row["device_for_operations"]=$lv_name
-                    ;;
-                "file_in_none")
+                "file_in_none"|"pwd_in_none")
                     #пока что можно просто проверить есть ли свободное место,
                     #это можно спокойно сделать именно на данном этапе
                     #если свободного места нет, то пользователь получит соответствующее сообщение
 
                     #в этих двух случаях нужно будет создать новые крипто-контейнеры заданного размера
-                    # TODO: пока что просто отбражаем пользователю планируемые изменения
+                    # пока что просто отбражаем пользователю планируемые изменения
                     # но не создаём ничего нового
-                    #получаем путь к файлу-ключу
-                    #keyfile=${current_row["keyfile"]}
-                    #получаем размер тома
-                    #lv_basename=$(get_device_basename4lsblk "$lv_name")
                     pending_commands_description["$lv_name"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
-
-                   # v эти строки нужно будет перенести в ту часть скрипта,
-                   # в которой будет уже непосредственная установка
-                   # #получаем имя тома и группы томов через функции
-                   # lv_basename=$(get_lv_name_from_fulldevname "$lv_name")
-                   # vg_name=$(get_vg_name_from_fulldevname "$lv_name")
-                   # #создаём логический том заданного размера size_of_lv
-                   # lvcreate -l "$size_of_lv" -n "$lv_basename" "$vg_name"
-                   # #создаём крипто-контейнер и открываем его
-                   # #используем функцию для создания и открытия крипто-контейнера
-                   # create_and_open_crypt_container_by_file "$lv_name" "$keyfile"
-                   # #сохраняем открытый крипто-контейнер в качестве девайса для операций
-                   # current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
-                   # 
-                    ;;
-                "pwd_in_none")
-                    #size_of_lv=${current_row["size"]}
-                    #lv_basename=$(get_device_basename4lsblk "$lv_name")
-                    pending_commands_description["$lv_name"]="Будет создан логический том $lv_basename в группе томов $vg_name размером $size_of_lv"
-                    #используем функцию для открытия крипто-контейнера
-                    #open_crypt_container_by_pwd "$lv_name"
-                    #сохраняем открытый крипто-контейнер в качестве девайса для операций
-                    #current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
                     ;;
                 *)
                     echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none_in_none, none_in_file, none_in_pwd, file_in_none, pwd_in_none)" >&2
@@ -857,21 +809,9 @@ while IFS= read -r line; do
     fi
 done < <(sed '1d' $LSBLK_RAW_INFO)
 
-# Обновляем первый временный файл и обнуляем второй
+#обновляем первый временный файл и обнуляем второй
 mv $LSBLK_RAW_INFO_UPDATED $LSBLK_RAW_INFO
 #выводим содержимое временного файла
-# Настраиваем специальный pager для bat
-#bat --style=grid,numbers \
-#    --paging=always \
-#    --pager="less -R -F -X -P ' ↑↓ прокрутка | q — выход'" \
-#    "$LSBLK_RAW_INFO"
-##Пояснение:
-#- `--paging=always` принудительно пускает вывод через `less`.
-#- Флаг `-F` у `less` заставляет сразу выйти, если всё влезло в экран (аналог `--quit-if-one-screen`).
-#- `-X` предотвращает очистку экрана при выходе.
-#- Остальные опции (`-R`, `-P`) задают цветной вывод и подсказку пользователю как выйти только в случае большого вывода.
-
-#т.к. bat нет на установочном диске, на случай проблем с установкой будем использовать less
 less -R -F -X -P ' ↑↓ прокрутка | q — выход' "$LSBLK_RAW_INFO"
 
 
@@ -935,16 +875,16 @@ fi
 
 
 #создаём временный каталог для монтирования системы
-#INST_DIR=$(mktemp -d)
+INST_DIR=$(mktemp -d)
 #добавляем к имени каталога текущую дату и время для уникальности
-INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
-mkdir -p $INST_DIR 
-#проверка, что этот каталог не смонтирован
-if mount | grep -q $INST_DIR; then
-    echo "Ошибка: каталог $INST_DIR уже смонтирован" >&2
-    exit 1
-fi
-
+#INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
+#mkdir -p $INST_DIR 
+##проверка, что этот каталог не смонтирован
+#if mount | grep -q $INST_DIR; then
+#    echo "Ошибка: каталог $INST_DIR уже смонтирован" >&2
+#    exit 1
+#fi
+#
 
 
 # случаи для legacy будут добавлены потом
@@ -994,25 +934,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                     ;;
                 "pwd")
                     create_and_open_crypt_container_with_new_pwd ${current_row["device"]}
-                    #создаём файловую систему ext4 на открытом контейнере
-                    #if mkfs.ext4 -F ${current_row["opened_crypt_container_fullname"]}; then
-                    #    echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
-                    #else
-                    #    echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
-                    #    exit 1
-                    #fi
                     #получаем имя раздела для монтирования
                     current_row["device_for_operations"]="${current_row["opened_crypt_container_fullname"]}"
                     ;;
                 "file")
                     create_and_open_crypt_container_with_file ${current_row["device"]} ${current_row["keyfile"]}
-                    #создаём файловую систему ext4 на открытом контейнере
-                    #if mkfs.ext4 -F ${current_row["opened_crypt_container_fullname"]}; then
-                    #    echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
-                    #else
-                    #    echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
-                    #    exit 1
-                    #fi
                     #получаем имя раздела для монтирования
                     current_row["device_for_operations"]="${current_row["opened_crypt_container_fullname"]}"
                     ;;
@@ -1042,7 +968,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             fi
             ;;
         "new_subvol_in_btrfs" | "new_subvol_in_btrfs_in_lvm")
-            #в обоих этих случаях набор операций идентичен
             #в этих случаях поле device_for_operation уже получено
             #в предыдущем цикле для всех опций шифрования
             btrfs_device=${current_row["device_for_operations"]}
@@ -1111,27 +1036,11 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 "pwd_in_none")
                     #используем функцию для создания и открытия крипто-контейнера
                     create_and_open_crypt_container_with_new_pwd "$lv_name"
-                    # создаём файловую систему ext4 на открытом контейнере
-                    #if mkfs.ext4 "${current_row["opened_crypt_container_fullname"]}"; then
-                    #     echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
-                    # else
-                    #     echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
-                    #     exit 1
-                    # fi
-                    # получаем имя раздела для монтирования
                     current_row["device_for_operations"]="${current_row["opened_crypt_container_fullname"]}"
                     ;;
                 "file_in_none")
                     #используем функцию для создания и открытия крипто-контейнера
                     create_and_open_crypt_container_with_file "$lv_name" "${current_row["keyfile"]}"
-                    # создаём файловую систему ext4 на открытом контейнере
-                    #if mkfs.ext4 "${current_row["opened_crypt_container_fullname"]}"; then
-                    #     echo -e "${GREEN}Файловая система ext4 успешно создана на открытом контейнере.${NC}"
-                    # else
-                    #     echo -e "${RED}Ошибка: не удалось создать файловую систему ext4 на открытом контейнере.${NC}" >&2
-                    #     exit 1
-                    # fi
-                    # получаем имя раздела для монтирования
                     current_row["device_for_operations"]="${current_row["opened_crypt_container_fullname"]}"
                     ;; 
             esac
@@ -1177,9 +1086,6 @@ pacstrap $INST_DIR $SOFT_PACK1
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
 # настройка зашифрованных разделов
-
-
-
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
     crypt_mode=${current_row["crypt_mode"]}
