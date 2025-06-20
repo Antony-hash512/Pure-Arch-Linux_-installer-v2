@@ -808,7 +808,7 @@
 </install_locations>
 
 <settings_variants>
-	<settings name="standard" description="Стандартные параметры">
+	<settings name="st" description="Стандартные параметры">
 		<timezone>Asia/Dubai</timezone>
 		<locales>
 			<locale>en_US.UTF-8 UTF-8</locale>
@@ -820,7 +820,7 @@
 		</locales>
 	</settings>
 	
-	<settings name="cyrillic" description="Кириллица по умолчанию">
+	<settings name="cyr" description="Кириллица по умолчанию">
 		<timezone>Asia/Dubai</timezone>
 		<locales>
 			<locale>en_US.UTF-8 UTF-8</locale>
