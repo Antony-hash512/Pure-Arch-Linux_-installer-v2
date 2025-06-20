@@ -1579,13 +1579,24 @@ configure_crypt_volumes_by_ref(){
             #в Arch Wiki написано, что несколько pv lvm в режиме busybox не работает
             #но всё пока что всё тестируется тестируется с одним pv lvm
                 uuids=($(echo "${current_row["pv-volumes-uuids"]}" | tr ',' '\n'))
+                
+                # Пишем строки в /etc/crypttab
+                 for uuid in "${uuids[@]}"; do
+                     #luks_name=$(standardize_lvm_format_to_mapper "$luks_device_fullname")
+                     if [[ $crypt_mode == *"pwd"* ]]; then
+                         echo "luks-$uuid UUID=$uuid none luks" >> "$INST_DIR/etc/crypttab"
+                     elif [[ $crypt_mode == *"file"* ]]; then
+                         echo "luks-$uuid UUID=$uuid ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+                     fi
+                 done
+                
                 # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
                 # там экранированы открывающая кавычка и слеш для перехода на новую строку
                 echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
                 for uuid in "${uuids[@]}"; do
                     echo "  cryptdevice=UUID=$uuid:luks-$uuid\\" >> "$INST_DIR/etc/default/grub"
                 done
-                echo "  root=$(standardize_lvm_format ${current_row["lv-volume"]})\\" >> "$INST_DIR/etc/default/grub"
+                echo "  root=$(standardize_lvm_format_to_mapper ${current_row["lv-volume"]})\\" >> "$INST_DIR/etc/default/grub"
                 # Для Btrfs-корня указываем subvol
                 if [[ $type == *"btrfs"* ]]; then
                     echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
@@ -1598,6 +1609,12 @@ configure_crypt_volumes_by_ref(){
             #`_device-UUID_` нужно заменить на UUID суперблока LUKS, в этом примере это UUID `/dev/MyVolGroup/cryptroot`
             #`root` в /dev/mapper/root нужно заменить на имя логического тома, в этом примере это luks-uuid
             #нужно также учесть случай с btrfs, когда нужно будет добавить rootflags=subvol=
+                if [[ $crypt_mode == *"pwd"* ]]; then
+                    echo "$opened_crypt_container_name $luks_device_fullname none luks" >> "$INST_DIR/etc/crypttab"
+                elif [[ $crypt_mode == *"file"* ]]; then
+                    echo "$opened_crypt_container_name $luks_device_fullname ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+                fi
+                
                 # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
                 # там экранированы открывающая кавычка и слеш для перехода на новую строку
                 echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"

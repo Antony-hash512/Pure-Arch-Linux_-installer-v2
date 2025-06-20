@@ -10,7 +10,7 @@ qemu-system-x86_64 \
     -drive file=/home/share/data/extra/vm_disks/archlinux_vm_disk.qcow2,format=qcow2 \
     -virtfs local,path=/home/share/git/Pure-Arch-Linux_-installer-v2/,mount_tag=inst_scripts,security_model=none \
     -virtfs local,path=/home/share/git/Pure-Arch-Linux_-installer-v2/cash-repo/,mount_tag=pkgcache,security_model=none \
-    -cdrom /home/share/data/extra/torrents/archlinux-2025.05.01-x86_64.iso \
+    -cdrom /home/share/data/extra/torrents/archlinux-2025.06.01-x86_64.iso \
     -drive file=./mntfld.iso,media=cdrom \
     -boot order=d \
     -netdev user,id=mynet0 \
