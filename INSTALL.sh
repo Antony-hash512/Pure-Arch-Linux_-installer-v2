@@ -1140,7 +1140,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
     crypt_mode=${current_row["crypt_mode"]}
     if [[ $crypt_mode == *"pwd"* || $crypt_mode == *"file"* ]]; then
-        configure_crypt_volumes_by_ref "current_row"
+        configure_crypt_volumes_by_ref "$row"
     fi
 done
 
