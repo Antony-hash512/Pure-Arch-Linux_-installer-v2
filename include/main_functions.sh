@@ -544,7 +544,7 @@ get_btrfs_subvolumes() {
 #Функция для паузы
 make_pause() {
     echo ""
-    read -p "Нажмите Enter для продолжения"
+    read -p "Нажмите Enter для продолжения" < /dev/tty
     echo ""
 }
 

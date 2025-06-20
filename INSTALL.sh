@@ -1132,6 +1132,10 @@ pacstrap $INST_DIR $SOFT_PACK1
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
 # настройка зашифрованных разделов
+
+echo "debug: сейчас будет выполнена настройка зашифрованных разделов" >/dev/tty
+make_pause
+
 for row in "${NEW_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
     crypt_mode=${current_row["crypt_mode"]}
