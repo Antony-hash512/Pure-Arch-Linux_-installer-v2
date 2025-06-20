@@ -900,17 +900,17 @@ ask_user_action() {
 # Функция для выбора действия пользователем с массивом вариантов
 ask_user_action_with_array() {
     local prompt="$1"      # Текст приглашения
-    local -n opt_array="$2"  # ссылка на массив вариантов
-    local default_action="$3"  # Действие по умолчанию при некорректном вводе
-    local num_options=${#opt_array[@]} # количество вариантов
+    local -n arr_ref="$2"  # поменял имя намерефа
+    local default_action="$3"
+    local num_options=${#arr_ref[@]}
 
     echo -e "${YELLOW}$prompt${NC}"
     for ((i=0; i<num_options; i++)); do
         local idx=$((i+1))
-        if [[ "${opt_array[$i]}" == *"Прервать"* || "${opt_array[$i]}" == *"прервать"* ]]; then
-            echo -e "$idx. ${RED}${opt_array[$i]}${NC}"
+        if [[ "${arr_ref[$i]}" == *"Прервать"* || "${arr_ref[$i]}" == *"прервать"* ]]; then
+            echo -e "$idx. ${RED}${arr_ref[$i]}${NC}"
         else
-            echo -e "$idx. ${CYAN}${opt_array[$i]}${NC}"
+            echo -e "$idx. ${CYAN}${arr_ref[$i]}${NC}"
         fi
     done
     
