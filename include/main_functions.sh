@@ -1568,9 +1568,12 @@ configure_crypt_volumes_by_ref(){
     local crypt_mode=${current_row["crypt_mode"]}
     local mount_point=${current_row["mount_point"]}
     local type=${current_row["type"]}
-
+    echo "mount_point=$mount_point, type=$type, crypt_mode=$crypt_mode" >/dev/tty
+    make_pause
     #проверяем точку монтирования
     if [[ "$mount_point" == "/" ]]; then
+        echo "условие выполняется" >/dev/tty
+        make_pause
         #  настраиваем параметры ядра в grub по разному для каждого из случаев
         if [[ "$type" == *"_in_lvm"*  ]]; then
             if [[ "$crypt_mode" == *"none_in_"* ]]; then
