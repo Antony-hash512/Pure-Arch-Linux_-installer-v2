@@ -97,7 +97,7 @@ export COLORS_CONSTANTS="include/colors.sh"
 # Получаем путь к каталогу, где находится скрипт
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
-# Подключаем файл с цветовыми переменными
+# Подключаем файл с цветовыми константами
 source $COLORS_CONSTANTS
 
 # Подключаем функции
@@ -205,7 +205,7 @@ done
 
 
 # Формат вывода lsblk по умолчанию
-export LSBLK_FORMAT="NAME,TYPE,FSTYPE,SIZE,UUID,RM,RO,ROTA"
+export LSBLK_FORMAT="NAME,TYPE,FSTYPE,SIZE,UUID,MOUNTPOINTS,RM,RO,ROTA"
 # Читаем ширину терминала
 TTY_WIDTH=$(tput cols)
 

@@ -1,0 +1,24 @@
+NAME                                              MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS           UUID
+fd0                                                 2:0    1     4K  0 disk                        
+loop0                                               7:0    0 836.7M  1 loop  /run/archiso/airootfs 
+sda                                                 8:0    0   100G  0 disk                        
+├─sda1                                              8:1    0   349M  0 part                        FD65-F97C
+├─sda2                                              8:2    0  19.7G  0 part                        7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167
+│ └─luks_on_sda2                                  254:0    0  19.6G  0 crypt                       tfc66E-cnrD-3V2V-sHKg-MDGr-9yvT-GHeCcc
+│   └─locked_vg-btrfs_in_locked_lvm               254:1    0    10G  0 lvm                         2dc5c011-6739-456a-88a5-5a2c7075b076
+├─sda3                                              8:3    0    30G  0 part                        avcFhY-Z9qW-f1Oc-HoRW-sk9B-VckD-fyeyfn
+│ ├─opened_vg-btrfs_in_opened_lvm                 254:2    0    10G  0 lvm                         4aba42d2-db82-49f5-a1ac-efd35d85d97d
+│ └─opened_vg-luks_in_opened_lvm                  254:3    0    10G  0 lvm                         1eb58acd-e999-489f-a592-5fc8815bc037
+│   └─luks_inside_lvm                             254:4    0    10G  0 crypt                       a742f7f7-e6a3-4f74-b05c-87f836510256
+├─sda4                                              8:4    0    10G  0 part                        5a684c53-53cd-4419-b7b1-04ea97ba09d3
+├─sda5                                              8:5    0    10G  0 part                        f0ecf279-3df6-43e1-b508-0075960299f2
+│ └─luks_on_sda5                                  254:5    0    10G  0 crypt                       e26d96e5-d4b6-4022-8edd-4aa04113fbd4
+├─sda6                                              8:6    0    10G  0 part                        7e4a08f1-cde8-4f97-aef0-2645e2691f2f
+├─sda7                                              8:7    0     5G  0 part                        d8526a70-78a1-40a9-b138-90a248ee6ef6
+│ └─luks_on_sda7                                  254:6    0     5G  0 crypt                       jYP8jX-rWH0-W4TW-leDw-TtHJ-d0xf-643Kb1
+│   └─double_locked_vg-btrfs_in_double_locked_lvm 254:8    0     6G  0 lvm                         cf6f9731-377c-49cf-b427-538427d76609
+└─sda8                                              8:8    0     5G  0 part                        d7cf1e1f-e766-4dc1-8110-744c6b9caea1
+  └─luks_on_sda8                                  254:7    0     5G  0 crypt                       gHy8mS-0j4d-lL8P-MJv7-JOw2-EfDm-kiXkSU
+    └─double_locked_vg-btrfs_in_double_locked_lvm 254:8    0     6G  0 lvm                         cf6f9731-377c-49cf-b427-538427d76609
+sr0                                                11:0    1   380K  0 rom   /mnt/sr0              2025-03-13-19-41-48-00
+sr1                                                11:1    1   1.2G  0 rom   /run/archiso/bootmnt  2025-03-01-17-40-22-00
