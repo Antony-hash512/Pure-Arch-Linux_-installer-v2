@@ -482,6 +482,9 @@ get_device_basename4lsblk() {
 #используем трюк с дополнительной функцией, для "бегства" из подпроцесса (сабшелла)
 get_btrfs_mountpoint() {
     local btrfs_device=$1
+    # Приводим путь к устройству к единому формату (как внутри add_btrfs_mountpoint_to_array)
+    # иначе ключи в массиве ALL_BTRFS_MOUNTPOINTS могут не совпасть
+    btrfs_device=$(standardize_lvm_format "$btrfs_device")
     local btrfs_mountpoint=""
     add_btrfs_mountpoint_to_array "$btrfs_device"
     echo "${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
