@@ -485,7 +485,6 @@ get_btrfs_mountpoint() {
     # Приводим путь к устройству к единому формату (как внутри add_btrfs_mountpoint_to_array)
     # иначе ключи в массиве ALL_BTRFS_MOUNTPOINTS могут не совпасть
     btrfs_device=$(standardize_lvm_format "$btrfs_device")
-    local btrfs_mountpoint=""
     add_btrfs_mountpoint_to_array "$btrfs_device"
     echo "${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
 }
@@ -504,11 +503,11 @@ add_btrfs_mountpoint_to_array() {
         btrfs_mountpoint="${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
     else
         #при помощи команды findmnt проверяем, существует ли хотя бы одна точка монтирования для данного устройства
-        if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
+        #if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
             #создаём временный каталог
             btrfs_mountpoint=$(mktemp -d)
             #монтируем устройство в временный каталог
-            mount "$btrfs_device" "$btrfs_mountpoint"
+            mount -o subvolid=5 "$btrfs_device" "$btrfs_mountpoint"
             
             # Сохраняем точку монтирования в файле для последующего размонтирования
             echo "$btrfs_mountpoint" >> /tmp/btrfs_temp_mounts.txt
@@ -521,10 +520,10 @@ add_btrfs_mountpoint_to_array() {
                 echo -e "${RED}Устройство $btrfs_device не смонтировалось${NC}" >&2
                 exit 1
             fi
-        else
+        #else
             #получаем точку монтирования для устройства (первую попавшуюся, если их несколько)
-            btrfs_mountpoint=$(findmnt -l -n -o TARGET "$btrfs_device" | sed -n '1p')
-        fi
+            #btrfs_mountpoint=$(findmnt -l -n -o TARGET "$btrfs_device" | sed -n '1p')
+        #fi
         #добавляем точку монтирования в массив ALL_BTRFS_MOUNTPOINTS
         ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]="$btrfs_mountpoint"
     fi
