@@ -142,6 +142,34 @@
 		</extrafiles>
 	</softpack>
 	
+	<softpack name="lxde_lxdm" description="Неурезанный LXDE c LXDM">
+		<init_system>systemd</init_system>
+		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
+		<pakages>
+			<pacstrap>base base-devel linux linux-firmware</pacstrap>
+			<bundle>networkmanager btrfs-progs mc yazi lf ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
+			<bundle>cfdisk timeshift wipe snapper</bundle>
+			<bundle>nvim nano micro diffutils</bundle>
+			<bundle>fastfetch cowsay</bundle>
+			<bundle>terminus-font</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mplayer</bundle>
+			<bundle>lxdm lxde xclip</bundle>
+			<bundle>gvim xed luakit tree</bundle>
+			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>sof-firmware mplayer mpv</bundle>
+			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
+			<bundle>firefox chromium geany thunar meld terminator baobab</bundle>
+			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle>
+			<aur>compiz</aur>
+		</pakages>
+		
+		<extrafiles>
+			<home>
+				<archive>homefiles.tar.zst</archive>
+			</home>
+		</extrafiles>
+	</softpack>
+	
 	<softpack name="openbox" description="Легкий рабочий стол Openbox">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>openbox multilibs</softpack_tweaks>
@@ -150,7 +178,7 @@
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
-			<bundle>neofetch cowsay</bundle>
+			<bundle>fastfetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
@@ -236,7 +264,51 @@
 		<efi>
 			<bootlabel>ArchGnomeNotCrypted</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
+		</efi>
+		<iso>false</iso>
+	</install_location>
+	
+	<install_location name="vivo_something" description="Установка lxde на Vivobook">
+		<mountpoints>
+			<point type="new">
+				<location>/</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
+				<subvolume>@lxde</subvolume>
+			</point>
+			<point type="new">
+				<location>/var/log</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
+				<subvolume>@lxde_logs</subvolume>
+			</point>
+			<point type="new">
+				<location>/var/cache/pacman/pkg</location>
+				<way>new_subvol_in_btrfs_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/vivo/btrbox</lv-volume>
+				<subvolume>@pacman_cache</subvolume>
+			</point>
+			<point type="new">
+				<location>/home</location>
+				<way>new_ext4_in_lvm</way>
+				<crypt_mode>none_in_none</crypt_mode>
+				<lv-volume>/dev/vivo/homes</lv-volume>
+				<size>120G</size>
+			</point>
+		</mountpoints>
+		<hostname>vivobook</hostname>
+		<username>admin-lxde</username>
+		<useruid>1000</useruid>
+		<hooks>base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 resume filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchLXDENotCrypted</bootlabel>
+			<dev>/dev/nvme0n1p1</dev>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>false</iso>
 	</install_location>
@@ -290,7 +362,7 @@
 		<efi>
 			<bootlabel>ArchGnomeNotCrypted2</bootlabel>
 			<dev>/dev/nvme0n1p1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>false</iso>
 	</install_location>
@@ -323,7 +395,7 @@
 		<efi>
 			<bootlabel>ArchTest1</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -346,7 +418,7 @@
 		<efi>
 			<bootlabel>ArchTest1</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>	
@@ -376,7 +448,7 @@
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -399,7 +471,7 @@
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -422,7 +494,7 @@
 		<efi>
 			<bootlabel>ArchTest3</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -444,7 +516,7 @@
 		<efi>
 			<bootlabel>ArchTest3</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -473,7 +545,7 @@
 		<efi>
 			<bootlabel>ArchTest4</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -495,7 +567,7 @@
 		<efi>
 			<bootlabel>ArchTest4</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -525,7 +597,7 @@
 		<efi>
 			<bootlabel>ArchTest5</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -547,7 +619,7 @@
 		<efi>
 			<bootlabel>ArchTest5</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -570,7 +642,7 @@
 		<efi>
 			<bootlabel>ArchTest6</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -592,7 +664,7 @@
 		<efi>
 			<bootlabel>ArchTest6</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -615,7 +687,7 @@
 		<efi>
 			<bootlabel>ArchTest5a</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -638,7 +710,7 @@
 		<efi>
 			<bootlabel>ArchTest6a</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -660,7 +732,7 @@
 		<efi>
 			<bootlabel>ArchTest7</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -681,7 +753,7 @@
 		<efi>
 			<bootlabel>ArchTest8</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -704,7 +776,7 @@
 		<efi>
 			<bootlabel>ArchTest9</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -727,7 +799,7 @@
 		<efi>
 			<bootlabel>ArchTest9</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -750,7 +822,7 @@
 		<efi>
 			<bootlabel>ArchTest10</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -777,7 +849,7 @@
 		<efi>
 			<bootlabel>ArchTest11</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
@@ -800,7 +872,7 @@
 		<efi>
 			<bootlabel>ArchTest12</bootlabel>
 			<dev>/dev/sda1</dev>
-			<new_location>/boot/efi</new_location>
+			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
 	</install_location>
