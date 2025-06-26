@@ -47,7 +47,7 @@
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
 			<bundle>terminus-font</bundle>
-			<bundle>base-devel rust cmake meson ninja</bundle>
+			<bundle>base-devel rustup cmake meson ninja</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
 			<bundle>zsh zsh-syntax-highlighting fish</bundle>
@@ -89,7 +89,7 @@
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>fastfetch neofetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
-			<bundle>base-devel rust cmake meson ninja</bundle>
+			<bundle>base-devel rustup cmake meson ninja</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu</bundle>
             <bundle>hyprland wayland xorg-xwayland wlroots polkit kitty wofi</bundle>
             <bundle>brightnessctl waybar swaylock hyprlock nm-applet swayidle hypridle xed nwg-look</bundle>
@@ -142,7 +142,7 @@
 		</extrafiles>
 	</softpack>
 	
-	<softpack name="lxde_lxdm" description="Неурезанный LXDE c LXDM">
+	<softpack name="lxde_with_dm" description="Неурезанный LXDE c LightDM">
 		<init_system>systemd</init_system>
 		<softpack_tweaks>multilibs userdirs</softpack_tweaks>
 		<pakages>
@@ -153,13 +153,17 @@
 			<bundle>fastfetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mplayer</bundle>
-			<bundle>lxdm lxde xclip</bundle>
+			<bundle>zip unzip<bundle>
+			<bundle>alsa-utils pipewire sof-firmware mpv volumeicon pavucontrol</bundle>
+			<bundle>lightdm lightdm-gtk-greeter lxde xclip nm-connection-editor network-manager-applet xarchiver brightnessctl</bundle>
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
-			<bundle>sof-firmware mplayer mpv</bundle>
+			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium geany thunar meld terminator baobab</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle>
+			
+
 			<aur>compiz</aur>
 		</pakages>
 		
@@ -181,7 +185,7 @@
 			<bundle>fastfetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober docker tmux diff ncdu ffmpeg mediainfo</bundle>
-			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mplayer</bundle>
+			<bundle>alsa-utils pipewire pipewire-pulseaudio sof-firmware mpv</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs gmrun pavucontrol brightnessctl i3lock gsimplecal xclip</bundle>			
 			<bundle>gvim xed luakit tree</bundle>
