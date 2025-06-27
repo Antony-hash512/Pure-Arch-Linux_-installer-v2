@@ -24,6 +24,8 @@ MY_TIMEZONE="$(parse_xml settings get_timezone)"
 MY_LOCALE="$(parse_xml settings get_default_locale)"
 ALL_LOCALES="$(parse_xml settings get_locales)"
 
+EFI_NEW_LOCATION="$(parse_xml install_location get_efi_new_location)"
+
 SOFTPACK_TWEAKS="$(parse_xml softpack get_softpack_tweaks)"
 
 #проверяем, есть ли в настройках openbox
@@ -128,7 +130,7 @@ mkinitcpio -P
 
 # Установка загрузчика
 pacman -S grub efibootmgr  --noconfirm
-grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=$EFI_SYS_NAME
+grub-install --target=x86_64-efi --efi-directory=$EFI_NEW_LOCATION --bootloader-id=$EFI_SYS_NAME
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Делаем новую запись EFI загрузчиком по умолчанию
