@@ -162,6 +162,7 @@
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium geany thunar meld terminator baobab</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle>
+			<bundle>sqlitebrowser bless</bundle>
 			
 
 			<aur>compiz</aur>
