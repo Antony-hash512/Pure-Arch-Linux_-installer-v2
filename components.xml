@@ -153,7 +153,7 @@
 			<bundle>fastfetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mplayer</bundle>
-			<bundle>zip unzip<bundle>
+			<bundle>zip unzip</bundle>
 			<bundle>alsa-utils pipewire sof-firmware mpv volumeicon pavucontrol</bundle>
 			<bundle>lightdm lightdm-gtk-greeter lxde xclip nm-connection-editor network-manager-applet xarchiver brightnessctl</bundle>
 			<bundle>gvim xed luakit tree</bundle>
