@@ -502,32 +502,25 @@ add_btrfs_mountpoint_to_array() {
     if [[ -n "${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}" ]]; then
         btrfs_mountpoint="${ALL_BTRFS_MOUNTPOINTS[$btrfs_device]}"
     else
-        #при помощи команды findmnt проверяем, существует ли хотя бы одна точка монтирования для данного устройства
-        #if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
-            #создаём временный каталог
-            btrfs_mountpoint=$(mktemp -d)
-            #монтируем устройство в временный каталог
-            mount -o subvolid=5 "$btrfs_device" "$btrfs_mountpoint"
+        btrfs_mountpoint=$(mktemp -d)
+        #монтируем устройство в временный каталог
+        mount -o subvolid=5 "$btrfs_device" "$btrfs_mountpoint"
             
-            # Сохраняем точку монтирования в файле для последующего размонтирования
-            echo "$btrfs_mountpoint" >> /tmp/btrfs_temp_mounts.txt
+        # Сохраняем точку монтирования в файле для последующего размонтирования
+        echo "$btrfs_mountpoint" >> /tmp/btrfs_temp_mounts.txt
             
-            # Выводим сообщение в stderr, чтобы не влиять на вывод функции
-            echo -e "${GRAY}${ITALIC}Добавлена временная точка монтирования: $btrfs_mountpoint${NC}" >&2
+        # Выводим сообщение в stderr, чтобы не влиять на вывод функции
+        echo -e "${GRAY}${ITALIC}Добавлена временная точка монтирования: $btrfs_mountpoint${NC}" >&2
             
-            #проверяем, что устройство успешно смонтировалось
-            if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
-                echo -e "${RED}Устройство $btrfs_device не смонтировалось${NC}" >&2
-                exit 1
-            fi
-        #else
-            #получаем точку монтирования для устройства (первую попавшуюся, если их несколько)
-            #btrfs_mountpoint=$(findmnt -l -n -o TARGET "$btrfs_device" | sed -n '1p')
-        #fi
+        #проверяем, что устройство успешно смонтировалось
+        if ! findmnt "$btrfs_device" > /dev/null 2>&1; then
+            echo -e "${RED}Устройство $btrfs_device не смонтировалось${NC}" >&2
+            exit 1
+        fi
+
         #добавляем точку монтирования в массив ALL_BTRFS_MOUNTPOINTS
         ALL_BTRFS_MOUNTPOINTS["$btrfs_device"]="$btrfs_mountpoint"
     fi
-    #echo "$btrfs_mountpoint"
 }
 
 
