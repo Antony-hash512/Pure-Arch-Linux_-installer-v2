@@ -414,6 +414,13 @@
 				<subvolume>@arch</subvolume>
 				<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
 			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -466,6 +473,13 @@
 				<lv-volume>/dev/mapper/locked_vg-new_ext4_from_test2</lv-volume>
 				<size>5G</size>
 				<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
@@ -563,6 +577,13 @@
 				<lv-volume>/dev/mapper/opened_vg-luks_in_opened_lvm</lv-volume>
 				<subvolume>@arch</subvolume>
 			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -614,6 +635,13 @@
 				<crypt_mode>pwd_in_none</crypt_mode>
 				<lv-volume>/dev/mapper/opened_vg-new_encrypted_ext4_in_open_lvm</lv-volume>
 				<size>5G</size>
+			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
@@ -683,6 +711,13 @@
 				<lv-volume>/dev/opened_vg/new_encrypted_ext4_in_open_lvm</lv-volume>
 				<size>200G</size>
 			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -705,6 +740,13 @@
 				<crypt_mode>none_in_none</crypt_mode>
 				<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
 				<size>200G</size>
+			</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
 			</point>
 		</mountpoints>
 		<hostname>qemu-arch</hostname>
@@ -749,6 +791,13 @@
         		<crypt_mode>pwd</crypt_mode>
         		<uuid>7e4a08f1-cde8-4f97-aef0-2645e2691f2f</uuid>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -772,6 +821,13 @@
         		<subvolume>@arch</subvolume>
         		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -795,6 +851,13 @@
         		<subvolume>@arch</subvolume>
         		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -818,6 +881,13 @@
         		<size>5G</size>
         		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -845,6 +915,13 @@
 				7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167,
 				</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>
 		<username>user</username>
@@ -868,6 +945,13 @@
         		<size>5G</size>
         		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_arch1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         </mountpoints>
         <hostname>qemu-arch</hostname>
 		<username>user</username>
