@@ -1575,14 +1575,14 @@ configure_crypt_volumes_by_ref(){
                 uuids=($(echo "${current_row["pv-volumes-uuids"]}" | tr ',' '\n'))
                 
                 # Пишем строки в /etc/crypttab
-                 for uuid in "${uuids[@]}"; do
-                     #luks_name=$(standardize_lvm_format_to_mapper "$luks_device_fullname")
-                     if [[ $crypt_mode == *"pwd"* ]]; then
+                for uuid in "${uuids[@]}"; do
+                    #luks_name=$(standardize_lvm_format_to_mapper "$luks_device_fullname")
+                    if [[ $crypt_mode == *"pwd"* ]]; then
                          echo "luks-$uuid UUID=$uuid none luks" >> "$INST_DIR/etc/crypttab"
-                     elif [[ $crypt_mode == *"file"* ]]; then
+                    elif [[ $crypt_mode == *"file"* ]]; then
                          echo "luks-$uuid UUID=$uuid ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
-                     fi
-                 done
+                    fi
+                done
                 
                 # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
                 # там экранированы открывающая кавычка и слеш для перехода на новую строку
@@ -1619,10 +1619,55 @@ configure_crypt_volumes_by_ref(){
                 echo "\"" >> "$INST_DIR/etc/default/grub"
             fi
         else
+            if [[ $crypt_mode == *"pwd"* ]]; then
+                echo "$opened_crypt_container_name $luks_device_fullname none luks" >> "$INST_DIR/etc/crypttab"
+            elif [[ $crypt_mode == *"file"* ]]; then
+                echo "$opened_crypt_container_name $luks_device_fullname ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+            fi
+            
             #обычный LUKS на разделе
-            :
+            # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
+            # там экранированы открывающая кавычка и слеш для перехода на новую строку
+            echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
+             # тут не будет цикла, т.к. в этом случае будет только один uuid (и даже логический том, который можно прописать просто по названию без uuid)
+            echo "  cryptdevice=$luks_device_fullname:$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+            # Для Btrfs-корня указываем subvol
+            if [[ $type == *"btrfs"* ]]; then
+                echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
+            fi
+
+            # Закрываем кавычки
+            echo "\"" >> "$INST_DIR/etc/default/grub"
+            
         fi
-        
+    else
+        #не рутовая точка монтирования
+        if [[ $type == *"_in_lvm"* ]]; then
+            if [[ $crypt_mode == *"none_in_"* ]]; then
+                # Пишем строки в /etc/crypttab
+                for uuid in "${uuids[@]}"; do
+                    #luks_name=$(standardize_lvm_format_to_mapper "$luks_device_fullname")
+                    if [[ $crypt_mode == *"pwd"* ]]; then
+                         echo "luks-$uuid UUID=$uuid none luks" >> "$INST_DIR/etc/crypttab"
+                    elif [[ $crypt_mode == *"file"* ]]; then
+                         echo "luks-$uuid UUID=$uuid ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+                    fi
+                done
+                
+            elif [[ $crypt_mode == *"_in_none"* ]]; then
+                if [[ $crypt_mode == *"pwd"* ]]; then
+                    echo "$opened_crypt_container_name $luks_device_fullname none luks" >> "$INST_DIR/etc/crypttab"
+                elif [[ $crypt_mode == *"file"* ]]; then
+                    echo "$opened_crypt_container_name $luks_device_fullname ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+                fi
+            fi
+        else
+            if [[ $crypt_mode == *"pwd"* ]]; then
+                echo "$opened_crypt_container_name $luks_device_fullname none luks" >> "$INST_DIR/etc/crypttab"
+            elif [[ $crypt_mode == *"file"* ]]; then
+                echo "$opened_crypt_container_name $luks_device_fullname ${current_row["keyfile"]} luks" >> "$INST_DIR/etc/crypttab"
+            fi
+        fi
     fi
 }
 
