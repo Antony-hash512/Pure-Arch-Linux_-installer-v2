@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- возможное содержимое softpack/sofpack_tweaks: openbox hyperland multilibs paru flatpack downgrade swap createroot zsh fish-->
+<!-- возможное содержимое softpack/sofpack_tweaks (данная функция, если будет реализовываться, то только после mvp):
+ openbox hyperland multilibs paru flatpack downgrade swap createroot zsh fish-->
 <!-- ВАЖНО: если есть графическая среда, то вместо пакета vim нужно установливать пакет gvim, который конфликтует в с пакетом vim,
 но тоже содержит команду vim, чтобы в консольном vim работал общесистемный буфер обмена в эмуляторе терминала -->
 <componets>
@@ -811,7 +812,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test9_mapper" description="Тестовая установка на VM 9 (mapper)">
+	<install_location name="vm_test9_mapper" description="Тестовая установка на VM 9 (mapper) и хук systemd">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -832,7 +833,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
+		<hooks>base systemd autodetect microcode modconf kms sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest9</bootlabel>
@@ -841,7 +842,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test9" description="Тестовая установка на VM 9">
+	<install_location name="vm_test9" description="Тестовая установка на VM 9 (не будет работать)">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -901,7 +902,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test10" description="Тестовая установка на VM 10">
+	<install_location name="vm_test10" description="Тестовая установка на VM 10 (не будет работать)">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -961,7 +962,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test11" description="Тестовая установка на VM 11">
+	<install_location name="vm_test11" description="Тестовая установка на VM 11 (не будет работать)">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -1029,7 +1030,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test12" description="Тестовая установка на VM 12">
+	<install_location name="vm_test12" description="Тестовая установка на VM 12 (не будет работать)">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
