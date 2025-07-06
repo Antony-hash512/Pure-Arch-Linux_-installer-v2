@@ -1563,6 +1563,18 @@ configure_crypt_volumes_by_ref(){
     local crypt_mode=${current_row["crypt_mode"]}
     local mount_point=${current_row["mount_point"]}
     local type=${current_row["type"]}
+    local hooks=$(parse_xml install_location get_hooks)
+    local init_hook="busybox"
+    if [[ "$hooks" == *"systemd"* ]]; then
+        init_hook="systemd"
+    elif [[ "$hooks" == *"udev"* ]]; then
+        init_hook="busybox"
+    else
+        init_hook="busybox"
+        echo -e "${RED}Неизвестный хуки для системы инициализации, не найдены systemd или udev: $hooks${NC}" >&2
+        echo -e "${RED}Для использования других хуков инициализации, скрипт требует доработки${YELLOW}(ctrl+c для выхода)${NC}" >&2
+        make_pause
+    fi
     #проверяем точку монтирования
     if [[ "$mount_point" == "/" ]]; then
         #  настраиваем параметры ядра в grub по разному для каждого из случаев
@@ -1587,9 +1599,15 @@ configure_crypt_volumes_by_ref(){
                 # Формируем параметр GRUB_CMDLINE_LINUX целиком в одной паре кавычек
                 # там экранированы открывающая кавычка и слеш для перехода на новую строку
                 echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
-                for uuid in "${uuids[@]}"; do
-                    echo "  cryptdevice=UUID=$uuid:luks-$uuid\\" >> "$INST_DIR/etc/default/grub"
-                done
+                if [[ "$init_hook" == "systemd" ]]; then
+                    for uuid in "${uuids[@]}"; do
+                        echo "   rd.luks.name=$uuid=luks-$uuid\\" >> "$INST_DIR/etc/default/grub"
+                    done
+                else
+                    for uuid in "${uuids[@]}"; do
+                        echo "  cryptdevice=UUID=$uuid:luks-$uuid\\" >> "$INST_DIR/etc/default/grub"
+                    done
+                fi
                 echo "  root=$(standardize_lvm_format_to_mapper ${current_row["lv-volume"]})\\" >> "$INST_DIR/etc/default/grub"
                 # Для Btrfs-корня указываем subvol
                 if [[ $type == *"btrfs"* ]]; then
@@ -1609,7 +1627,11 @@ configure_crypt_volumes_by_ref(){
                 # там экранированы открывающая кавычка и слеш для перехода на новую строку
                 echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
                 # тут не будет цикла, т.к. в этом случае будет только один uuid (и даже логический том, который можно прописать просто по названию без uuid)
-                echo "  cryptdevice=$luks_device_fullname:$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+                if [[ "$init_hook" == "systemd" ]]; then
+                    echo "  rd.luks.name=$luks_device_fullname=$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+                else
+                    echo "  cryptdevice=$luks_device_fullname:$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+                fi
                 # Для Btrfs-корня указываем subvol
                 if [[ $type == *"btrfs"* ]]; then
                     echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
@@ -1630,7 +1652,11 @@ configure_crypt_volumes_by_ref(){
             # там экранированы открывающая кавычка и слеш для перехода на новую строку
             echo "GRUB_CMDLINE_LINUX=\"\\" >> "$INST_DIR/etc/default/grub"
              # тут не будет цикла, т.к. в этом случае будет только один uuid (и даже логический том, который можно прописать просто по названию без uuid)
-            echo "  cryptdevice=$luks_device_fullname:$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+            if [[ "$init_hook" == "systemd" ]]; then
+                echo "  rd.luks.name=$luks_device_fullname=$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+            else
+                echo "  cryptdevice=$luks_device_fullname:$opened_crypt_container_name root=$opened_crypt_container_fullname\\" >> "$INST_DIR/etc/default/grub"
+            fi
             # Для Btrfs-корня указываем subvol
             if [[ $type == *"btrfs"* ]]; then
                 echo "  rootflags=subvol=${current_row["subvolume"]}\\" >> "$INST_DIR/etc/default/grub"
