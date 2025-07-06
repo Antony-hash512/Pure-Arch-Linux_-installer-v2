@@ -842,37 +842,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test9" description="Тестовая установка на VM 9 (не будет работать)">
-        <mountpoints>
-        	<point type="new">
-        		<location>/</location>
-        		<way>new_subvol_in_btrfs_in_lvm</way>
-        		<crypt_mode>none_in_pwd</crypt_mode>
-        		<lv-volume>/dev/double_locked_vg/btrfs_in_double_locked_lvm</lv-volume>
-        		<subvolume>@arch</subvolume>
-        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
-        	</point>
-			<point type="new">
-				<location>/boot</location>
-				<way>new_subvol_in_btrfs</way>
-				<crypt_mode>none</crypt_mode>
-				<subvolume>@boot_arch1</subvolume>
-				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
-			</point>
-        </mountpoints>
-        <hostname>qemu-arch</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
-		<legacy_bios>false</legacy_bios>
-		<efi>
-			<bootlabel>ArchTest9</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-	<install_location name="vm_test9_systemd_hook" description="Тестовая установка на VM 9 с хуком systemd">
+	<install_location name="vm_test9" description="Тестовая установка на VM 9 с хуком systemd">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -902,37 +872,8 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test10" description="Тестовая установка на VM 10 (не будет работать)">
-        <mountpoints>
-        	<point type="new">
-        		<location>/</location>
-        		<way>new_ext4_in_lvm</way>
-        		<crypt_mode>none_in_pwd</crypt_mode>
-        		<lv-volume>/dev/double_locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
-        		<size>5G</size>
-        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1</pv-volumes-uuids>
-        	</point>
-			<point type="new">
-				<location>/boot</location>
-				<way>new_subvol_in_btrfs</way>
-				<crypt_mode>none</crypt_mode>
-				<subvolume>@boot_arch1</subvolume>
-				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
-			</point>
-        </mountpoints>
-        <hostname>qemu-arch</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
-		<legacy_bios>false</legacy_bios>
-		<efi>
-			<bootlabel>ArchTest10</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-	<install_location name="vm_test10_systemd_hook" description="Тестовая установка на VM 10 с хуком systemd">
+
+	<install_location name="vm_test10" description="Тестовая установка на VM 10 с хуком systemd">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -962,41 +903,8 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test11" description="Тестовая установка на VM 11 (не будет работать)">
-        <mountpoints>
-        	<point type="new">
-        		<location>/</location>
-        		<way>new_subvol_in_btrfs_in_lvm</way>
-        		<crypt_mode>none_in_pwd</crypt_mode>
-        		<lv-volume>/dev/double_locked_vg/btrfs_in_double_locked_lvm</lv-volume>
-        		<subvolume>@arch</subvolume>
-        		<pv-volumes-uuids>
-				d8526a70-78a1-40a9-b138-90a248ee6ef6,
-				d7cf1e1f-e766-4dc1-8110-744c6b9caea1,
-				7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167,
-				</pv-volumes-uuids>
-        	</point>
-			<point type="new">
-				<location>/boot</location>
-				<way>new_subvol_in_btrfs</way>
-				<crypt_mode>none</crypt_mode>
-				<subvolume>@boot_arch1</subvolume>
-				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
-			</point>
-        </mountpoints>
-        <hostname>qemu-arch</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
-		<legacy_bios>false</legacy_bios>
-		<efi>
-			<bootlabel>ArchTest11</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-	<install_location name="vm_test11_systemd_hook" description="Тестовая установка на VM 11 с хуком systemd">
+	
+	<install_location name="vm_test11" description="Тестовая установка на VM 11 с хуком systemd">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
@@ -1030,37 +938,7 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
-	<install_location name="vm_test12" description="Тестовая установка на VM 12 (не будет работать)">
-        <mountpoints>
-        	<point type="new">
-        		<location>/</location>
-        		<way>new_ext4_in_lvm</way>
-        		<crypt_mode>none_in_pwd</crypt_mode>
-        		<lv-volume>/dev/double_locked_vg/new_ext4_in_double_luksed_pvs</lv-volume>
-        		<size>5G</size>
-        		<pv-volumes-uuids>d8526a70-78a1-40a9-b138-90a248ee6ef6,d7cf1e1f-e766-4dc1-8110-744c6b9caea1,7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
-        	</point>
-			<point type="new">
-				<location>/boot</location>
-				<way>new_subvol_in_btrfs</way>
-				<crypt_mode>none</crypt_mode>
-				<subvolume>@boot_arch1</subvolume>
-				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
-			</point>
-        </mountpoints>
-        <hostname>qemu-arch</hostname>
-		<username>user</username>
-		<useruid>1000</useruid>
-		<hooks>base udev autodetect microcode modconf kms keymap consolefont block encrypt lvm2 filesystems fsck</hooks>
-		<legacy_bios>false</legacy_bios>
-		<efi>
-			<bootlabel>ArchTest12</bootlabel>
-			<dev>/dev/sda1</dev>
-			<new_location>/efi</new_location>
-		</efi>
-		<iso>true</iso>
-	</install_location>
-	<install_location name="vm_test12_systemd_hook" description="Тестовая установка на VM 12 с хуком systemd">
+	<install_location name="vm_test12" description="Тестовая установка на VM 12 с хуком systemd">
         <mountpoints>
         	<point type="new">
         		<location>/</location>
