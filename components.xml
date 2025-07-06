@@ -892,7 +892,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block encrypt lvm2 filesystems fsck</hooks>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest9</bootlabel>
@@ -952,7 +952,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block encrypt lvm2 filesystems fsck</hooks>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest10</bootlabel>
@@ -1020,7 +1020,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block encrypt lvm2 filesystems fsck</hooks>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest11</bootlabel>
@@ -1080,7 +1080,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block encrypt lvm2 filesystems fsck</hooks>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest12</bootlabel>
