@@ -134,10 +134,10 @@ fi
 # используем trap для вызова функции cleanup_all при любом выходе из скрипта
 trap 'cleanup_all' EXIT
 
-function long_flag_was_used {
+long_flag_was_used() {
     echo -e "${GREEN}Длинный флаг $1 был использован${NC}"
 }
-function enable_log {
+enable_log() {
     if [[ ! -f "$LOG_FILE" ]]; then
         touch "$LOG_FILE"
         chmod 666 "$LOG_FILE"
