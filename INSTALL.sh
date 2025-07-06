@@ -1146,8 +1146,8 @@ echo -e "${GREEN}ALL DONE${NC}"
 
 
 if [[ $INSTALL_FROM == "other_system" ]]; then
-    echo "не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)"
+    echo -e "${YELLOW}не забудь выполнить grub-mkconfig -o /boot/grub/grub.cfg (если нужно)${NC}"
     read -p "Нажмите Enter для выхода..."
 else
-    echo "Установка завершена. Перезагрузите компьютер."
+    echo -e "${YELLOW}Установка завершена. Перезагрузите компьютер.${NC}"
 fi
