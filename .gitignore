@@ -7,6 +7,8 @@ git_configs/*
 old_diffs/*
 tar_zsts_contents/*
 !tar_zsts_contents/.gitkeep
+trashbin/*
+!trashbin/.gitkeep
 log.txt
 
 
