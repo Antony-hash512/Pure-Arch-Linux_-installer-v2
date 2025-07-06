@@ -1550,6 +1550,7 @@ open_all_luks_devices(){
     activate_lvm_groups_for_opened_crypt_containers "$vg_name"
     # Предупреждаем пользователя о подводном камне
     echo -e "${YELLOW}ВНИМАНИЕ: в таком режиме используйте только зашифрованные физические тома lvm для данной группы томов иначе будет дыра в безопасности;${NC}"
+    make_pause
                 
 }
 
