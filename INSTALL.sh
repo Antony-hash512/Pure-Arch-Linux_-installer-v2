@@ -47,6 +47,7 @@ EOF
 * протестировать различные варианты установок на vm
 * убрать мусорные ошибки на этапе отображения информации (например во втором тесте)
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
+* добавить кастомные настройки рефлектора в xml-файл
 * зарелизить бету !!!! <-- ВАЖНО НАКОНЕЦ-ТО НАДО ЗАРЕЛИЗИТЬ ГОТОВЫЙ MVP
 * написать функцию, для проверки гарантированного свободного места в btrfs томах
 * создать функцию, которая будет проверять корректность данных в xml-файле
@@ -265,7 +266,17 @@ echo -e "${YELLOW}Перед использованием скрипта так�
 read -p "Enter - продолжить; ctrl+C - прервать"
 
 #Обновление времени
+echo -e "${YELLOW}Обновление времени...${NC}"
 timedatectl set-ntp true
+
+# Настройка зеркал
+echo -e "${YELLOW}Настройка зеркал...${NC}"
+if ! pacman -Qi reflector &>/dev/null; then
+    sudo pacman -S reflector --noconfirm
+fi
+#  потом это можно делать через файл конфигурации
+reflector --country Georgia --latest 5 --protocol https --sort rate > /etc/pacman.d/mirrorlist
+reflector --country Germany,Netherlands --latest 10 --protocol https --download-timeout 15 --sort rate >> /etc/pacman.d/mirrorlist
 
 #1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
 if [[ "$TTY_WIDTH" -lt 150 ]]; then
@@ -287,6 +298,8 @@ done
 # "lvm2" "cryptsetup" "btrfs-progs" - можно установливать позже по мере необхотмости но пока прописаны здесь
 # почти все простые вещи входят в base, а именно grep, sed, util-linux для lsblk, coreutils для date
 # можно автоматически определять есть ли хоть где-нибудь шифрование (хотя от этой установки вреда всё равно не будет)
+
+
 
 
 #2) получаем от пользователя данные какие компоненты использовать
@@ -874,15 +887,7 @@ fi
 
 #создаём временный каталог для монтирования системы
 INST_DIR=$(mktemp -d)
-#добавляем к имени каталога текущую дату и время для уникальности
-#INST_DIR="/mnt/system_installing_$(date +%Y-%m-%d_%H-%M)"
-#mkdir -p $INST_DIR 
-##проверка, что этот каталог не смонтирован
-#if mount | grep -q $INST_DIR; then
-#    echo "Ошибка: каталог $INST_DIR уже смонтирован" >&2
-#    exit 1
-#fi
-#
+
 
 
 # случаи для legacy будут добавлены потом
@@ -1106,6 +1111,9 @@ ARCHIVES_4HOME="$(parse_xml softpack get_archs4home)"
 for archive in $ARCHIVES_4HOME; do
     cp $SCRIPT_DIR/$archive $INST_DIR
 done
+
+# копируем настроенные зеркала:
+cp /etc/pacman.d/mirrorlist $INST_DIR/etc/pacman.d/mirrorlist
 
 #-------------------------------
 # Chroot в новую систему
