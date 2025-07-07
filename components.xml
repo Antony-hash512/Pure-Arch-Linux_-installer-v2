@@ -969,6 +969,64 @@
 		<iso>true</iso>
 	</install_location>
 
+	<install_location name="vm_test14_step1" description="Тестовая установка на VM 14 (step1)">
+        <mountpoints>
+            <point type="new">
+	        	<location>/</location>
+	        	<way>new_subvol_in_btrfs_in_lvm</way>
+	        	<crypt_mode>none_in_none</crypt_mode>
+	        	<lv-volume>/dev/opened_vg/btrfs_in_opened_lvm</lv-volume>
+	        	<subvolume>@arch</subvolume>
+	        </point>
+	        <point type="new">
+	        	<location>/home</location>
+	        	<way>new_ext4_in_lvm</way>
+	        	<crypt_mode>none_in_none</crypt_mode>
+	        	<lv-volume>/dev/opened_vg/home</lv-volume>
+	        	<size>2G</size>
+	        </point>
+		</mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest14_step1</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test14_step2" description="Тестовая установка на VM 14 (step2)">
+        <mountpoints>
+            <point type="new">
+        		<location>/</location>
+        		<way>new_ext4_in_lvm</way>
+        		<crypt_mode>none_in_none</crypt_mode>
+        		<lv-volume>/dev/opened_vg/new_ext4_in_open_lvm</lv-volume>
+        		<size>5G</size>
+        	</point>
+        	<point type="extra">
+        		<location>/home</location>
+        		<way>volume_in_lvm</way>
+        		<crypt_mode>none_in_none</crypt_mode>
+        		<lv-volume>/dev/opened_vg/home</lv-volume>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user2</username>
+		<useruid>1000</useruid>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest14_step2</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+
 </install_locations>
 
 <settings_variants>
