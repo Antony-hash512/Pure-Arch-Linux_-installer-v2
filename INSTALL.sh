@@ -256,6 +256,9 @@ declare -a CRYPT_LV_VOLUMES
 #создаём массив для хранения имен новых точек монтирования
 declare -a NEW_MOUNTPOINTS
 
+#создаём массив для хранения имен дополнительных точек монтирования (просто для прописывания в /etc/fstab)
+declare -a EXTRA_MOUNTPOINTS
+
 #создаём ассоциативный массив, который будет хранить размеры требуемого свободного места
 #в группах томов lvm
 declare -A ALL_LVM_VOLUMES_REQUIRED_SPACE
@@ -314,6 +317,9 @@ check_key_and_request_component_id "install_location"
 NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
 echo -e "${YELLOW}Количество новых точек монтирования:${NC} $NEW_MOUNTPOINTS_AMOUNT"
 
+EXTRA_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_extra_mountpoints")
+echo -e "${YELLOW}Количество дополнительных точек монтирования:${NC} $EXTRA_MOUNTPOINTS_AMOUNT"
+
 for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
     NEW_MOUNTPOINT=$(parse_xml "install_location" "get_new_mountpoint" "$i")
     CURRENT_POINT_NAME="new_point$i"
@@ -321,6 +327,14 @@ for ((i=0; i<$NEW_MOUNTPOINTS_AMOUNT; i++)); do
     #получаем ассоциативный массив из строки
     eval "$CURRENT_POINT_NAME=$NEW_MOUNTPOINT"
     NEW_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
+done
+
+for ((i=0; i<$EXTRA_MOUNTPOINTS_AMOUNT; i++)); do
+    EXTRA_MOUNTPOINT=$(parse_xml "install_location" "get_extra_mountpoint" "$i")
+    CURRENT_POINT_NAME="extra_point$i"
+    declare -A "$CURRENT_POINT_NAME"
+    eval "$CURRENT_POINT_NAME=$EXTRA_MOUNTPOINT"
+    EXTRA_MOUNTPOINTS+=("$CURRENT_POINT_NAME")
 done
 
 #3) проходимся по массиву точек монтирования, открываем крипто-контейнеры,
