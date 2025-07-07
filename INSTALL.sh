@@ -357,7 +357,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
         exit 1
     fi
 
-    #device=${current_row["device"]} #device выпилен из xml-файла
+    #device выпилен из xml-файла
     #вместо него будет использоваться uuid или lv-volume в зависимости от type
     
     #в каждый кейс прописан подкейс с опциями шифрования
@@ -388,14 +388,9 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
                 "none")
                     current_row["device_for_operations"]=$ext4_partition
                     ;;
-                "file")
+                "file"|"pwd")
                     # пояснение: пока не делаем что либо, то тех пор пока
                     #пользователь подтвердит начало установки, до этого измененения на диск мы не вносим
-                    pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
- 
-                    ;;
-                "pwd")
-                    #  аналогично предыдущему случаю
                     pending_commands_description["$basename_of_ext4_partition"]="Будет отформатировано в LUKS, с ext4 внутри для точки монтирования $mount_point"
                     ;;
                 *)
@@ -463,7 +458,7 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             #в таких режимах от пользователя также требуется указать партишн с luks в котором лежит pv lvm
             #в случае последующих if'ов в качестве девайса для операций будет использоваться прописанный в xml lv lvm,
             #а не открытый крипто-контейнер, т.к. там pv lvm, а не lv lvm
-            #lvm в данном случае сам всё найдёт по имени группы томов, которой принадлежит в физический том из крипто-контейнера
+            #lvm в данном случае сам всё найдёт по имени группы томов, которой принадлежит физический том из крипто-контейнера
             #при этом пользователя надо предупредить о возможной дыре в безопасности, 
             #если в этой группе томов присутствует хотя бы один физический том, который не зашифрован
             
@@ -634,6 +629,119 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
             ;;
     esac
     
+done
+
+
+for row in "${EXTRA_MOUNTPOINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    #получаем короткие алиасы переменных из xml-файла
+    mount_point=${current_row["mount_point"]}
+    type=${current_row["type"]}
+    crypt_mode=${current_row["crypt_mode"]}
+
+    case $type in
+        "partition"|"subvol_in_btrfs")
+            # эти случаи подлежат объединению: нужно просто открыть luks-контейнер
+            # если уже существующая файловая система в него завёрнута.
+            #получаем uuid
+            uuid=${current_row["uuid"]}
+            #проверяем существует ли устройство с таким uuid
+            if ! device=$(check_uuid_exists "$uuid"); then
+                echo -e "${RED}Устройство с uuid '$uuid' не существует${NC}" >&2
+                # добавляем проблему для запланрованного выхода из скрипта
+                add_problem "partition_device_by_uuid_not_found" "Ошибка: устройство с uuid $uuid не найдено"
+                #выходим из case для проверки других точек монтирования
+                continue
+            else
+                echo -e "${GREEN}Устройство с uuid '$uuid' найдено: $device${NC}"
+            fi
+            current_row["device"]=$device
+            case $crypt_mode in
+                "none")
+                    current_row["device_for_operations"]=$device
+                    ;;
+                "pwd")
+                    open_crypt_container_by_pwd "$device"
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                "file")
+                    open_crypt_container_by_file "$device"
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                *)
+                    echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none, file, pwd)" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        "volume_in_lvm"|"subvol_in_btrfs_in_lvm")
+            device=${current_row["lv-volume"]}
+            current_row["device"]=$device
+            lv_name=$device
+            vg_name=$(get_vg_name_from_fulldevname "$device")
+
+            if [[ "$crypt_mode" == "none_in_file" || "$crypt_mode" == "none_in_pwd" ]]; then
+                #объявляем временный массив для хранения физических томов
+                declare -a luks_devices=()
+                #заполняем массив pv_devices на основе данных из от uuids из xml-файла
+                #заодно проверяем существуют ли устройства с такими uuid
+                if ! fill_in_array_by_pv_devices "${current_row["pv-volumes-uuids"]}" luks_devices; then
+                    #выходим из case для проверки других точек монтирования
+                    continue
+                fi
+                
+                #открываем все luks-контейнеры через процедуру
+                open_all_luks_devices
+
+                unset luks_devices
+            fi
+
+            #проверяем существует ли группа томов
+            if ! check_vg_exists "$vg_name"; then
+                echo -e "${RED}Группа томов '$vg_name' не существует${NC}" >&2
+                # добавляем проблему для запланрованного выхода из скрипта
+                add_problem "lvm_group_not_found" "Ошибка: группа томов $vg_name не найдена"
+                #выходим из case для проверки других точек монтирования
+                continue
+            else
+                echo -e "${GREEN}Группа томов '$vg_name' найдена${NC}"
+            fi
+
+            #проверяем существует ли логический том
+            if ! check_lv_exists_by_full_devname "$device"; then
+                echo -e "${RED}Логический том '$device' не существует${NC}" >&2
+                # добавляем проблему для запланрованного выхода из скрипта
+                add_problem "lvm_logical_volume_not_found" "Ошибка: логический том $device не найден"
+                #выходим из case для проверки других точек монтирования
+                continue
+            else
+                echo -e "${GREEN}Логический том '$device' найден${NC}"
+            fi
+
+            case $crypt_mode in
+                "none_in_none"|"none_in_file"|"none_in_pwd")
+                    current_row["device_for_operations"]=$device
+                    ;;
+                "pwd_in_none")
+                    open_crypt_container_by_pwd "$device"
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                "file_in_none")
+                    open_crypt_container_by_file "$device"
+                    current_row["device_for_operations"]=${current_row["opened_crypt_container_fullname"]}
+                    ;;
+                *)
+                    echo "Для $mount_point неизвестный тип: $crypt_mode (в данном случае предусмотрены: none_in_none, none_in_file, none_in_pwd, pwd_in_none, file_in_none)" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+            echo "Для $mount_point неизвестный тип: $type (в данном случае предусмотрены: partition, volume_in_lvm, subvol_in_btrfs, subvol_in_btrfs_in_lvm)" >&2
+            exit 1
+            ;;
+    esac
+
 done
 
 check_problems
