@@ -38,11 +38,8 @@ EOF
 #5) выполняем установку системы после явного подтверждения пользователем
 
 : <<'TODO'
+* протестировать функционал extra точек монтирования
 * сделать готовый образ диска для тестирования extra точек монтирования + мини-скрипт для его быстрого задействования
-* добавить полноценную поддержку extra точек монтирования (туда ничего не уставнавливается,
-они просто прописываются в /etc/fstab) + тесты для них
-** добавить второй проход по циклам для extra точек монтирования (аналогично new, но без форматирования)
-** продублировать настройки шифрования для extra точек монтирования (в случае если они были зашифрованы)
 * добавить тесты с несколькими криптованными точками монтирования (+ btrfs с шифрованием, без lvm)
 * сделать правильную распаковку архивов
 * не пытаться "скачивать" пакманом ошибку питоновского скрипта (когда выбирается опция none)
@@ -1207,6 +1204,26 @@ else
     exit 1
 fi
 
+#монтируем дополнительные разделы
+for row in "${EXTRA_MOUNTPOINTS[@]}"; do
+    declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
+    #получаем короткие алиасы переменных из xml-файла
+    mount_point=${current_row["mount_point"]}
+    device_for_operations=${current_row["device_for_operations"]}
+    #тут уже не нужно проходиться по значениям type и crypt_mode
+    #и даже вообще не нужно использовать их, просто монтируем их
+    #тип файловой системы в mount также определяется автоматически
+    if mount $device_for_operations $INST_DIR$mount_point; then
+        echo -e "${GREEN}Раздел успешно смонтирован в $INST_DIR$mount_point.${NC}"
+    else
+        echo -e "${RED}Ошибка: не удалось смонтировать раздел в $INST_DIR$mount_point.${NC}" >&2
+        echo -e "${RED}Убедитесь, что раздел $device_for_operations существует и доступен.${NC}" >&2
+        echo -e "${RED}Убедитесь, что файловая система $(lsblk -o FSTYPE -n $device_for_operations) поддерживается системой.${NC}" >&2
+        exit 1
+    fi
+done
+
+
 # Установка основных пакетов
 pacstrap $INST_DIR $SOFT_PACK1
 
@@ -1214,7 +1231,7 @@ pacstrap $INST_DIR $SOFT_PACK1
 genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
 
 # настройка зашифрованных разделов
-for row in "${NEW_MOUNTPOINTS[@]}"; do
+for row in "${NEW_MOUNTPOINTS[@]}" "${EXTRA_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"
     crypt_mode=${current_row["crypt_mode"]}
     if [[ $crypt_mode == *"pwd"* || $crypt_mode == *"file"* ]]; then
