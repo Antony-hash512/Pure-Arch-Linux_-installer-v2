@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # https://github.com/Antony-hash512/Cryptful-Arch-Linux_-installer-v2/
 read -r -d '' LOGO <<'EOF'
+````````````````````````````````````````````````````
   ______                         ___       _ 
  / _____)                  _    / __)     | |
 | /       ____ _   _ ____ | |_ | |__ _   _| |
@@ -19,6 +20,7 @@ read -r -d '' LOGO <<'EOF'
  | || '_ \/ __| __/ _` | | |/ _ \ '__| \ \ / / __) |
  | || | | \__ \ || (_| | | |  __/ |     \ V / / __/ 
 |___|_| |_|___/\__\__,_|_|_|\___|_|      \_(_)_____|
+````````````````````````````````````````````````````
 EOF
 
 #0) читаем аргументы командной строки, включаем киррилический шрифт, проверяем на права рута и версию баша
@@ -282,7 +284,7 @@ if ! pacman -Qi reflector &>/dev/null; then
 fi
 #  потом это можно делать через файл конфигурации
 reflector --country Georgia --latest 5 --protocol https --sort rate > /etc/pacman.d/mirrorlist
-reflector --country Germany,Netherlands --latest 10 --protocol https --download-timeout 15 --sort rate >> /etc/pacman.d/mirrorlist
+#reflector --country Germany,Netherlands --latest 10 --protocol https --download-timeout 15 --sort rate >> /etc/pacman.d/mirrorlist
 
 #1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
 if [[ "$TTY_WIDTH" -lt 150 ]]; then
@@ -347,14 +349,15 @@ done
 declare -A pending_commands_description
 
 
-for row in "${NEW_MOUNTPOINTS[@]}"; do
+for idx in "${!NEW_MOUNTPOINTS[@]}"; do
+    row=${NEW_MOUNTPOINTS[$idx]}
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
     #получает короткие алиасы переменных и xml-файла
     mount_point=${current_row["mount_point"]}
     type=${current_row["type"]}
     crypt_mode=${current_row["crypt_mode"]}
     
-    if [[ "$i" -eq 0 && "$mount_point" != "/" ]]; then
+    if (( idx == 0 )) && [[ "$mount_point" != "/" ]]; then
         echo -e "${RED}Критическая ошибка: первой в $XML_FILE в разделе с точками монтирования должна быть /${NC}" >&2
         exit 1
     fi
