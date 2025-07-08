@@ -1200,9 +1200,61 @@ for row in "${EXTRA_MOUNTPOINTS[@]}"; do
     mount_point=${current_row["mount_point"]}
     device_for_operations=${current_row["device_for_operations"]}
     #тут уже не нужно проходиться по значениям type и crypt_mode
-    #и даже вообще не нужно использовать их, просто монтируем их
-    #тип файловой системы в mount также определяется автоматически
-    if mount $device_for_operations $INST_DIR$mount_point; then
+
+    if mkdir -p $INST_DIR$mount_point; then
+        echo -e "${GREEN}Каталог $INST_DIR$mount_point успешно создан или уже существует.${NC}"
+    else
+        echo -e "${RED}Ошибка: при создании каталога $INST_DIR$mount_point.${NC}" >&2
+        exit 1
+    fi
+
+    fs_type=$(lsblk -o FSTYPE -n $device_for_operations)
+    mount_options=""
+    if [[ "$fs_type" == "btrfs" ]]; then
+        # Для btrfs используем subvol только если он определен
+        subvol_name=${current_row["subvolume"]}
+        if [[ -n "$subvol_name" ]]; then
+            mount_options="-t btrfs -o subvol=$subvol_name"
+        else
+            echo -e "${RED}Не указан subvolume для монтирования раздела $mount_point${NC}" >&2
+            exit 1
+        fi
+    elif [[ "$fs_type" == "ntfs" ]]; then
+        mount_options="-t ntfs3 -o uid=$(parse_xml settings get_uid),gid=$(parse_xml settings get_gid),locale=$(parse_xml settings get_default_locale),umask=0022"
+    elif [[ "$fs_type" == "ext4" ]]; then
+        mount_options="-t ext4"
+    elif [[ "$fs_type" == "f2fs" ]]; then
+        mount_options="-t f2fs"
+    elif [[ "$fs_type" == "xfs" ]]; then
+        mount_options="-t xfs"
+    elif [[ "$fs_type" == "crypto_LUKS" ]]; then
+        echo -e "${RED}Возможно, неправильно указаны параметр crypt_mode для раздела точки монтирования $mount_point${NC}" >&2
+        exit 1
+    elif [[ "$fs_type" == "zfs" ]]; then
+        echo -e "${RED} Поддержка ZFS в этом скрипте пока не реализована${NC}" >&2
+        exit 1
+    else
+        echo -e "${RED} Неизвестный тип файловой системы: $fs_type${NC}" >/dev/tty
+        echo -e "${RED}1. Смонтировать её без указания опций?${NC}" >/dev/tty
+        echo -e "${RED}2. Указать опции вручную?${NC}" >/dev/tty
+        echo -e "${RED}3. Использовать опции для $fs_type по умолчанию?${NC}" >/dev/tty
+        echo -e "${RED}4. Выйти из скрипта${NC}" >/dev/tty
+        read -p "Введите номер действия: " user_input
+        if [[ "$user_input" == "1" ]]; then
+            mount_options=""
+        elif [[ "$user_input" == "2" ]]; then
+            read -p "Введите опции: " mount_options
+        elif [[ "$user_input" == "3" ]]; then
+            mount_options="-t $fs_type"
+        elif [[ "$user_input" == "4" ]]; then
+            exit 1
+        else
+            echo -e "${RED}Неизвестное действие: $user_input${NC}" >&2
+            exit 1
+        fi
+    fi
+
+    if mount $mount_options $device_for_operations $INST_DIR$mount_point; then
         echo -e "${GREEN}Раздел успешно смонтирован в $INST_DIR$mount_point.${NC}"
     else
         echo -e "${RED}Ошибка: не удалось смонтировать раздел в $INST_DIR$mount_point.${NC}" >&2
