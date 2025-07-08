@@ -1189,21 +1189,6 @@ for row in "${NEW_MOUNTPOINTS[@]}"; do
 
 done
 
-
-#монтируем EFI-раздел
-if mkdir -p $INST_DIR/$EFI_NEW_LOCATION; then
-    echo -e "${GREEN}Каталог $INST_DIR/$EFI_NEW_LOCATION успешно создан или уже существует.${NC}"
-else
-    echo -e "${RED}Ошибка: при создании каталога $INST_DIR/$EFI_NEW_LOCATION.${NC}" >&2
-    exit 1
-fi
-if mount $EFI_DEV $INST_DIR/$EFI_NEW_LOCATION; then
-    echo -e "${GREEN}EFI-раздел успешно смонтирован в $INST_DIR/$EFI_NEW_LOCATION.${NC}"
-else
-    echo -e "${RED}Ошибка: не удалось смонтировать EFI-раздел в $INST_DIR/$EFI_NEW_LOCATION.${NC}" >&2
-    exit 1
-fi
-
 #монтируем дополнительные разделы
 for row in "${EXTRA_MOUNTPOINTS[@]}"; do
     declare -n current_row="$row"  # Используем ссылку на ассоциативный массив по его имени
@@ -1222,6 +1207,23 @@ for row in "${EXTRA_MOUNTPOINTS[@]}"; do
         exit 1
     fi
 done
+
+
+#монтируем EFI-раздел
+if mkdir -p $INST_DIR/$EFI_NEW_LOCATION; then
+    echo -e "${GREEN}Каталог $INST_DIR/$EFI_NEW_LOCATION успешно создан или уже существует.${NC}"
+else
+    echo -e "${RED}Ошибка: при создании каталога $INST_DIR/$EFI_NEW_LOCATION.${NC}" >&2
+    exit 1
+fi
+if mount $EFI_DEV $INST_DIR/$EFI_NEW_LOCATION; then
+    echo -e "${GREEN}EFI-раздел успешно смонтирован в $INST_DIR/$EFI_NEW_LOCATION.${NC}"
+else
+    echo -e "${RED}Ошибка: не удалось смонтировать EFI-раздел в $INST_DIR/$EFI_NEW_LOCATION.${NC}" >&2
+    exit 1
+fi
+
+
 
 
 # Установка основных пакетов
