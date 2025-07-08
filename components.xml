@@ -1020,7 +1020,7 @@
 		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
-			<bootlabel>ArchTest14_step2</bootlabel>
+			<bootlabel>ArchTest14_step1</bootlabel>
 			<dev>/dev/sda1</dev>
 			<new_location>/efi</new_location>
 		</efi>
