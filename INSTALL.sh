@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# https://github.com/Antony-hash512/Pure-Arch-Linux_-installer-v2/
+# https://github.com/Antony-hash512/Cryptful-Arch-Linux_-installer-v2/
 read -r -d '' LOGO <<'EOF'
   ______                         ___       _ 
  / _____)                  _    / __)     | |
