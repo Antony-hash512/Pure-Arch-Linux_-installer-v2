@@ -121,12 +121,12 @@
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>neofetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
-			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mplayer</bundle>
+			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mpv</bundle>
 			<bundle>gnome xorg-server xorg-xinit xorg-xauth xclip</bundle>
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany gtksourceview5</bundle>
 			<bundle>gnome-extra i3lock</bundle>
-			<bundle>sof-firmware mplayer</bundle>
+			<bundle>sof-firmware</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium geany thunar pcmanfm meld terminator baobab</bundle>
 
