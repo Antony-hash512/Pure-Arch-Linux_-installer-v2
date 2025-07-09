@@ -325,6 +325,24 @@ def main():
             print(description.strip())
         else:
             print("Описание отсутствует")
+    elif command == 'get_ntfs_locale':
+        locale_elem = component.find('extra_ntfs_options/locale')
+        if locale_elem is not None:
+            print(locale_elem.text.strip())
+        else:
+            print("")
+    elif command == 'get_ntfs_mask':
+        mask_elem = component.find('extra_ntfs_options/mask')
+        if mask_elem is not None:
+            print(mask_elem.text.strip())
+        else:
+            print("")
+    elif command == 'get_nofail_templates_list':
+        templates_elem = component.find('nofail_templates_list')
+        if templates_elem is not None:
+            print(templates_elem.text.strip())
+        else:
+            print("")
     else:
         print(f"Неизвестная команда '{command}'")
         sys.exit(1)

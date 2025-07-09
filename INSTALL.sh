@@ -38,13 +38,10 @@ EOF
 #5) выполняем установку системы после явного подтверждения пользователем
 
 : <<'TODO'
-* добавить чтение питоном новых шаблонов и задействовать их в скрипте
-надо добавить get_ntfs_locale, get_ntfs_mask, get_nofail_templates_list
 * перенести всё, что связано с тестингом в каталог testing
 кроме установочного iso, а рабочий, не образцовый qcow2, можно добавить в gitignore
 * добавить тесты с несколькими криптованными точками монтирования (+ btrfs с шифрованием, без lvm)
 * сделать правильную распаковку архивов
-* не пытаться "скачивать" пакманом ошибку питоновского скрипта (когда выбирается опция none)
 * протестировать различные варианты установок на vm
 * убрать мусорные ошибки на этапе отображения информации (например во втором тесте)
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
@@ -1286,7 +1283,7 @@ pacstrap $INST_DIR $SOFT_PACK1
 
 # Генерация fstab
 genfstab -U $INST_DIR > $INST_DIR/etc/fstab
-NOFAIL_TEMPLATE_LIST=("ntfs3" "ntfs-3g" "/extra" "/run" "/mnt" "/media")
+NOFAIL_TEMPLATE_LIST=$(parse_xml softpack get_nofail_templates)
 for NOFAIL_TEMPLATE in ${NOFAIL_TEMPLATE_LIST[@]}; do
     sed -i -r '/\s+'$NOFAIL_TEMPLATE'/ { /nofail/! s/(defaults)(.*)/\1,nofail\2/ }' $INST_DIR/etc/fstab
 done

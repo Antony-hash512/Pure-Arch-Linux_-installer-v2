@@ -91,15 +91,21 @@ pacman -S sudo --noconfirm
 
 
 # Установка всего дополнительного софта через pacman (кроме драйверов)
-for package in $SOFT_PACK2; do
-    echo "Установка пакета: $package и его зависимостей"
-    pacman -S $package --noconfirm
-done
+# (избегаем ошибки, если пакеты не указаны)
+if [[ -n "${SOFT_PACK2// }" ]]; then
+    for package in $SOFT_PACK2; do
+        echo "Установка пакета: $package и его зависимостей"
+        pacman -S $package --noconfirm
+    done
+fi
+
 # Установка драйверов
-for package in $DRIVERS_PACK; do
-    echo "Установка пакета: $package и его зависимостей"
-    pacman -S $package --noconfirm
-done
+if [[ -n "${DRIVERS_PACK// }" ]]; then
+    for package in $DRIVERS_PACK; do
+        echo "Установка пакета: $package и его зависимостей"
+        pacman -S $package --noconfirm
+    done
+fi
 
 
 # Разрешение sudo для пользователя
