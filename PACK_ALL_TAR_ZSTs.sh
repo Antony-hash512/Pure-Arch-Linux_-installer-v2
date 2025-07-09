@@ -34,10 +34,10 @@ for DIR_NAME in "${DIR_NAMES[@]}"; do
         # Сравниваем версии как числа с плавающей точкой через bc
         if [ "$(echo "$TAR_VERSION > 1.31" | bc)" -eq 1 ]; then
             echo "using directly compression"
-            tar --zstd --numeric-owner -cvf "$DIR_NAME.tar.zst" "$FILES_ARCH_DIR/${DIR_NAME}"
+            tar --zstd --numeric-owner -cvf "$DIR_NAME.tar.zst" -C "$FILES_ARCH_DIR/${DIR_NAME}" .
         else
             echo "using an external compressor"
-            tar -I zstd --numeric-owner -cvf "$DIR_NAME.tar.zst" "$FILES_ARCH_DIR/${DIR_NAME}"
+            tar -I zstd --numeric-owner -cvf "$DIR_NAME.tar.zst" -C "$FILES_ARCH_DIR/${DIR_NAME}" .
         fi
     else
         echo "Archive $DIR_NAME.tar.zst was missed because it already exists."
