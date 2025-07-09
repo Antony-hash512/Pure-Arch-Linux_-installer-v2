@@ -38,7 +38,8 @@ EOF
 #5) выполняем установку системы после явного подтверждения пользователем
 
 : <<'TODO'
-
+* добавить чтение питоном новых шаблонов и задействовать их в скрипте
+надо добавить get_ntfs_locale, get_ntfs_mask, get_nofail_templates_list
 * перенести всё, что связано с тестингом в каталог testing
 кроме установочного iso, а рабочий, не образцовый qcow2, можно добавить в gitignore
 * добавить тесты с несколькими криптованными точками монтирования (+ btrfs с шифрованием, без lvm)
@@ -1218,7 +1219,7 @@ for row in "${EXTRA_MOUNTPOINTS[@]}"; do
             exit 1
         fi
     elif [[ "$fs_type" == "ntfs" ]]; then
-        mount_options="-t ntfs3 -o uid=$(parse_xml settings get_uid),gid=$(parse_xml settings get_gid),locale=$(parse_xml settings get_default_locale),umask=0022"
+        mount_options="-t ntfs3 -o uid=$(parse_xml settings get_uid),gid=$(parse_xml settings get_gid),locale=$(parse_xml settings get_ntfs_locale),$(parse_xml settings get_ntfs_mask)"
     elif [[ "$fs_type" == "ext4" ]]; then
         mount_options="-t ext4"
     elif [[ "$fs_type" == "f2fs" ]]; then
@@ -1284,7 +1285,12 @@ fi
 pacstrap $INST_DIR $SOFT_PACK1
 
 # Генерация fstab
-genfstab -U $INST_DIR >> $INST_DIR/etc/fstab
+genfstab -U $INST_DIR > $INST_DIR/etc/fstab
+NOFAIL_TEMPLATE_LIST=("ntfs3" "ntfs-3g" "/extra" "/run" "/mnt" "/media")
+for NOFAIL_TEMPLATE in ${NOFAIL_TEMPLATE_LIST[@]}; do
+    sed -i -r '/\s+'$NOFAIL_TEMPLATE'/ { /nofail/! s/(defaults)(.*)/\1,nofail\2/ }' $INST_DIR/etc/fstab
+done
+
 
 # настройка зашифрованных разделов
 for row in "${NEW_MOUNTPOINTS[@]}" "${EXTRA_MOUNTPOINTS[@]}"; do
