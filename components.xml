@@ -230,8 +230,8 @@
 		<softpack_tweaks></softpack_tweaks>
 		<pakages>
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
-			<bundle>networkmanager btrfs-progs mc yazi man-db less htop lvm2 cryptsetup</bundle>
-			<bundle>nvim nano vim micro tree</bundle>
+			<bundle>networkmanager btrfs-progs mc man-db less htop lvm2 cryptsetup</bundle>
+			<bundle>nvim nano</bundle>
 			<bundle>ntfs-3g dosfstools os-prober</bundle>
 			<bundle>terminus-font</bundle>
 		</pakages>
