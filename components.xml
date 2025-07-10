@@ -1069,7 +1069,7 @@
         	</point>
         	<point type="extra">
         		<location>/home</location>
-        		<way>ext4_in_lvm</way>
+        		<way>volume_in_lvm</way>
         		<crypt_mode>none_in_pwd</crypt_mode>
         		<lv-volume>/dev/locked_vg/home</lv-volume>
         		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
@@ -1078,7 +1078,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user2</username>
 		<useruid>1000</useruid>
-		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck</hooks>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest15</bootlabel>
