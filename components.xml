@@ -1036,6 +1036,13 @@
         		<subvolume>@arch</subvolume>
         		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_test15_step1</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         	<point type="new">
         		<location>/home</location>
         		<way>new_ext4_in_lvm</way>
@@ -1049,6 +1056,7 @@
 		<username>user</username>
 		<useruid>1000</useruid>
 		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
+		<encrypted_boot>false</encrypted_boot>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest15</bootlabel>
@@ -1067,6 +1075,13 @@
         		<size>5G</size>
         		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
         	</point>
+			<point type="new">
+				<location>/boot</location>
+				<way>new_subvol_in_btrfs</way>
+				<crypt_mode>none</crypt_mode>
+				<subvolume>@boot_test15_step2</subvolume>
+				<uuid>5a684c53-53cd-4419-b7b1-04ea97ba09d3</uuid>
+			</point>
         	<point type="extra">
         		<location>/home</location>
         		<way>volume_in_lvm</way>
@@ -1079,6 +1094,7 @@
 		<username>user2</username>
 		<useruid>1000</useruid>
 		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
+		<encrypted_boot>false</encrypted_boot>
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest15</bootlabel>

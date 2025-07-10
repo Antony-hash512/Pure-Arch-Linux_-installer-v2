@@ -157,6 +157,22 @@ def main():
             print(hooks_elem.text.strip())
         else:
             print("")
+    elif command == 'is_boot_encrypted':
+        encrypted_boot_elem = component.find('encrypted_boot')
+        if encrypted_boot_elem is not None:
+            if encrypted_boot_elem.text.strip() == "true":
+                print("true")
+            else:
+                print("false")
+        else:
+            print("false")
+    elif command == 'is_legacy_bios':
+        legacy_bios_elem = component.find('legacy_bios')
+        if legacy_bios_elem is not None:
+            if legacy_bios_elem.text.strip() == "true":
+                print("true")
+            else:
+                print("false")
     elif command == 'get_archs4home':
         archives = component.findall('extrafiles/home/archive')
         archive_names = [archive.text.strip() for archive in archives if archive.text]
