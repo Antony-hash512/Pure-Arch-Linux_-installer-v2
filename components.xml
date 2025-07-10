@@ -1026,6 +1026,67 @@
 		</efi>
 		<iso>true</iso>
 	</install_location>
+	<install_location name="vm_test15_step1" description="Тестовая установка на VM 15 (step1)">
+        <mountpoints>
+        	<point type="new">
+        		<location>/</location>
+        		<way>new_subvol_in_btrfs_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/locked_vg/btrfs_in_locked_lvm</lv-volume>
+        		<subvolume>@arch</subvolume>
+        		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+        	</point>
+        	<point type="new">
+        		<location>/home</location>
+        		<way>new_ext4_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/locked_vg/home</lv-volume>
+        		<size>2G</size>
+        		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user</username>
+		<useruid>1000</useruid>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest15</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
+	<install_location name="vm_test15_step2" description="Тестовая установка на VM 15 (step2)">
+        <mountpoints>
+               <point type="new">
+        		<location>/</location>
+        		<way>new_ext4_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/locked_vg/new_ext4_from_test2</lv-volume>
+        		<size>5G</size>
+        		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+        	</point>
+        	<point type="extra">
+        		<location>/home</location>
+        		<way>ext4_in_lvm</way>
+        		<crypt_mode>none_in_pwd</crypt_mode>
+        		<lv-volume>/dev/locked_vg/home</lv-volume>
+        		<pv-volumes-uuids>7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167</pv-volumes-uuids>
+        	</point>
+        </mountpoints>
+        <hostname>qemu-arch</hostname>
+		<username>user2</username>
+		<useruid>1000</useruid>
+		<hooks>base systemd autodetect microcode modconf kms keyboard sd-vconsole block lvm2 filesystems fsck</hooks>
+		<legacy_bios>false</legacy_bios>
+		<efi>
+			<bootlabel>ArchTest15</bootlabel>
+			<dev>/dev/sda1</dev>
+			<new_location>/efi</new_location>
+		</efi>
+		<iso>true</iso>
+	</install_location>
 
 </install_locations>
 
