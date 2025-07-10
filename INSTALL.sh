@@ -277,8 +277,8 @@ if ! pacman -Qi reflector &>/dev/null; then
     sudo pacman -S reflector --noconfirm
 fi
 #  потом это можно делать через файл конфигурации
-reflector --country Georgia --latest 5 --protocol https --sort rate > /etc/pacman.d/mirrorlist
-#reflector --country Germany,Netherlands --latest 10 --protocol https --download-timeout 15 --sort rate >> /etc/pacman.d/mirrorlist
+#reflector --country Georgia --latest 5 --protocol https --sort rate > /etc/pacman.d/mirrorlist
+reflector --country Germany,Netherlands --latest 10 --protocol https --download-timeout 15 --sort rate >> /etc/pacman.d/mirrorlist
 
 #1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
 if [[ "$TTY_WIDTH" -lt 150 ]]; then
