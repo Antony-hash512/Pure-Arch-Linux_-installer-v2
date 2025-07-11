@@ -48,7 +48,7 @@ EOF
 * протестировать различные варианты установок на vm
 * убрать мусорные ошибки на этапе отображения информации (например во втором тесте)
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
-* добавить кастомные настройки рефлектора в xml или в дополнительный конфигурационный файл
+* брать булевы параметры для рефлектора из xml-файла
 * зарелизить бету !!!! <-- ВАЖНО НАКОНЕЦ-ТО НАДО ЗАРЕЛИЗИТЬ ГОТОВЫЙ MVP
 * написать функцию, для проверки гарантированного свободного места в btrfs томах
 * создать функцию, которая будет проверять корректность данных в xml-файле
@@ -93,6 +93,14 @@ export CHROOT_SCRIPT="run_inside_chroot.sh"
 export SHARED_FUNCTIONS="include/shared_functions.sh"
 export MAIN_FUNCTIONS="include/main_functions.sh"
 export COLORS_CONSTANTS="include/colors.sh"
+export TEMPLATES_DIR="templates"
+export CREATE_MIRRORLIST_CACHE_SCRIPT="CREATE_MIRRORLIST_CACHE.sh"
+export MIRRORLIST_CACHE_FILE="reflector_mirrorlist_cache"
+export SYSTEM_MIRRORLIST_FILE="/etc/pacman.d/mirrorlist"
+
+#булевы параметры по умолчанию
+IS_USE_REFLECTOR=false
+IS_GET_MIRRORS_FROM_REFLECTOR_CACHE=true
 
 # Получаем путь к каталогу, где находится скрипт
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -275,13 +283,29 @@ echo -e "${YELLOW}Обновление времени...${NC}"
 timedatectl set-ntp true
 
 # Настройка зеркал
-echo -e "${YELLOW}Настройка зеркал...${NC}"
-if ! pacman -Qi reflector &>/dev/null; then
-    sudo pacman -S reflector --noconfirm
+if [[ "$IS_GET_MIRRORS_FROM_REFLECTOR_CACHE" == true ]]; then
+    # если файла с кэшем зеркал не существует, то копируем его из templates
+    if [[ ! -f "$MIRRORLIST_CACHE_FILE" ]]; then
+        IS_USE_REFLECTOR=true
+    else
+        #копируем кэш зеркал в системный файл
+        cp $MIRRORLIST_CACHE_FILE $SYSTEM_MIRRORLIST_FILE
+        echo -e "${YELLOW}Кэш зеркал был использован из файла $MIRRORLIST_CACHE_FILE${NC}"
+        IS_USE_REFLECTOR=false
+    fi
 fi
-#  потом это можно делать через файл конфигурации
-#reflector --country Georgia --latest 5 --protocol https --sort rate > /etc/pacman.d/mirrorlist
-reflector --country Germany,Netherlands --latest 10 --protocol https --download-timeout 15 --sort rate >> /etc/pacman.d/mirrorlist
+if [[ "$IS_USE_REFLECTOR" == true ]]; then
+    echo -e "${YELLOW}Настройка зеркал...${NC}"
+    # если скрипта для рефлектора не существует, то копируем его из templates
+    if [[ ! -f "$TEMPLATES_DIR/$CREATE_MIRRORLIST_CACHE_SCRIPT" ]]; then
+        cp $TEMPLATES_DIR/$CREATE_MIRRORLIST_CACHE_SCRIPT $CREATE_MIRRORLIST_CACHE_SCRIPT
+    fi
+    #выполняем скрипт для настройки зеркал
+    source $CREATE_MIRRORLIST_CACHE_SCRIPT
+    #копируем кэш зеркал в системный файл
+    cp $MIRRORLIST_CACHE_FILE $SYSTEM_MIRRORLIST_FILE
+
+fi
 
 #1.1.1) запрашиваем формат вывода lsblk с учётом ширины tty
 if [[ "$TTY_WIDTH" -lt 150 ]]; then

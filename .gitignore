@@ -6,11 +6,14 @@ cash-repo/*
 git_configs/*
 old_diffs/*
 tar_zsts_contents/*
+tar.zst-s_contents_*
 !tar_zsts_contents/.gitkeep
 trashbin/*
 !trashbin/.gitkeep
 log.txt
-
+reflector_mirrorlist_cache
+CREATE_MIRRORLIST_CACHE.sh
+!/templates/CREATE_MIRRORLIST_CACHE.sh
 
 # - Libreoffice lock files
 .~lock.*#
