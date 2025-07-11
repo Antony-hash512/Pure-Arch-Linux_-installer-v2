@@ -316,7 +316,10 @@ fi
 
 
 #1.2) устанавливаем необходимые пакеты
-pacman -Sy
+if [[ $INSTALL_FROM == "other_system" ]]; then
+    pacman -Syu
+fi
+
 packages=("arch-install-scripts" "base" "lvm2" "cryptsetup" "btrfs-progs" "efibootmgr" "python" "bc")
 
 for pkg in "${packages[@]}"; do
