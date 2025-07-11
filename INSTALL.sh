@@ -1344,7 +1344,11 @@ for archive in $ARCHIVES_4HOME; do
 done
 
 # копируем настроенные зеркала:
-cp /etc/pacman.d/mirrorlist $INST_DIR/etc/pacman.d/mirrorlist
+if [[ "$IS_GET_MIRRORS_FROM_REFLECTOR_CACHE" == true ]]; then
+    cp $MIRRORLIST_CACHE_FILE $INST_DIR$SYSTEM_MIRRORLIST_FILE
+else
+    cp $SYSTEM_MIRRORLIST_FILE $INST_DIR$SYSTEM_MIRRORLIST_FILE
+fi
 
 #-------------------------------
 # Chroot в новую систему
