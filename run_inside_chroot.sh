@@ -205,7 +205,7 @@ ARCHIVES_4HOME="$(parse_xml softpack get_archs4home)"
 
 if [[ $ADD_FILES_TO_HOME = "true" ]]; then
     #распаковка tar-архива в домашнюю папку пользователя
-    #испльзуем цикл для распаковки всех архивов
+    #используем цикл для распаковки всех архивов
     for archive in $ARCHIVES_4HOME; do
         tar --numeric-owner --zstd -xvf "/$archive" -C /home/$USERNAME
         chown -R $MY_UID:$MY_UID /home/$USERNAME/
