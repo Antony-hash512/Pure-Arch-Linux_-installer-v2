@@ -336,8 +336,14 @@ one_line_with_commas() {
 # Функция для преобразования формата mapper в реальный формат с использованием регулярных выражений
 # Можно использовать для преобразования формата mapper в реальный формат для устройств, которые не существуют
 # ВНИМАНИЕ !!! ДАННУЮ ФУНКЦИЮ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ с /dev/mapper/* томов открытых из luks, она только для логических томов lvm
+# либо для открытых из luks томов должны быть использованы стандартные имена
+# вида /dev/mapper/luks-{uuid-of-external-device-name}
 standardize_lvm_format() {
     local device=$1
+    if [[ "$device" =~ ^/dev/mapper/luks- ]]; then
+        echo "$device"          # это LUKS, оставляем как есть
+        return
+    fi
     #если в начале строки стоит /dev/mapper/, то преобразуем её в реальный формат
     if [[ "$device" =~ ^/dev/mapper/ ]]; then
         device_basename=$(basename "$device")
@@ -355,6 +361,10 @@ standardize_lvm_format() {
 #Аналогичная функция для преобразования формата lvm в формат mapper (наоборот)
 standardize_lvm_format_to_mapper() {
     local device=$1
+    if [[ "$device" =~ ^/dev/mapper/luks- ]]; then
+        echo "$device"          # это LUKS, оставляем как есть
+        return
+    fi
     #если в начале строки стоит /dev/mapper/
     if [[ "$device" =~ ^/dev/mapper/ ]]; then
         echo "$device"
@@ -435,7 +445,7 @@ get_device_basename4lsblk() {
     local device_format=""
     
     # Проверяем специальный случай для LUKS устройств
-    if [[ "$device" =~ ^/dev/mapper/opened_luks_ ]]; then
+    if [[ "$device" =~ ^/dev/mapper/luks- ]]; then
         # LUKS устройство
         device_basename=$(basename "$device")
         echo "$device_basename"
