@@ -85,17 +85,20 @@ useradd -m -u $MY_UID -g $MY_UID -G users,wheel,storage,power -s /bin/bash $USER
 echo "Введите пароль для пользователя $USERNAME:"
 passwd $USERNAME
 
-# устанавливаем sudo
-# такие пакеты как coreutils и sed уже входят в состав base поэтому их установка избыточна
-pacman -S sudo --noconfirm
-
+# Временно отключаем хуки pacman'а, чтобы избежать пересборки initramfs после каждого пакета
+if [ -f /usr/share/libalpm/hooks/mkinitcpio-install.hook ]; then
+    mv /usr/share/libalpm/hooks/mkinitcpio-install.hook /usr/share/libalpm/hooks/mkinitcpio-install.hook.bak
+fi
+if [ -f /usr/share/libalpm/hooks/mkinitcpio-remove.hook ]; then
+    mv /usr/share/libalpm/hooks/mkinitcpio-remove.hook /usr/share/libalpm/hooks/mkinitcpio-remove.hook.bak
+fi
 
 # Установка всего дополнительного софта через pacman (кроме драйверов)
 # (избегаем ошибки, если пакеты не указаны)
 if [[ -n "${SOFT_PACK2// }" ]]; then
     for package in $SOFT_PACK2; do
         echo "Установка пакета: $package и его зависимостей"
-        pacman -S $package --noconfirm
+        pacman -S $package --noconfirm || echo "Пакет $package не найден или не установлен, продолжаем..."
     done
 fi
 
@@ -103,10 +106,25 @@ fi
 if [[ -n "${DRIVERS_PACK// }" ]]; then
     for package in $DRIVERS_PACK; do
         echo "Установка пакета: $package и его зависимостей"
-        pacman -S $package --noconfirm
+        pacman -S $package --noconfirm || echo "Пакет $package не найден или не установлен, продолжаем..."
     done
 fi
 
+# устанавливаем sudo
+# такие пакеты как coreutils и sed уже входят в состав base поэтому их установка избыточна
+pacman -S sudo --noconfirm
+
+# Восстанавливаем хуки pacman'а
+if [ -f /usr/share/libalpm/hooks/mkinitcpio-install.hook.bak ]; then
+    mv /usr/share/libalpm/hooks/mkinitcpio-install.hook.bak /usr/share/libalpm/hooks/mkinitcpio-install.hook
+fi
+if [ -f /usr/share/libalpm/hooks/mkinitcpio-remove.hook.bak ]; then
+    mv /usr/share/libalpm/hooks/mkinitcpio-remove.hook.bak /usr/share/libalpm/hooks/mkinitcpio-remove.hook
+fi
+
+# Настройка хуков для mkinitcpio
+sed -i "s/^HOOKS=(.*)/HOOKS=($(parse_xml install_location get_hooks))/" /etc/mkinitcpio.conf
+mkinitcpio -P
 
 # Разрешение sudo для пользователя
 #sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
@@ -128,9 +146,7 @@ echo '%wheel ALL=(ALL:ALL) ALL' | EDITOR='tee -a' visudo -f /etc/sudoers.d/rules
 
 
 
-# Настройка хуков для mkinitcpio
-sed -i "s/^HOOKS=(.*)/HOOKS=($(parse_xml install_location get_hooks))/" /etc/mkinitcpio.conf
-mkinitcpio -P
+
 
 
 
