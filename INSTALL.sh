@@ -297,7 +297,7 @@ fi
 if [[ "$IS_USE_REFLECTOR" == true ]]; then
     echo -e "${YELLOW}Настройка зеркал...${NC}"
     # если скрипта для рефлектора не существует, то копируем его из templates
-    if [[ ! -f "$TEMPLATES_DIR/$CREATE_MIRRORLIST_CACHE_SCRIPT" ]]; then
+    if [[ ! -f "$CREATE_MIRRORLIST_CACHE_SCRIPT" ]]; then
         cp $TEMPLATES_DIR/$CREATE_MIRRORLIST_CACHE_SCRIPT $CREATE_MIRRORLIST_CACHE_SCRIPT
     fi
     #выполняем скрипт для настройки зеркал
