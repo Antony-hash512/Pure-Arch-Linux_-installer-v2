@@ -1,3 +1,4 @@
 #!/bin/bash
-/home/share/data/extra/vm_disks/make_parted2.sh
+cp [original]archlinux_vm_disk.qcow2 [modified]archlinux_vm_disk.qcow2
+cp [original]OVMF_VARS.4m.fd [modified]OVMF_VARS.4m.fd
 ./qemu_start.sh
