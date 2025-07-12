@@ -23,9 +23,10 @@ if [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ]; then
     if [ -f arch.torrent ]; then
         rm arch.torrent
     fi
-    wget https://archlinux.org/releng/releases/${CURRENT_YEAR}.${CURRENT_MONTH}.01/torrent/ -O arch.torrent
-    aria2c -i arch.torrent --enable-rpc=false --continue=true
-    if [ $? -eq 0 ]; then
+    wget https://archlinux.org/releng/releases/$(date +%Y).$(date +%m).01/torrent/ -O arch.torrent
+    aria2c arch.torrent --enable-rpc=false --continue=true
+    # Проверяем, что файл архива существует
+    if [ -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ]; then
         echo "Скачивание завершено успешно!"
         # Удаляем старые образы ISO (кроме текущего)
         for iso_file in archlinux-*.iso; do
