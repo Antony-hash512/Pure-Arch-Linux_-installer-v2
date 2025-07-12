@@ -19,6 +19,7 @@ CREATE_MIRRORLIST_CACHE.sh
 testing/\[modified\]OVMF_VARS.4m.fd
 testing/\[modified\]archlinux_vm_disk.qcow2
 testing/\[original\]archlinux_vm_disk.qcow2
+testing/\[original\]archlinux_vm_disk.qcow2.zst
 testing/archlinux-*.iso
 testing/archlinux-*.iso.aria2
 testing/arch.torrent
