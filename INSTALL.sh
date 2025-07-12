@@ -280,7 +280,7 @@ read -p "Enter - продолжить; ctrl+C - прервать"
 
 #Обновление времени
 echo -e "${YELLOW}Обновление времени...${NC}"
-timedatectl set-ntp true
+sync_time
 
 # Настройка зеркал
 if [[ "$IS_GET_MIRRORS_FROM_REFLECTOR_CACHE" == true ]]; then

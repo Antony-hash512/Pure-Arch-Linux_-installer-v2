@@ -1,5 +1,8 @@
 #!/bin/bash
 
+source ../include/shared_functions.sh
+sync_time
+
 CURRENT_MONTH=$(date +%m)
 CURRENT_YEAR=$(date +%Y)
 RAM_SIZE=4G

@@ -21,4 +21,21 @@ parse_xml() {
 
 }
 
-
+sync_time() {
+    # Проверяем наличие systemd и используем соответствующий метод синхронизации времени
+    if command -v timedatectl &> /dev/null; then
+        # Система с systemd
+        timedatectl set-ntp true
+    elif command -v ntpd &> /dev/null; then
+        # Система с ntpd
+        ntpd -s
+    elif command -v chronyd &> /dev/null; then
+        # Система с chronyd
+        chronyd
+    elif command -v ntpdate &> /dev/null; then
+        # Используем ntpdate для разовой синхронизации
+        ntpdate -s pool.ntp.org
+    else
+        echo -e "${YELLOW}Предупреждение: не найден сервис синхронизации времени. Время может быть неточным.${NC}"
+    fi
+}
