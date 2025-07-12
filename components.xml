@@ -1200,7 +1200,7 @@
 			ntfs-3g более старый инструмент, требует одноименный пакет -->
 			<locale>en_US.UTF-8</locale>
 			<mask>umask=0022</mask>
-			</extra_ntfs_options>
+		</extra_ntfs_options>
 		<nofail_templates_list>ntfs3 ntfs-3g /extra /run /mnt /media</nofail_templates_list>
 	</settings>
 	
@@ -1214,11 +1214,11 @@
 			<vconsole_add>KEYMAP=us</vconsole_add>
 			<vconsole_add>KEYMAP=ruwin_alt_sh-UTF-8</vconsole_add>
 		</locales>
-				<extra_ntfs_options>
+		<extra_ntfs_options>
 		    <type>ntfs3</type>
 			<locale>ru_RU.UTF-8</locale>
 			<mask>umask=0022</mask>
-			</extra_ntfs_options>
+		</extra_ntfs_options>
 		<nofail_templates_list>ntfs3 ntfs-3g /extra /run /mnt /media</nofail_templates_list>
 	</settings>
 </settings_variants>

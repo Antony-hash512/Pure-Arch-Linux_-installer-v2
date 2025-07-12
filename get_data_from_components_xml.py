@@ -297,6 +297,12 @@ def main():
             print(dev_elem.text.strip())
         else:
             print("")
+    elif command == 'get_efi_uuid':
+        uuid_elem = component.find('efi/uuid')
+        if uuid_elem is not None:
+            print(uuid_elem.text.strip())
+        else:
+            print("")
     elif command == 'get_efi_new_location':
         new_location_elem = component.find('efi/new_location')
         if new_location_elem is not None:
