@@ -2,7 +2,8 @@
 autocreated_scripts/*
 !autocreated_scripts/.gitkeep
 errors/*
-cash-repo/*
+cache-repo/*
+!cache-repo/.gitkeep
 git_configs/*
 old_diffs/*
 tar_zsts_contents/*
@@ -14,6 +15,13 @@ log.txt
 reflector_mirrorlist_cache
 CREATE_MIRRORLIST_CACHE.sh
 !/templates/CREATE_MIRRORLIST_CACHE.sh
+
+testing/\[modified\]OVMF_VARS.4m.fd
+testing/\[modified\]archlinux_vm_disk.qcow2
+testing/\[original\]archlinux_vm_disk.qcow2
+testing/archlinux-*.iso
+testing/archlinux-*.iso.aria2
+testing/arch.torrent
 
 # - Libreoffice lock files
 .~lock.*#
