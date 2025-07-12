@@ -24,7 +24,7 @@ if [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ]; then
         rm arch.torrent
     fi
     wget https://archlinux.org/releng/releases/$(date +%Y).$(date +%m).01/torrent/ -O arch.torrent
-    aria2c arch.torrent --enable-rpc=false --continue=true
+    aria2c arch.torrent --enable-rpc=false --seed-time=0
     # Проверяем, что файл архива существует
     if [ -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ]; then
         echo "Скачивание завершено успешно!"
