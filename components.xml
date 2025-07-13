@@ -1130,7 +1130,7 @@
         <hostname>qemu-arch</hostname>
 		<username>user</username>
 		<useruid>1000</useruid>
-		<!-- в даннай конфигурации хуки на базе systemd не работают или требуют дополнительных настроек -->
+		<!-- в данной конфигурации хуки на базе systemd не работают или требуют дополнительных настроек -->
 		<hooks>base udev autodetect microcode modconf kms keymap consolefont block lvm2 encrypt filesystems fsck</hooks>
 		<encrypted_boot>false</encrypted_boot>
 		<legacy_bios>false</legacy_bios>
