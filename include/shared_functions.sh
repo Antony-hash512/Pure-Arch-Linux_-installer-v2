@@ -6,16 +6,16 @@ parse_xml() {
     local optional_args=("${@:3}")
     case $component in
         "driverspack")
-            python3 $XML_PARSER driverspack $DRIVERSPACK_ID $command
+            python3 "$XML_PARSER" driverspack "$DRIVERSPACK_ID" "$command"
             ;;
         "softpack")
-            python3 $XML_PARSER softpack $SOFTPACK_ID $command
+            python3 "$XML_PARSER" softpack "$SOFTPACK_ID" "$command"
             ;;
         "install_location")
-            python3 $XML_PARSER install_location $INSTALL_LOCATION_ID $command "${optional_args[@]}"
+            python3 "$XML_PARSER" install_location "$INSTALL_LOCATION_ID" "$command" "${optional_args[@]}"
             ;;
         "settings")
-            python3 $XML_PARSER settings $SETTINGS_ID $command
+            python3 "$XML_PARSER" settings "$SETTINGS_ID" "$command"
             ;;
     esac
 

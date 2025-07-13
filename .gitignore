@@ -23,6 +23,7 @@ testing/\[original\]archlinux_vm_disk.qcow2.zst
 testing/archlinux-*.iso
 testing/archlinux-*.iso.aria2
 testing/arch.torrent
+testing/trashbin/*
 
 # - Libreoffice lock files
 .~lock.*#
