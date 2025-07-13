@@ -400,7 +400,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest1</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -430,7 +430,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest1</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -460,7 +460,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -490,7 +490,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest2</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -513,7 +513,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest3</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -535,7 +535,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest3</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -564,7 +564,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest4</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -593,7 +593,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest4</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -623,7 +623,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest5</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -652,7 +652,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest5</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -675,7 +675,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest6</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -697,7 +697,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest6</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -727,7 +727,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest5a</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -757,7 +757,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest6a</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -779,7 +779,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest7</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -807,7 +807,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest8</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -837,7 +837,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest9</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -867,7 +867,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest9</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -898,7 +898,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest10</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -933,7 +933,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest11</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -963,7 +963,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest12</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -993,7 +993,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest14</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -1021,7 +1021,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest14</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -1060,7 +1060,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest15</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -1098,7 +1098,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest15</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -1136,7 +1136,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest16</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>
@@ -1172,7 +1172,7 @@
 		<legacy_bios>false</legacy_bios>
 		<efi>
 			<bootlabel>ArchTest16</bootlabel>
-			<dev>/dev/sda1</dev><uuid>FD65-F97C</uuid>
+			<!--dev>/dev/sda1</dev--><uuid>FD65-F97C</uuid>
 			<new_location>/efi</new_location>
 		</efi>
 		<iso>true</iso>

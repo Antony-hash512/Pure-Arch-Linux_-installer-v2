@@ -291,12 +291,12 @@ def main():
             print(bootlabel_elem.text.strip())
         else:
             print("")
-    elif command == 'get_efi_dev':
-        dev_elem = component.find('efi/dev')
-        if dev_elem is not None:
-            print(dev_elem.text.strip())
-        else:
-            print("")
+    #elif command == 'get_efi_dev':
+        #dev_elem = component.find('efi/dev')
+        #if dev_elem is not None:
+            #print(dev_elem.text.strip())
+        #else:
+            #print("")
     elif command == 'get_efi_uuid':
         uuid_elem = component.find('efi/uuid')
         if uuid_elem is not None:
