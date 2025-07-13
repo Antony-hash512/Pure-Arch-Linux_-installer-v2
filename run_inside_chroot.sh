@@ -3,7 +3,7 @@ SOFTPACK_ID=$1
 DRIVERSPACK_ID=$2
 INSTALL_LOCATION_ID=$3
 SETTINGS_ID=$4
-EFI_SYS_NAME=$5
+
 
 XML_PARSER="get_data_from_components_xml.py"
 SHARED_FUNCTIONS="shared_functions.sh"
@@ -25,6 +25,7 @@ MY_LOCALE="$(parse_xml settings get_default_locale)"
 ALL_LOCALES="$(parse_xml settings get_locales)"
 
 EFI_NEW_LOCATION="$(parse_xml install_location get_efi_new_location)"
+EFI_SYS_NAME="$(parse_xml install_location get_efi_bootlabel)"
 
 SOFTPACK_TWEAKS="$(parse_xml softpack get_softpack_tweaks)"
 

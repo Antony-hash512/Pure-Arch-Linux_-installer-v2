@@ -39,7 +39,6 @@ EOF
 
 : <<'TODO'
 * сделать двух-факторку на гитхабе с бекапом ключа
-* использовать uuid для EFI-раздела (вместо /dev/sda1)
 * сделать скрипт для автогенерации размеченного образа диска с нужными uuid
 * разобраться из-за чего pacman'у передаётся пустая строка в качестве аргумента
 * протестировать различные варианты установок на vm
@@ -1043,7 +1042,14 @@ INST_DIR=$(mktemp -d)
 
 
 # случаи для legacy будут добавлены потом
-EFI_DEV="$(parse_xml install_location get_efi_dev)"
+EFI_UUID="$(parse_xml install_location get_efi_uuid)"
+# Получаем имя устройства через UUID с проверкой существования
+if [[ -n "$EFI_UUID" ]] && [[ -e "/dev/disk/by-uuid/$EFI_UUID" ]]; then
+    EFI_DEV=$(readlink -f "/dev/disk/by-uuid/$EFI_UUID")
+else
+    echo -e "${RED}Ошибка: EFI устройство с UUID $EFI_UUID не найдено${NC}" >&2
+    exit 1
+fi
 EFI_NEW_LOCATION="$(parse_xml install_location get_efi_new_location)"
 EFI_SYS_NAME="$(parse_xml install_location get_efi_bootlabel)"
 
@@ -1352,8 +1358,8 @@ fi
 
 #-------------------------------
 # Chroot в новую систему
-# передаём в скрипт idшники установки и имя загрузчика в EFI-разделе
-arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DRIVERSPACK_ID\" \"$INSTALL_LOCATION_ID\" \"$SETTINGS_ID\" \"$EFI_SYS_NAME\""
+# передаём в скрипт idшники установки
+arch-chroot $INST_DIR /bin/bash -c "/run_inside_chroot.sh \"$SOFTPACK_ID\" \"$DRIVERSPACK_ID\" \"$INSTALL_LOCATION_ID\" \"$SETTINGS_ID\""
 #-------------------------------
 
 #удаляем выполнившуюся в chroot'е копию второго скрипта
