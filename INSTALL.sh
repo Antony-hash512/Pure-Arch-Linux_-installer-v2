@@ -39,6 +39,8 @@ EOF
 
 : <<'TODO'
 * сделать двух-факторку на гитхабе с бекапом ключа
+* починить кеш для пакетов
+* удалять кеш рефлектора если ему больше суток
 * сделать скрипт для автогенерации размеченного образа диска с нужными uuid
 * реализовать поддержку старых ноутбуков с legacy bios
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
@@ -75,6 +77,11 @@ LOG_FILE="log.txt"
 VIEW_ONLY_KEY="--view-only"
 VIEW_ONLY_FLAG=false
 HELP_KEY="--help"
+NO_CACHE_MIRRORS="--no-cache-mirrors"
+IS_GET_MIRRORS_FROM_REFLECTOR_CACHE=true
+IS_USE_REFLECTOR=true
+CACHE_PKGS_KEY="--cache-pkgs"
+CACHE_PKGS_FLAG=false
 
 # Заранее вычисленные степени 1024
 export MB=1048576  # 1024^2
@@ -95,10 +102,7 @@ export TEMPLATES_DIR="templates"
 export CREATE_MIRRORLIST_CACHE_SCRIPT="CREATE_MIRRORLIST_CACHE.sh"
 export MIRRORLIST_CACHE_FILE="reflector_mirrorlist_cache"
 export SYSTEM_MIRRORLIST_FILE="/etc/pacman.d/mirrorlist"
-
-#булевы параметры по умолчанию
-IS_USE_REFLECTOR=false
-IS_GET_MIRRORS_FROM_REFLECTOR_CACHE=true
+export PKG_LOCAL_CACHE_DIR="cache-repo"
 
 # Получаем путь к каталогу, где находится скрипт
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
@@ -143,6 +147,7 @@ fi
 # используем trap для вызова функции cleanup_all при любом выходе из скрипта
 trap 'cleanup_all' EXIT
 
+# фильтрация длинных флагов из аргументов
 long_flag_was_used() {
     echo -e "${GREEN}Длинный флаг $1 был использован${NC}"
 }
@@ -165,6 +170,14 @@ for arg in "$@"; do
     elif [[ "$arg" == "$VIEW_ONLY_KEY" ]]; then
         VIEW_ONLY_FLAG=true
         long_flag_was_used "$VIEW_ONLY_KEY"
+    elif [[ "$arg" == "$NO_CACHE_MIRRORS" ]]; then
+        if [[ -f "$MIRRORLIST_CACHE_FILE" ]]; then
+            rm "$MIRRORLIST_CACHE_FILE"
+        fi
+        long_flag_was_used "$NO_CACHE_MIRRORS"
+    elif [[ "$arg" == "$CACHE_PKGS_KEY" ]]; then
+        CACHE_PKGS_FLAG=true
+        long_flag_was_used "$CACHE_PKGS_KEY"
     else
         filtered_args+=("$arg")
     fi
@@ -312,8 +325,21 @@ else
     echo "Вывод lsblk будет выполнен в формате по умолчанию: $LSBLK_FORMAT. TTY достаточно широкий ($TTY_WIDTH) для вывода всех необходимых данных."
 fi
 
+#1.2) получаем от пользователя данные какие компоненты использовать
+check_key_and_request_component_id "install_location"
+# остальные будут запрашиваться после начала установки системы
+# пока что они не требуются
 
-#1.2) устанавливаем необходимые пакеты
+#1.2.1) устанавливаем необходимые пакеты
+# откуда устанавливается система
+
+if [[ $(parse_xml install_location get_tweak_iso) == "true" ]]; then
+    INSTALL_FROM="iso"
+else
+    INSTALL_FROM="other_system"
+fi
+
+
 if [[ $INSTALL_FROM == "other_system" ]]; then
     pacman -Syu
 fi
@@ -332,13 +358,10 @@ done
 #  для возможного добавления в дальнейшем: xfsprogs, f2fs-tools
 # zfs-dkms (или zfs-linux-lts); zfs-utils
 
-#2) получаем от пользователя данные какие компоненты использовать
-check_key_and_request_component_id "install_location"
-# остальные будут запрашиваться после начала установки системы
-# пока что они не требуются
 
 
-#2.1) получаем данные и xml-файла
+
+#2) получаем данные и xml-файла
 #получаем информацию содержащуюся в xml-файле
 NEW_MOUNTPOINTS_AMOUNT=$(parse_xml "install_location" "get_amount_of_new_mountpoints")
 echo -e "${YELLOW}Количество новых точек монтирования:${NC} $NEW_MOUNTPOINTS_AMOUNT"
@@ -1027,12 +1050,6 @@ check_key_and_request_component_id "softpack"
 check_key_and_request_component_id "driverspack"
 check_key_and_request_component_id "settings"
 
-# откуда устанавливается система
-if [[ $(parse_xml install_location get_tweak_iso) == "true" ]]; then
-    INSTALL_FROM="iso"
-else
-    INSTALL_FROM="other_system"
-fi
 
 
 #создаём временный каталог для монтирования системы
@@ -1311,27 +1328,31 @@ else
 fi
 
 
-#----небольшой, но важный костыль для кеша при тестировании на виртуалке----
+#----небольшой вспомогательный код для кеша при тестировании на виртуалке qemu----
 # если use_cache.sh уже выполнился, 9p-шара висит на /var/cache/pacman/pkg
 # остаётся «пробросить» её внутрь нового root'а
 #mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"
 
-mkdir -p "$INST_DIR/var/cache/pacman/pkg"
 # Проверяем, что /var/cache/pacman/pkg смонтирован как 9p; если да — пробрасываем его внутрь инсталлируемой системы
-if mountpoint -q /var/cache/pacman/pkg && [[ "$(findmnt -n -o FSTYPE /var/cache/pacman/pkg)" == "9p" ]]; then
-    mkdir -p "$INST_DIR/var/cache/pacman/pkg"
-    if mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"; then
-        echo -e "${GREEN}pkgcache (9p) проброшен внутрь новой системы.${NC}"
-    else
-        echo -e "${YELLOW}Предупреждение: не удалось выполнить bind-mount pkgcache${NC}" >&2
-    fi
-else
-    echo -e "${YELLOW}pkgcache не является 9p-точкой монтирования — bind-mount пропущен.${NC}" >&2
-fi
-#--------------------------------конец кастыля--------------------------------
+#if mountpoint -q /var/cache/pacman/pkg && [[ "$(findmnt -n -o FSTYPE /var/cache/pacman/pkg)" == "9p" ]]; then
+    #mkdir -p "$INST_DIR/var/cache/pacman/pkg"
+    #if mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"; then
+        #echo -e "${GREEN}pkgcache (9p) проброшен внутрь новой системы.${NC}"
+    #else
+        #echo -e "${YELLOW}Предупреждение: не удалось выполнить bind-mount pkgcache${NC}" >&2
+    #fi
+#else
+    #echo -e "${YELLOW}pkgcache не является 9p-точкой монтирования — bind-mount пропущен.${NC}" >&2
+#fi
+#--------------------------------конец вспомогательного кода--------------------------------
+
 
 # Установка основных пакетов
-pacstrap $INST_DIR $SOFT_PACK1
+if [[ "$CACHE_PKGS_FLAG" == true ]]; then
+    pacstrap -c $(pwd)/$PKG_LOCAL_CACHE_DIR $INST_DIR $SOFT_PACK1
+else
+    pacstrap $INST_DIR $SOFT_PACK1
+fi
 
 # Генерация fstab
 genfstab -U $INST_DIR > $INST_DIR/etc/fstab
@@ -1370,6 +1391,10 @@ if [[ "$IS_GET_MIRRORS_FROM_REFLECTOR_CACHE" == true ]]; then
     cp $MIRRORLIST_CACHE_FILE $INST_DIR$SYSTEM_MIRRORLIST_FILE
 else
     cp $SYSTEM_MIRRORLIST_FILE $INST_DIR$SYSTEM_MIRRORLIST_FILE
+fi
+
+if [[ "$CACHE_PKGS_FLAG" == true ]]; then
+    mount --bind  "$(pwd)/$PKG_LOCAL_CACHE_DIR" "$INST_DIR/var/cache/pacman/pkg"
 fi
 
 #-------------------------------
