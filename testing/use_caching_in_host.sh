@@ -20,3 +20,5 @@ if ! systemctl is-active --quiet pacserve-ports.service; then
 else
     echo "Сервис pacserve-ports.service уже запущен"
 fi
+
+echo "Для подключения к кешу пакетов в хосте, запустите скрипт INSTALL.sh с флагом --cache-qemu-pkgs"

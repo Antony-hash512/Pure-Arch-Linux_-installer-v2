@@ -55,6 +55,8 @@ if ! pacman -Qi qemu-base &>/dev/null; then
     sudo pacman -S qemu-base --noconfirm
 fi
 
+./use_caching_in_host.sh
+
 qemu-system-x86_64 \
     -enable-kvm \
     -m ${RAM_SIZE} \
@@ -64,7 +66,6 @@ qemu-system-x86_64 \
     -drive if=pflash,format=raw,file=[modified]OVMF_VARS.4m.fd \
     -drive file=[modified]archlinux_vm_disk.qcow2,format=qcow2 \
     -virtfs local,path=../,mount_tag=inst_scripts,security_model=none \
-    -virtfs local,path=../cache-repo/,mount_tag=pkgcache,security_model=none \
     -cdrom archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso \
     -drive file=./mntfld.iso,media=cdrom \
     -boot order=d \

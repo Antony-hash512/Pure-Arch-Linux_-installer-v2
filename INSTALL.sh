@@ -82,6 +82,8 @@ IS_GET_MIRRORS_FROM_REFLECTOR_CACHE=true
 IS_USE_REFLECTOR=true
 CACHE_PKGS_KEY="--cache-pkgs"
 CACHE_PKGS_FLAG=false
+CACHE_QEMU_PKGS_KEY="--cache-qemu-pkgs"
+CACHE_QEMU_PKGS_FLAG=false
 
 # Заранее вычисленные степени 1024
 export MB=1048576  # 1024^2
@@ -178,6 +180,9 @@ for arg in "$@"; do
     elif [[ "$arg" == "$CACHE_PKGS_KEY" ]]; then
         CACHE_PKGS_FLAG=true
         long_flag_was_used "$CACHE_PKGS_KEY"
+    elif [[ "$arg" == "$CACHE_QEMU_PKGS_KEY" ]]; then
+        CACHE_QEMU_PKGS_FLAG=true
+        long_flag_was_used "$CACHE_QEMU_PKGS_KEY"
     else
         filtered_args+=("$arg")
     fi
@@ -1346,15 +1351,19 @@ fi
 #fi
 #--------------------------------конец вспомогательного кода--------------------------------
 
-
-# Установка основных пакетов
+# кеширование пакетов в qemu
 if [[ "$CACHE_PKGS_FLAG" == true ]]; then
     # гарантируем, что целевая директория существует внутри нового root
     mkdir -p "$INST_DIR/var/cache/pacman/pkg"
     mount --bind  "$(pwd)/$PKG_LOCAL_CACHE_DIR" "$INST_DIR/var/cache/pacman/pkg"
 fi
+if [[ "$CACHE_QEMU_PKGS_FLAG" == true ]]; then
+    echo "[local-cache]
+Server = http://10.0.2.2:15678" >> /etc/pacman.conf
+    pacman -Sy
+fi
 
-
+# Установка основных пакетов
 pacstrap $INST_DIR $SOFT_PACK1
 
 
@@ -1381,6 +1390,11 @@ cp $SCRIPT_DIR/$CHROOT_SCRIPT $INST_DIR
 cp $SCRIPT_DIR/$XML_PARSER $INST_DIR
 cp $SCRIPT_DIR/$XML_FILE $INST_DIR
 cp $SCRIPT_DIR/$SHARED_FUNCTIONS $INST_DIR
+
+if  [[ "$CACHE_QEMU_PKGS_FLAG" == true ]]; then
+        echo "[local-cache]
+Server = http://10.0.2.2:15678" >> $INST_DIR/etc/pacman.conf
+fi
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
 ARCHIVES_4HOME="$(parse_xml softpack get_archs4home)"
