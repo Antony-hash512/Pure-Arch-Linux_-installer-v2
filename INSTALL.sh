@@ -1349,6 +1349,8 @@ fi
 
 # Установка основных пакетов
 if [[ "$CACHE_PKGS_FLAG" == true ]]; then
+    # гарантируем, что целевая директория существует внутри нового root
+    mkdir -p "$INST_DIR/var/cache/pacman/pkg"
     mount --bind  "$(pwd)/$PKG_LOCAL_CACHE_DIR" "$INST_DIR/var/cache/pacman/pkg"
 fi
 
