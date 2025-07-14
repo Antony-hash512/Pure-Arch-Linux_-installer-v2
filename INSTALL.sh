@@ -1311,7 +1311,24 @@ else
 fi
 
 
+#----небольшой, но важный костыль для кеша при тестировании на виртуалке----
+# если use_cache.sh уже выполнился, 9p-шара висит на /var/cache/pacman/pkg
+# остаётся «пробросить» её внутрь нового root'а
+#mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"
 
+mkdir -p "$INST_DIR/var/cache/pacman/pkg"
+# Проверяем, что /var/cache/pacman/pkg смонтирован как 9p; если да — пробрасываем его внутрь инсталлируемой системы
+if mountpoint -q /var/cache/pacman/pkg && [[ "$(findmnt -n -o FSTYPE /var/cache/pacman/pkg)" == "9p" ]]; then
+    mkdir -p "$INST_DIR/var/cache/pacman/pkg"
+    if mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"; then
+        echo -e "${GREEN}pkgcache (9p) проброшен внутрь новой системы.${NC}"
+    else
+        echo -e "${YELLOW}Предупреждение: не удалось выполнить bind-mount pkgcache${NC}" >&2
+    fi
+else
+    echo -e "${YELLOW}pkgcache не является 9p-точкой монтирования — bind-mount пропущен.${NC}" >&2
+fi
+#--------------------------------конец кастыля--------------------------------
 
 # Установка основных пакетов
 pacstrap $INST_DIR $SOFT_PACK1
