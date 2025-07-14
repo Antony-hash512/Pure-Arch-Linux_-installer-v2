@@ -1708,3 +1708,16 @@ configure_crypt_volumes_by_ref(){
     fi
 }
 
+#заменяет серверы pacman.conf на локальный кеш
+add_local_cache_servers_to_file(){
+    local file_name=$1
+    sed -i '/^\[core\]$/c\\[core]\nServer = http:\/\/10.0.2.2:15678\/pacman\/$repo\/$arch' $file_name
+    sed -i '/^\[extra\]$/c\\[extra]\nServer = http:\/\/10.0.2.2:15678\/pacman\/$repo\/$arch' $file_name
+}
+
+#убирает ранее добавленные серверы кеша из файла
+remove_local_cache_servers_from_file(){
+    local file_name=$1
+    sed -i '/^\[core\]\nServer = http:\/\/10.0.2.2:15678\/pacman\/$repo\/$arch$/c\\[core]' $file_name
+    sed -i '/^\[extra\]\nServer = http:\/\/10.0.2.2:15678\/pacman\/$repo\/$arch$/c\\[extra]' $file_name
+}

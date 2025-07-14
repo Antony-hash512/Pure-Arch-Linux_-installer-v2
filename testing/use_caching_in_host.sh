@@ -9,7 +9,9 @@ fi
 # Проверяем и запускаем pacserve, если он не запущен
 if ! systemctl is-active --quiet pacserve; then
     echo "потребуется ввести пароль от root для запуска pacserve и pacserve-ports.service"
+    echo 'PACSERVE_ARGS="--multicast --avahi --trust-pacserve-peers"' | sudo tee /etc/pacserve/pacserve.service.conf
     sudo systemctl start pacserve
+
 else
     echo "Сервис pacserve уже запущен"
 fi

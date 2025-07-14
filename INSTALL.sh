@@ -1358,8 +1358,7 @@ if [[ "$CACHE_PKGS_FLAG" == true ]]; then
     mount --bind  "$(pwd)/$PKG_LOCAL_CACHE_DIR" "$INST_DIR/var/cache/pacman/pkg"
 fi
 if [[ "$CACHE_QEMU_PKGS_FLAG" == true ]]; then
-    echo "[local-cache]
-Server = http://10.0.2.2:15678" >> /etc/pacman.conf
+    add_local_cache_servers_to_file /etc/pacman.conf
     pacman -Sy
 fi
 
@@ -1392,8 +1391,7 @@ cp $SCRIPT_DIR/$XML_FILE $INST_DIR
 cp $SCRIPT_DIR/$SHARED_FUNCTIONS $INST_DIR
 
 if  [[ "$CACHE_QEMU_PKGS_FLAG" == true ]]; then
-        echo "[local-cache]
-Server = http://10.0.2.2:15678" >> $INST_DIR/etc/pacman.conf
+    add_local_cache_servers_to_file $INST_DIR/etc/pacman.conf
 fi
 
 #получаем список архивов для распаковки в домашнюю папку пользователя
@@ -1424,6 +1422,10 @@ rm $INST_DIR/$CHROOT_SCRIPT
 rm $INST_DIR/$XML_PARSER
 rm $INST_DIR/$XML_FILE
 rm $INST_DIR/$(basename $SHARED_FUNCTIONS)
+
+if [[ "$CACHE_QEMU_PKGS_FLAG" == true ]]; then
+    remove_local_cache_servers_from_file $INST_DIR/etc/pacman.conf
+fi
 
 
 #размонтируем раздел EFI

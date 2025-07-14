@@ -55,8 +55,6 @@ if ! pacman -Qi qemu-base &>/dev/null; then
     sudo pacman -S qemu-base --noconfirm
 fi
 
-./use_caching_in_host.sh
-
 qemu-system-x86_64 \
     -enable-kvm \
     -m ${RAM_SIZE} \
