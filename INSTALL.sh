@@ -1349,10 +1349,12 @@ fi
 
 # Установка основных пакетов
 if [[ "$CACHE_PKGS_FLAG" == true ]]; then
-    pacstrap --cachedir $(pwd)/$PKG_LOCAL_CACHE_DIR $INST_DIR $SOFT_PACK1
-else
-    pacstrap $INST_DIR $SOFT_PACK1
+    mount --bind  "$(pwd)/$PKG_LOCAL_CACHE_DIR" "$INST_DIR/var/cache/pacman/pkg"
 fi
+
+
+pacstrap $INST_DIR $SOFT_PACK1
+
 
 # Генерация fstab
 genfstab -U $INST_DIR > $INST_DIR/etc/fstab
@@ -1393,9 +1395,7 @@ else
     cp $SYSTEM_MIRRORLIST_FILE $INST_DIR$SYSTEM_MIRRORLIST_FILE
 fi
 
-if [[ "$CACHE_PKGS_FLAG" == true ]]; then
-    mount --bind  "$(pwd)/$PKG_LOCAL_CACHE_DIR" "$INST_DIR/var/cache/pacman/pkg"
-fi
+
 
 #-------------------------------
 # Chroot в новую систему
