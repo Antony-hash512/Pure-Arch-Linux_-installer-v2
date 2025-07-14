@@ -1349,7 +1349,7 @@ fi
 
 # Установка основных пакетов
 if [[ "$CACHE_PKGS_FLAG" == true ]]; then
-    pacstrap -c $(pwd)/$PKG_LOCAL_CACHE_DIR $INST_DIR $SOFT_PACK1
+    pacstrap --cachedir $(pwd)/$PKG_LOCAL_CACHE_DIR $INST_DIR $SOFT_PACK1
 else
     pacstrap $INST_DIR $SOFT_PACK1
 fi
