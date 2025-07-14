@@ -192,7 +192,7 @@ check_key_and_request_component_id() {
             ;;
         "driverspack")
             key="d"
-            current_value="$DRIVERS_ID"
+            current_value="$DRIVERSPACK_ID"
             prompt_text="Введите ID набора драйверов"
             ;;
         "settings")
@@ -228,7 +228,7 @@ check_key_and_request_component_id() {
             SOFTPACK_ID="$current_value"
             ;;
         "driverspack")
-            DRIVERS_ID="$current_value"
+            DRIVERSPACK_ID="$current_value"
             ;;
         "settings")
             SETTINGS_ID="$current_value"
@@ -746,7 +746,7 @@ check_ext4_partitions_to_format_with_their_mount_points() {
         
             mount_point=${current_row["mount_point"]}
             crypt_mode=${current_row["crypt_mode"]}
-            current_device_name=${current_row["device"]}
+            current_device_name=${current_row["device"]} #TODO: device или lv-volume?
 
             #если полученное имя устройства совпадает с именем устройства в массиве, то добавляем в output
             if [[ "$device_from_input" == "$current_device_name" ]]; then
