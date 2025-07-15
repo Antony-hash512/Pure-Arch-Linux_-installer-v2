@@ -39,6 +39,25 @@ parted -a optimal /dev/sda mkpart primary 70GiB 80GiB   # /dev/sda6 - ext4 10 GB
 parted -a optimal /dev/sda mkpart primary 80GiB 85GiB   # /dev/sda7 - 1й pv для lvm
 parted -a optimal /dev/sda mkpart primary 85GiB 90GiB  # /dev/sda8 - 2й pv для lvm
 
+# Задаём фиксированные PARTUUID для разделов
+sgdisk --partition-guid=1:e8db4848-b418-42b6-a19a-272cbd1259db /dev/sda1 # EFI
+sgdisk --partition-guid=2:309f026b-2f3a-4b81-93f3-91f01b2bd264 /dev/sda2 # LUKS
+sgdisk --partition-guid=3:c64c4dae-e095-43f4-852c-079a71e09da9 /dev/sda3 # не потребуется, LVM2_member
+sgdisk --partition-guid=4:25b07408-5287-442b-b301-cd13d70fcd7a /dev/sda4 # btrfs
+sgdisk --partition-guid=5:459c5d86-02c1-4b60-9536-eefbb37b93cf /dev/sda5 # LUKS
+sgdisk --partition-guid=6:e6b3a93f-4a9a-4bed-a986-fed780600a20 /dev/sda6 # ext4
+sgdisk --partition-guid=7:6dc4628a-4ea8-4686-ba68-4a15801d00d5 /dev/sda7 # LUKS
+sgdisk --partition-guid=8:6afde44f-0917-4ef0-bd18-70e31737278d /dev/sda8 # LUKS
+
+# шпаргалка по uuid файловых систем и LUKS:
+# FD65-F97C - /dev/sda1 - EFI
+# 7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167 - /dev/sda2 - LUKS внутри которого lvm
+# --changeable -- /dev/sda3 - не потребуется, LVM2_member
+# 5a684c53-53cd-4419-b7b1-04ea97ba09d3 - /dev/sda4 - btrfs
+# f0ecf279-3df6-43e1-b508-0075960299f2 - /dev/sda5 - LUKS внутри которого btrfs
+# 7e4a08f1-cde8-4f97-aef0-2645e2691f2f - /dev/sda6 - ext4
+# d8526a70-78a1-40a9-b138-90a248ee6ef6 - /dev/sda7 - LUKS внутри которого lvm с 2мя pv
+# d7cf1e1f-e766-4dc1-8110-744c6b9caea1 - /dev/sda8 - LUKS внутри которого lvm с 2мя pv
 
 # Установка флага загрузки для EFI раздела
 parted /dev/sda set 1 boot on
@@ -92,25 +111,7 @@ mkfs.btrfs -f /dev/mapper/luks_on_sda5
 mkfs.ext4 -f -U 7e4a08f1-cde8-4f97-aef0-2645e2691f2f /dev/sda6
 mkfs.btrfs -f /dev/double_locked_vg/btrfs_in_double_locked_lvm
 
-# Задаём фиксированные PARTUUID для разделов
-sgdisk --partition-guid=1:e8db4848-b418-42b6-a19a-272cbd1259db /dev/sda1 # EFI
-sgdisk --partition-guid=2:309f026b-2f3a-4b81-93f3-91f01b2bd264 /dev/sda2 # LUKS
-sgdisk --partition-guid=3:c64c4dae-e095-43f4-852c-079a71e09da9 /dev/sda3 # не потребуется, LVM2_member
-sgdisk --partition-guid=4:25b07408-5287-442b-b301-cd13d70fcd7a /dev/sda4 # btrfs
-sgdisk --partition-guid=5:459c5d86-02c1-4b60-9536-eefbb37b93cf /dev/sda5 # LUKS
-sgdisk --partition-guid=6:e6b3a93f-4a9a-4bed-a986-fed780600a20 /dev/sda6 # ext4
-sgdisk --partition-guid=7:6dc4628a-4ea8-4686-ba68-4a15801d00d5 /dev/sda7 # LUKS
-sgdisk --partition-guid=8:6afde44f-0917-4ef0-bd18-70e31737278d /dev/sda8 # LUKS
 
-# шпаргалка по uuid файловых систем и LUKS:
-# FD65-F97C - /dev/sda1 - EFI
-# 7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167 - /dev/sda2 - LUKS внутри которого lvm
-# --changeable -- /dev/sda3 - не потребуется, LVM2_member
-# 5a684c53-53cd-4419-b7b1-04ea97ba09d3 - /dev/sda4 - btrfs
-# f0ecf279-3df6-43e1-b508-0075960299f2 - /dev/sda5 - LUKS внутри которого btrfs
-# 7e4a08f1-cde8-4f97-aef0-2645e2691f2f - /dev/sda6 - ext4
-# d8526a70-78a1-40a9-b138-90a248ee6ef6 - /dev/sda7 - LUKS внутри которого lvm с 2мя pv
-# d7cf1e1f-e766-4dc1-8110-744c6b9caea1 - /dev/sda8 - LUKS внутри которого lvm с 2мя pv
 
 
 # Вывод информации о созданных разделах
