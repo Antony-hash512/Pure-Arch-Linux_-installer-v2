@@ -30,6 +30,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [ ! -f [original]archlinux_vm_disk.qcow2 ] && [ $DISK_NAME == $DEFAULT_DISK ]; then
+    echo "Ошибка: не найден оригинальный образ диска [original]archlinux_vm_disk.qcow2"
+    echo "Пожалуйста, создайте его с помощью скрипта ./create_parted_qcow2.sh"
+    echo "Подробности в файле README.md"
+    exit 1
+fi
+
 if [ ! -f [modified]OVMF_VARS.4m.fd ]; then
     cp [original]OVMF_VARS.4m.fd [modified]OVMF_VARS.4m.fd
 fi
