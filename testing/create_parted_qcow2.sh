@@ -6,7 +6,7 @@ SIZE=120
 
 if [ -f '[modified]archlinux_vm_disk.qcow2' ]; then
     read -p "сделать резервную копию '[modified]archlinux_vm_disk.qcow2' (y/n)? " response
-    if [[ ! "$response" == "nNНн" ]]; then
+    if [[ "$response" =~ [nNНн] ]]; then
         rm -f '[modified]archlinux_vm_disk.qcow2'
     else
         mv '[modified]archlinux_vm_disk.qcow2' '[modified_backup]archlinux_vm_disk.qcow2'
@@ -14,7 +14,7 @@ if [ -f '[modified]archlinux_vm_disk.qcow2' ]; then
 fi
 if [ -f '[original]archlinux_vm_disk.qcow2' ]; then
     read -p "сделать резервную копию '[original]archlinux_vm_disk.qcow2' (y/n)? " response
-    if [[ ! "$response" == "nNНн" ]]; then
+    if [[ "$response" =~ [nNНн] ]]; then
         rm -f '[original]archlinux_vm_disk.qcow2'
     else
         mv '[original]archlinux_vm_disk.qcow2' '[original_backup]archlinux_vm_disk.qcow2'
