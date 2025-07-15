@@ -1,5 +1,15 @@
 #!/bin/bash
 
+#запрашиваем подтверждение на создание новых разделов
+echo "Введите PARTING_START если сейчас находитесь на qemu и хотите разметить пустой диск"
+read -r response
+if [[ ! "$response" == "PARTING_START" ]]; then
+    echo "Выход без создания новых разделов."
+    exit 0
+fi
+
+
+
 # Создание разделов на диске /dev/sda
 parted -a optimal /dev/sda mklabel gpt
 
