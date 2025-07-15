@@ -2,8 +2,6 @@
 autocreated_scripts/*
 !autocreated_scripts/.gitkeep
 errors/*
-cache-repo/*
-!cache-repo/.gitkeep
 git_configs/*
 old_diffs/*
 tar_zsts_contents/*

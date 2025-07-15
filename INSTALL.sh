@@ -39,12 +39,10 @@ EOF
 
 : <<'TODO'
 * сделать двух-факторку на гитхабе с бекапом ключа
-* current_device_name=${current_row["device"]} #TODO: device или lv-volume? в main_functions.sh
 * удалять кеш рефлектора если ему больше суток
 * сделать скрипт для автогенерации размеченного образа диска с нужными uuid
 * реализовать поддержку старых ноутбуков с legacy bios
 * проверить открытия luksов по кейфайлу (в случаях с ext4 может быть создан новый кейфайл, в случаях с btrfs нет)
-* удалить альтернативный способ кеширование через внутренний каталог
 
 * зарелизить бету !!!! <-- ВАЖНО НАКОНЕЦ-ТО НАДО ЗАРЕЛИЗИТЬ ГОТОВЫЙ MVP
 * написать функцию, для проверки гарантированного свободного места в btrfs томах
@@ -81,8 +79,6 @@ HELP_KEY="--help"
 NO_CACHE_MIRRORS="--no-cache-mirrors"
 IS_GET_MIRRORS_FROM_REFLECTOR_CACHE=true
 IS_USE_REFLECTOR=true
-CACHE_PKGS_KEY="--cache-pkgs"
-CACHE_PKGS_FLAG=false
 CACHE_QEMU_PKGS_KEY="--cache-qemu-pkgs"
 CACHE_QEMU_PKGS_FLAG=false
 
@@ -178,9 +174,6 @@ for arg in "$@"; do
             rm "$MIRRORLIST_CACHE_FILE"
         fi
         long_flag_was_used "$NO_CACHE_MIRRORS"
-    elif [[ "$arg" == "$CACHE_PKGS_KEY" ]]; then
-        CACHE_PKGS_FLAG=true
-        long_flag_was_used "$CACHE_PKGS_KEY"
     elif [[ "$arg" == "$CACHE_QEMU_PKGS_KEY" ]]; then
         CACHE_QEMU_PKGS_FLAG=true
         long_flag_was_used "$CACHE_QEMU_PKGS_KEY"
@@ -1333,24 +1326,6 @@ else
     exit 1
 fi
 
-
-#----небольшой вспомогательный код для кеша при тестировании на виртуалке qemu----
-# если use_cache.sh уже выполнился, 9p-шара висит на /var/cache/pacman/pkg
-# остаётся «пробросить» её внутрь нового root'а
-#mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"
-
-# Проверяем, что /var/cache/pacman/pkg смонтирован как 9p; если да — пробрасываем его внутрь инсталлируемой системы
-#if mountpoint -q /var/cache/pacman/pkg && [[ "$(findmnt -n -o FSTYPE /var/cache/pacman/pkg)" == "9p" ]]; then
-    #mkdir -p "$INST_DIR/var/cache/pacman/pkg"
-    #if mount --bind /var/cache/pacman/pkg "$INST_DIR/var/cache/pacman/pkg"; then
-        #echo -e "${GREEN}pkgcache (9p) проброшен внутрь новой системы.${NC}"
-    #else
-        #echo -e "${YELLOW}Предупреждение: не удалось выполнить bind-mount pkgcache${NC}" >&2
-    #fi
-#else
-    #echo -e "${YELLOW}pkgcache не является 9p-точкой монтирования — bind-mount пропущен.${NC}" >&2
-#fi
-#--------------------------------конец вспомогательного кода--------------------------------
 
 # кеширование пакетов в qemu
 if [[ "$CACHE_PKGS_FLAG" == true ]]; then

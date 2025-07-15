@@ -746,7 +746,7 @@ check_ext4_partitions_to_format_with_their_mount_points() {
         
             mount_point=${current_row["mount_point"]}
             crypt_mode=${current_row["crypt_mode"]}
-            current_device_name=${current_row["device"]} #TODO: device или lv-volume?
+            current_device_name=${current_row["device"]}
 
             #если полученное имя устройства совпадает с именем устройства в массиве, то добавляем в output
             if [[ "$device_from_input" == "$current_device_name" ]]; then
