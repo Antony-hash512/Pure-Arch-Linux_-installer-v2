@@ -41,7 +41,7 @@ if [ ! -f [modified]OVMF_VARS.4m.fd ]; then
     cp [original]OVMF_VARS.4m.fd [modified]OVMF_VARS.4m.fd
 fi
 
-if [ ! -f [modified]archlinux_vm_disk.qcow2 ]; then
+if [ ! -f [modified]archlinux_vm_disk.qcow2 ] && [ -f [original]archlinux_vm_disk.qcow2 ]; then
     cp [original]archlinux_vm_disk.qcow2 [modified]archlinux_vm_disk.qcow2
 fi
 
