@@ -89,5 +89,18 @@ mkfs.btrfs -f /dev/mapper/luks_on_sda5
 mkfs.ext4 -f -U 7e4a08f1-cde8-4f97-aef0-2645e2691f2f /dev/sda6
 mkfs.btrfs -f /dev/double_locked_vg/btrfs_in_double_locked_lvm
 
+# Задаём фиксированные PARTUUID для разделов
+sgdisk --partition-guid=1:e8db4848-b418-42b6-a19a-272cbd1259db /dev/sda1 # EFI
+sgdisk --partition-guid=2:309f026b-2f3a-4b81-93f3-91f01b2bd264 /dev/sda2 # LUKS
+sgdisk --partition-guid=3:c64c4dae-e095-43f4-852c-079a71e09da9 /dev/sda3 # не потребуется, LVM2_member
+sgdisk --partition-guid=4:25b07408-5287-442b-b301-cd13d70fcd7a /dev/sda4 # btrfs
+sgdisk --partition-guid=5:459c5d86-02c1-4b60-9536-eefbb37b93cf /dev/sda5 # LUKS
+sgdisk --partition-guid=6:e6b3a93f-4a9a-4bed-a986-fed780600a20 /dev/sda6 # ext4
+sgdisk --partition-guid=7:6dc4628a-4ea8-4686-ba68-4a15801d00d5 /dev/sda7 # LUKS
+sgdisk --partition-guid=8:6afde44f-0917-4ef0-bd18-70e31737278d /dev/sda8 # LUKS
+
+
+
+
 # Вывод информации о созданных разделах
 echo "Разделы созданы успешно."
