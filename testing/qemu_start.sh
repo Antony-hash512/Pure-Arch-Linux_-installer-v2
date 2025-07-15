@@ -2,11 +2,12 @@
 
 source ../include/shared_functions.sh
 sync_time
-
+CURRENT_DAY=$(date +%d)
 CURRENT_MONTH=$(date +%m)
 CURRENT_YEAR=$(date +%Y)
 RAM_SIZE=4G
 CPU_CORES=4
+UPDATE_ISO=false
 
 if [ ! -f [modified]OVMF_VARS.4m.fd ]; then
     cp [original]OVMF_VARS.4m.fd [modified]OVMF_VARS.4m.fd
@@ -16,7 +17,36 @@ if [ ! -f [modified]archlinux_vm_disk.qcow2 ]; then
     cp [original]archlinux_vm_disk.qcow2 [modified]archlinux_vm_disk.qcow2
 fi
 
-if [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ]; then
+#из-за разницы в часовых поясах и риска задержки релиза, в первые 2 дня проверяем за прошлый месяц
+#но если образ за текущий месяц есть (например, добавлен вручную), то не отматываем месяц назад
+if [ $CURRENT_DAY -le 2 ] && [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ]; then
+    if [ $CURRENT_MONTH -eq 01 ]; then
+        CURRENT_MONTH=12
+        CURRENT_YEAR=$((CURRENT_YEAR - 1))
+    else
+        CURRENT_MONTH=$(printf "%02d" $((10#$CURRENT_MONTH - 1)))
+    fi
+fi
+
+#проверяем отсутствие образа за любой месяц и год
+# Если в каталоге отсутствуют *какие-либо* ISO-образы Arch Linux,
+# сразу помечаем необходимость скачивания
+if ! compgen -G "archlinux-*.iso" > /dev/null; then
+    echo "В каталоге не найдено ни одного ISO образа Arch Linux."
+    UPDATE_ISO=true
+fi
+
+# если пролое условие не выполнилось, то проверяем, нужно ли обновлять образ
+if [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ] && [ $UPDATE_ISO -eq false ]; then
+    echo "Хотите обновить образ Arch Linux? (y/N)"
+    read -r response
+    if [[ "$response" =~ ^[YyДд]$ ]]; then
+        UPDATE_ISO=true
+    fi
+fi
+
+# Скачиваем ISO, если это необходимо
+if [ "$UPDATE_ISO" = true ]; then
     if ! pacman -Qi aria2 &>/dev/null; then
         sudo pacman -S aria2 --noconfirm
     fi
