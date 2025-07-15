@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# устанавливаем кириллический шрифт в консоль
+setfont cyr-sun16
+
 #запрашиваем подтверждение на создание новых разделов
 echo "Введите PARTING_START если сейчас находитесь на qemu и хотите разметить пустой диск"
 echo "Будьте осторожны, никогда не используйте этот скрипт на хосте"
@@ -99,7 +102,15 @@ sgdisk --partition-guid=6:e6b3a93f-4a9a-4bed-a986-fed780600a20 /dev/sda6 # ext4
 sgdisk --partition-guid=7:6dc4628a-4ea8-4686-ba68-4a15801d00d5 /dev/sda7 # LUKS
 sgdisk --partition-guid=8:6afde44f-0917-4ef0-bd18-70e31737278d /dev/sda8 # LUKS
 
-
+# шпаргалка по uuid файловых систем и LUKS:
+# FD65-F97C - /dev/sda1 - EFI
+# 7fbfe88c-a81d-40c4-9d7c-1c3e1adbd167 - /dev/sda2 - LUKS внутри которого lvm
+# --changeable -- /dev/sda3 - не потребуется, LVM2_member
+# 5a684c53-53cd-4419-b7b1-04ea97ba09d3 - /dev/sda4 - btrfs
+# f0ecf279-3df6-43e1-b508-0075960299f2 - /dev/sda5 - LUKS внутри которого btrfs
+# 7e4a08f1-cde8-4f97-aef0-2645e2691f2f - /dev/sda6 - ext4
+# d8526a70-78a1-40a9-b138-90a248ee6ef6 - /dev/sda7 - LUKS внутри которого lvm с 2мя pv
+# d7cf1e1f-e766-4dc1-8110-744c6b9caea1 - /dev/sda8 - LUKS внутри которого lvm с 2мя pv
 
 
 # Вывод информации о созданных разделах

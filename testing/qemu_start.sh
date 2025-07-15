@@ -8,6 +8,27 @@ CURRENT_YEAR=$(date +%Y)
 RAM_SIZE=4G
 CPU_CORES=4
 UPDATE_ISO=false
+DEFAULT_DISK='[modified]archlinux_vm_disk.qcow2'
+DISK_NAME="$DEFAULT_DISK"
+
+# Обработка пользовательских аргументов
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --alt-disk)
+            if [[ -z "$2" ]]; then
+                echo "Параметр --alt-disk требует указать имя файла."
+                exit 1
+            fi
+            DISK_NAME="$2"
+            shift 2
+            ;;
+        *)
+            echo "Неизвестный параметр: $1"
+            echo "Доступные параметры: --alt-disk <файл>"
+            exit 1
+            ;;
+    esac
+done
 
 if [ ! -f [modified]OVMF_VARS.4m.fd ]; then
     cp [original]OVMF_VARS.4m.fd [modified]OVMF_VARS.4m.fd
@@ -92,7 +113,7 @@ qemu-system-x86_64 \
     -smp ${CPU_CORES} \
     -drive if=pflash,format=raw,readonly=on,file=OVMF_CODE.4m.fd \
     -drive if=pflash,format=raw,file=[modified]OVMF_VARS.4m.fd \
-    -drive file=[modified]archlinux_vm_disk.qcow2,format=qcow2 \
+    -drive file=${DISK_NAME},format=qcow2 \
     -virtfs local,path=../,mount_tag=inst_scripts,security_model=none \
     -cdrom archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso \
     -drive file=./mntfld.iso,media=cdrom \
