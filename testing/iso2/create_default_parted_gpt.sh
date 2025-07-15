@@ -109,7 +109,7 @@ mkfs.btrfs -f /dev/opened_vg/btrfs_in_opened_lvm
 mkfs.btrfs -f /dev/mapper/luks_inside_lvm
 mkfs.btrfs -f -U 5a684c53-53cd-4419-b7b1-04ea97ba09d3 /dev/sda4
 mkfs.btrfs -f /dev/mapper/luks_on_sda5
-mkfs.ext4 -f -U 7e4a08f1-cde8-4f97-aef0-2645e2691f2f /dev/sda6
+mkfs.ext4 -F -U 7e4a08f1-cde8-4f97-aef0-2645e2691f2f /dev/sda6
 mkfs.btrfs -f /dev/double_locked_vg/btrfs_in_double_locked_lvm
 
 
