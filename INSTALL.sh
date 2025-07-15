@@ -176,6 +176,8 @@ for arg in "$@"; do
         long_flag_was_used "$NO_CACHE_MIRRORS"
     elif [[ "$arg" == "$CACHE_QEMU_PKGS_KEY" ]]; then
         CACHE_QEMU_PKGS_FLAG=true
+        IS_GET_MIRRORS_FROM_REFLECTOR_CACHE=false
+        IS_USE_REFLECTOR=false
         long_flag_was_used "$CACHE_QEMU_PKGS_KEY"
     else
         filtered_args+=("$arg")
