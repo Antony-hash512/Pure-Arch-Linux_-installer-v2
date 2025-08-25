@@ -65,11 +65,14 @@ if ! compgen -G "archlinux-*.iso" > /dev/null; then
 fi
 
 # если пролое условие не выполнилось, то проверяем, нужно ли обновлять образ
-if [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ] && [ $UPDATE_ISO -eq false ]; then
+if [ ! -f archlinux-${CURRENT_YEAR}.${CURRENT_MONTH}.01-x86_64.iso ] && [ "$UPDATE_ISO" = false ]; then
     echo "Хотите обновить образ Arch Linux? (y/N)"
     read -r response
     if [[ "$response" =~ ^[YyДд]$ ]]; then
         UPDATE_ISO=true
+        if [ -f arch.torrent ]; then
+            rm arch.torrent
+        fi
     fi
 fi
 
@@ -128,7 +131,7 @@ qemu-system-x86_64 \
     -netdev user,id=mynet0 \
     -device virtio-net-pci,netdev=mynet0 \
     -display gtk,zoom-to-fit=off \
-    -device virtio-vga,edid=on,xres=1280,yres=720 \
+    -device virtio-vga,edid=on,xres=1280,yres=720
 
     #-audiodev pa,id=pa,server=unix:${XDG_RUNTIME_DIR}/pulse/native \
     #-device intel-hda \
