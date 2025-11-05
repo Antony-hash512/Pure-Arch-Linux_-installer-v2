@@ -14,12 +14,12 @@
 	</driverspack>
 	<driverspack name="nvidia" description="Графика NVIDIA">
 		<pakages>
-			<bundle>nvidia nvidia-utils nvidia-settings</bundle>
+			<bundle>nvidia-open nvidia-utils nvidia-settings</bundle>
 		</pakages>
 	</driverspack>
 	<driverspack name="nvidia-intel-hybr-gpu-wayland" description="Графика NVIDIA + Intel (Проц и гибридная графика)">
 		<pakages>
-			<bundle>nvidia nvidia-utils nvidia-settings</bundle>
+			<bundle>nvidia-open nvidia-utils nvidia-settings</bundle>
 			<bundle>mesa vulkan-intel lib32-mesa lib32-vulkan-intel</bundle>
 			<bundle>xf86-video-intel</bundle><!-- не нужен, если используется только Wayland -->
 			<bundle>intel-ucode</bundle>
@@ -46,13 +46,13 @@
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl uv git gitu htop 7zip unrar zstd rsync lvm2 cryptsetup</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
-			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
+			<bundle>fastfetch cowsay fortune-mod figlet</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>base-devel rustup cmake meson ninja</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
 			<bundle>zsh zsh-syntax-highlighting fish</bundle>
-			<bundle>hyprland wayland wayland-utils wl-clipboard xorg-xwayland xorg-xhost wlroots polkit kitty wofi mako ttf-font-awesome network-manager-applet</bundle>
+			<bundle>hyprland xdg-desktop-portal-hyprland wayland wayland-utils wl-clipboard xorg-xwayland xorg-xhost wlroots polkit kitty wofi mako ttf-font-awesome network-manager-applet</bundle>
 			<bundle>brightnessctl waybar swaylock hyprlock swayidle hypridle tumbler ffmpegthumbnailer xdg-user-dirs expac noto-fonts noto-fonts-emoji noto-fonts-cjk noto-fonts-extra</bundle>
 			<bundle>xreader xarchiver gmrun lshw feh mpv hyprpicker</bundle>
 			<bundle>yad zenity grim slurp jq</bundle>
@@ -62,7 +62,7 @@
 			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>gvim xed luakit tree</bundle>
-			<bundle>meld geany gtksourceview5 code</bundle>
+			<bundle>meld geany zed gtksourceview5 code</bundle>
 			<bundle>rhvoice-language-english rhvoice-language-russian rhvoice-language-georgian rhvoice-voice-tatiana rhvoice-voice-natia rhvoice-voice-alan</bundle>
 			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
 			<!--bundle>rhvoice-voice-anna rhvoice-voice-arina rhvoice-voice-irina rhvoice-voice-victoria rhvoice-voice-elena</bundle-->
@@ -88,7 +88,7 @@
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
-			<bundle>fastfetch neofetch cowsay</bundle>
+			<bundle>fastfetch cowsay</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>base-devel rustup cmake meson ninja</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu</bundle>
@@ -99,7 +99,7 @@
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium thunar vlc terminator</bundle>
 			<bundle>gvim xed luakit tree</bundle>
-			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape obsidian pinta baobab</bundle>
 		</pakages>
 		
@@ -119,16 +119,16 @@
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget uv git gitu htop 7zip unrar zstd lvm2 cryptsetup</bundle>
 			<bundle>cfdisk timeshift wipe snapper</bundle>
 			<bundle>nvim nano micro diffutils</bundle>
-			<bundle>neofetch cowsay</bundle>
+			<bundle>cowsay</bundle>
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mpv</bundle>
 			<bundle>gnome xorg-server xorg-xinit xorg-xauth xclip</bundle>
 			<bundle>gvim xed luakit tree</bundle>
-			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>gnome-extra i3lock</bundle>
 			<bundle>sof-firmware</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
-			<bundle>firefox chromium geany thunar pcmanfm meld terminator baobab</bundle>
+			<bundle>firefox chromium thunar pcmanfm meld terminator baobab</bundle>
 
 			<!--bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle-->
 			<!--bundle>qemu-system-x86 virt-manager virt-viewer</bundle-->
@@ -158,15 +158,15 @@
 			<bundle>alsa-utils pipewire sof-firmware mpv volumeicon pavucontrol</bundle>
 			<bundle>lightdm lightdm-gtk-greeter lxde xclip nm-connection-editor network-manager-applet xarchiver brightnessctl</bundle>
 			<bundle>gvim xed luakit tree</bundle>
-			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
-			<bundle>firefox chromium geany thunar meld terminator baobab</bundle>
+			<bundle>firefox chromium thunar meld terminator baobab</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle>
-			<bundle>sqlitebrowser bless</bundle>
+			<bundle>sqlitebrowser</bundle>
 			
 
-			<aur>compiz</aur>
+			<aur>compiz bless</aur>
 		</pakages>
 		
 		<extrafiles>
@@ -191,7 +191,7 @@
 			<bundle>bluez bluez-utils blueman</bundle>
 			<bundle>openbox gparted xorg-server xorg-xinit xorg-xauth tint2 volumeicon pnmixer volwheel nm-connection-editor network-manager-applet obconf alacritty terminator thunar udisks2 gvfs gmrun pavucontrol brightnessctl i3lock gsimplecal xclip</bundle>			
 			<bundle>gvim xed luakit tree</bundle>
-			<bundle>meld geany gtksourceview5</bundle>
+			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
 			<!--bundle>wmctrl xdotool</bundle-->
@@ -212,7 +212,7 @@
 			<pacstrap>base linux linux-headers linux-firmware</pacstrap>
 			<bundle>networkmanager btrfs-progs mc yazi lf  ranger man-db less links wget curl uv git gitu htop 7zip unrar zstd rsync wipe snapper lvm2 cryptsetup</bundle>
 			<bundle>nvim nano vim micro diffutils</bundle>
-			<bundle>fastfetch neofetch cowsay fortune-mod figlet</bundle>
+			<bundle>fastfetch cowsay fortune-mod figlet</bundle>
 			<bundle>base-devel rust cmake</bundle>
 			<bundle>openvpn tmux ncdu btop bat tree ffmpeg mediainfo</bundle>
 			<bundle>ntfs-3g enca dosfstools os-prober</bundle>
