@@ -8,6 +8,9 @@
 использование модуля ядре nt_tables, и утилиты nft с обротной совместимостью с legacy iptables (например для docker)
 имеет в зависимостях пакет nftables, пакет iptables удаляется как конфликтующий (если он установлен) 
 т.к. iptables начинает использовать модуль nt_tables, утилиты iptables и nft не будут конфликтовать -->
+
+<!-- gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' надо добавить для тёмной темы в hyprland -->
+
 <componets>
 <driverspacks>
 	<driverspack name="intel_cpu_gpu" description="Графика и проц от интел">
@@ -70,6 +73,7 @@
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany zed gtksourceview5 code</bundle>
 			<bundle>rhvoice-language-english rhvoice-language-russian rhvoice-language-georgian rhvoice-voice-tatiana rhvoice-voice-natia rhvoice-voice-alan</bundle>
+			<bundle>gucharmap qt5ct qt6ct adw-gtk3-theme ttf-jetbrains-mono-nerd qt5-wayland qt6-wayland</bundle>
 			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
 			<!--bundle>rhvoice-voice-anna rhvoice-voice-arina rhvoice-voice-irina rhvoice-voice-victoria rhvoice-voice-elena</bundle-->
 			<!--bundle>deluge deluge-gtk gimp inkscape pinta baobab smplayer kommit telegram-desktop</bundle-->
