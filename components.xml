@@ -73,7 +73,7 @@
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany zed gtksourceview5 code</bundle>
 			<bundle>rhvoice-language-english rhvoice-language-russian rhvoice-language-georgian rhvoice-voice-tatiana rhvoice-voice-natia rhvoice-voice-alan</bundle>
-			<bundle>gucharmap qt5ct qt6ct adw-gtk3-theme ttf-jetbrains-mono-nerd qt5-wayland qt6-wayland</bundle>
+			<bundle>gucharmap qt5ct qt6ct adw-gtk3-theme tela-circle-icon-theme-purple adapta-gtk-theme ttf-jetbrains-mono-nerd qt5-wayland qt6-wayland</bundle>
 			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
 			<!--bundle>rhvoice-voice-anna rhvoice-voice-arina rhvoice-voice-irina rhvoice-voice-victoria rhvoice-voice-elena</bundle-->
 			<!--bundle>deluge deluge-gtk gimp inkscape pinta baobab kommit telegram-desktop</bundle-->
