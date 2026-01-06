@@ -63,9 +63,9 @@
 			<bundle>iptables-nft</bundle>
 			<bundle>hyprland xdg-desktop-portal-hyprland wayland wayland-utils wl-clipboard xorg-xwayland xorg-xhost wlroots polkit kitty wofi mako ttf-font-awesome network-manager-applet</bundle>
 			<bundle>brightnessctl waybar swaylock hyprlock swayidle hypridle tumbler ffmpegthumbnailer xdg-user-dirs expac noto-fonts noto-fonts-emoji noto-fonts-cjk noto-fonts-extra</bundle>
-			<bundle>xreader xarchiver gmrun lshw feh mpv hyprpicker</bundle>
+			<bundle>xreader xarchiver gmrun lshw feh hyprpicker</bundle>
 			<bundle>yad zenity grim slurp jq</bundle>
-			<bundle>firefox chromium thunar thunar-archive-plugin vlc torbrowser-launcher gvfs gvfs-mtp thunar-volman</bundle>
+			<bundle>firefox chromium thunar thunar-archive-plugin mpv haruna celluloid torbrowser-launcher gvfs gvfs-mtp thunar-volman</bundle>
 			<bundle>polkit-gnome polkit-qt5 polkit-qt6 nwg-look gnome-themes-extra gnome-keyring</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulse pipewire-alsa sof-firmware pavucontrol</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
@@ -76,7 +76,7 @@
 			<bundle>gucharmap qt5ct qt6ct adw-gtk3-theme ttf-jetbrains-mono-nerd qt5-wayland qt6-wayland</bundle>
 			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
 			<!--bundle>rhvoice-voice-anna rhvoice-voice-arina rhvoice-voice-irina rhvoice-voice-victoria rhvoice-voice-elena</bundle-->
-			<!--bundle>deluge deluge-gtk gimp inkscape pinta baobab smplayer kommit telegram-desktop</bundle-->
+			<!--bundle>deluge deluge-gtk gimp inkscape pinta baobab kommit telegram-desktop</bundle-->
 			<!--bundle>evtest antimicrox steam joystick grub-customizer</bundle-->
 			<aur>wlogout wshot-git grimblast clipgrab ttf-symbola downgrade cursor-bin</aur>
 			<flatpak>obsidian</flatpak>
@@ -108,7 +108,7 @@
             <bundle>pipewire pipewire-pulse sof-firmware</bundle>
             <bundle>bluez bluez-utils blueman</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
-			<bundle>firefox chromium thunar vlc terminator</bundle>
+			<bundle>firefox chromium thunar mpv haruna celluloid terminator</bundle>
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape obsidian pinta baobab</bundle>
