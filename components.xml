@@ -72,14 +72,18 @@
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany zed gtksourceview5 code</bundle>
+			<bundle>yt-dlp</bundle>
 			<bundle>rhvoice-language-english rhvoice-language-russian rhvoice-language-georgian rhvoice-voice-tatiana rhvoice-voice-natia rhvoice-voice-alan</bundle>
 			<bundle>gucharmap qt5ct qt6ct adw-gtk3-theme tela-circle-icon-theme-purple adapta-gtk-theme ttf-jetbrains-mono-nerd qt5-wayland qt6-wayland</bundle>
+			<bundle>tela-circle-icon-theme-purple adapta-gtk-theme</bundle>
 			<!--bundle>python-pyqt5 python-pyqt6 qt5-speech qt6-speech</bundle-->
 			<!--bundle>rhvoice-voice-anna rhvoice-voice-arina rhvoice-voice-irina rhvoice-voice-victoria rhvoice-voice-elena</bundle-->
 			<!--bundle>deluge deluge-gtk gimp inkscape pinta baobab kommit telegram-desktop</bundle-->
 			<!--bundle>evtest antimicrox steam joystick grub-customizer</bundle-->
-			<aur>wlogout wshot-git grimblast clipgrab ttf-symbola downgrade cursor-bin</aur>
-			<flatpak>obsidian</flatpak>
+			<aur>wlogout wshot-git grimblast hyprshell-bin catppuccin-gtk-theme-mocha</aur>
+			<aur>ttf-symbola downgrade antigravity</aur>
+			<!-- hyprsnap dracula-gtk-theme dracula-gtk-theme -->
+			<flatpak>obsidian</flatpak><!--можно заменить на установку через pacman-->
 		</pakages>
 		
 		<extrafiles>
@@ -112,6 +116,7 @@
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape obsidian pinta baobab</bundle>
+			<bundle>yt-dlp</bundle>
 		</pakages>
 		
 		<extrafiles>
@@ -141,6 +146,7 @@
 			<bundle>sof-firmware</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium thunar pcmanfm meld terminator baobab</bundle>
+			<bundle>yt-dlp</bundle>
 
 			<!--bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle-->
 			<!--bundle>qemu-system-x86 virt-manager virt-viewer</bundle-->
@@ -177,7 +183,7 @@
 			<bundle>firefox chromium thunar meld terminator baobab</bundle>
 			<bundle>deluge deluge-gtk gimp inkscape krita obsidian pinta</bundle>
 			<bundle>sqlitebrowser</bundle>
-			
+			<bundle>yt-dlp</bundle>
 
 			<aur>compiz bless</aur>
 		</pakages>
@@ -208,6 +214,7 @@
 			<bundle>meld geany zed gtksourceview5</bundle>
 			<bundle>firefox chromium vlc viewnior xfce4-screenshooter engrampa</bundle>
 			<bundle>tumbler menumaker conky pinta</bundle>
+			<bundle>yt-dlp</bundle>
 			<!--bundle>wmctrl xdotool</bundle-->
 		</pakages>
 		
