@@ -15,7 +15,7 @@
 <driverspacks>
 	<driverspack name="intel_cpu_gpu" description="Графика и проц от интел">
 		<pakages>
-			<bundle>mesa vulkan-intel lib32-mesa lib32-vulkan-intel</bundle>
+			<bundle>mesa vulkan-intel lib32-mesa lib32-vulkan-intel intel-media-driver</bundle>
 			<bundle>xf86-video-intel</bundle><!-- не нужен, если используется только Wayland -->
 			<bundle>intel-ucode</bundle>
 		</pakages>
@@ -28,7 +28,7 @@
 	<driverspack name="nvidia-intel-hybr-gpu-wayland" description="Графика NVIDIA + Intel (Проц и гибридная графика)">
 		<pakages>
 			<bundle>nvidia-open nvidia-utils nvidia-settings</bundle>
-			<bundle>mesa vulkan-intel lib32-mesa lib32-vulkan-intel</bundle>
+			<bundle>mesa vulkan-intel lib32-mesa lib32-vulkan-intel intel-media-driver</bundle>
 			<bundle>xf86-video-intel</bundle><!-- не нужен, если используется только Wayland -->
 			<bundle>intel-ucode</bundle>
 			<bundle>nvidia-prime</bundle>
