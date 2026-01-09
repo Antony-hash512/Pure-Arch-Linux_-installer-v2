@@ -1,3 +1,9 @@
+expac
+lazygit
+delta
+
+
+
 not only:
 JetBrains:
 pycharm-community-edition
