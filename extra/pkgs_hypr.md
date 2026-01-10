@@ -1,7 +1,8 @@
 expac
 lazygit
 delta
-
+vlc-plugins-all
+rmlint-shredder
 
 
 not only:
