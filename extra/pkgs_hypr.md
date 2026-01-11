@@ -1,3 +1,5 @@
+
+sysstat
 expac
 lazygit
 lazydocker
