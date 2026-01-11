@@ -1,8 +1,18 @@
 expac
 lazygit
+lazydocker
 delta
 vlc-plugins-all
 rmlint-shredder
+duperemove
+gsmartcontrol
+smartcontrol
+dysk
+wlsunset
+hexyl
+hyx
+cloc
+
 
 
 not only:
