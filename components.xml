@@ -139,10 +139,13 @@
 			<bundle>terminus-font</bundle>
 			<bundle>curl ntfs-3g enca dosfstools openvpn os-prober tmux ncdu mpv</bundle>
 			<bundle>iptables-nft</bundle>
-			<bundle>gnome xorg-server xorg-xinit xorg-xauth xclip</bundle>
+
+			<!-- !! GNOME49=wayland !!  bundle>gnome gdm xorg-server xorg-xinit xorg-xauth xclip</bundle-->
+		        <bundle>gnome gdm</bundle>
+		        <bundle>nwg-look adw-gtk-theme tela-circle-icon-theme-all qt5ct qt6ct kvantum kvantum-qt5</bundle>
 			<bundle>gvim xed luakit tree</bundle>
 			<bundle>meld geany zed gtksourceview5</bundle>
-			<bundle>gnome-extra i3lock</bundle>
+			<bundle>gnome-extra</bundle>
 			<bundle>sof-firmware</bundle>
 			<bundle>libreoffice-still hunspell-ru libreoffice-still-ru man-pages-ru</bundle>
 			<bundle>firefox chromium thunar pcmanfm meld terminator baobab</bundle>
