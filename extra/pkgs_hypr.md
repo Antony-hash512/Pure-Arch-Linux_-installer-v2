@@ -15,6 +15,12 @@ hexyl
 hyx
 cloc
 
+-------------------
+чекнуть (это всё в ауре):
+bluetuith
+leafpad
+
+
 
 
 not only:
