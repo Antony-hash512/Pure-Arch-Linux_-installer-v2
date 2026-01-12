@@ -9,7 +9,7 @@
 # IMPORTANT / NOTE:
 # This is an OPTIONAL component. It is intended to be used as an add-on to a
 # standard Arch Linux installation. This script should only be executed if
-# the user explicitly chooses to enable BlackArch tools.
+# you explicitly choose to enable BlackArch tools.
 #
 # ==============================================================================
 
