@@ -1,3 +1,4 @@
+ccache
 
 sysstat
 expac
