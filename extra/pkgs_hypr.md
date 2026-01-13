@@ -20,7 +20,6 @@ wavemon
 bottom
 f3d
 
-electorrent-bin
 trgui-ng
 transgui-git
 transgui-gtk
