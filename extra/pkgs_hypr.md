@@ -20,6 +20,17 @@ wavemon
 bottom
 f3d
 
+electorrent-bin
+trgui-ng
+transgui-git
+transgui-gtk
+transgui-qt
+transgui-qt
+stig-git
+
+transmission-cli
+
+
 -------------------
 чекнуть (это всё в ауре):
 bluetuith
