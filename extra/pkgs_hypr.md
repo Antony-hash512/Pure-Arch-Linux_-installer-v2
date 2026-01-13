@@ -15,13 +15,25 @@ wlsunset
 hexyl
 hyx
 cloc
+s-tui
+wavemon
+bottom
 
 -------------------
 чекнуть (это всё в ауре):
 bluetuith
 qxmledit
+---------------------
+gnome:
+    shortwave
+    
+---------------------
+frog-ocr-no-telemetry
+tesseract-data-eng
+(можно ставить английскую версию,
+а остальное доустановить в интерфейсе программы)
 
-
+---------------------
 
 not only:
 JetBrains:
