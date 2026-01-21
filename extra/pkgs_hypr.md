@@ -29,6 +29,9 @@ stig-git
 
 transmission-cli
 
+AUR cli:
+
+charm-pop-bin
 
 -------------------
 чекнуть (это всё в ауре):
