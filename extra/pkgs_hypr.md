@@ -1,5 +1,8 @@
 ccache
 
+qmmp
+squashfs-tools-ng
+
 sysstat
 expac
 lazygit
@@ -40,7 +43,24 @@ qxmledit
 ---------------------
 gnome:
     shortwave
-    
+Wayland all:
+    wl-clipboard
+Wayland:
+    gnome-shell-extension-arc-blur
+    gnome-shell-extension-frippery-move-clock
+    gnome-shell-extension-pixelsaver
+    gnome-shell-extension-dash-to-dock
+    gnome-shell-extension-arc-menu
+    gnome-shell-extension-user-themes
+    gnome-shell-extension-caffeine
+    gnome-shell-extension-top-icons-plus
+    gnome-shell-extension-system-monitor
+    gnome-shell-extension-noannoyance
+    gnome-shell-extension-clipboard-indicator
+    gnome-shell-extension-openweather
+    gnome-shell-extension-just-perfection
+    gnome-shell-extension-tilix-dropdown
+    gnome-shell-extension-gsconnect
 ---------------------
 frog-ocr-no-telemetry
 tesseract-data-eng
