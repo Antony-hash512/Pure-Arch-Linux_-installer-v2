@@ -1,3 +1,14 @@
+> [!WARNING]
+> **Project Status: Suspended / Rewrite Planned**
+> 
+> Development and support for the Bash implementation are temporarily suspended as I plan to port the project to **Python** or **Rust**. 
+>
+> While implementing this concept in Bash is theoretically possible, the codebase has become unreadable due to the project's scale and complexity. Bash is inherently better suited for simpler automation tasks. Therefore, I have decided to rewrite the code in a language more appropriate for this scope.
+>
+> **Note:** Since the Bash version is nearly complete, I *might* also finish it eventually, but **no guarantees**.
+
+
+
 | Дисклеймер | Disclamer |
 |-------------------|------------------------|
 | Версия 2. Переписываю сделанный когда-то давно скрипт с нуля, основан на [более простой и узкоспециализированной версии, сделанной недавно](https://github.com/Antony-hash512/ArchLinux_install_scripts). пока находится в разработке !!! настоятельно не рекомендую использовать до релиза в ветке master (или main) текущая ветка dev загружена с целью резервного копирования текущих наработок но при этом есть также ветка dev_stable, содержимое, которого протестировано и не должно вызвать проблем, но задуманный функционал в ней всё равно не завершен список TODO перенесён в комментарий в скрипте | **<u><font color="#CCCC22">All comments, readmes and output messages for users will be translated into English when this script set is finished.</font></u>** This is the second version. I'm rewriting  from scratch a script made a long time ago. Now this new version based on [a simpler and more specialized version made recently](https://github.com/Antony-hash512/ArchLinuxMoneroMiner_install_scripts_english_version). <font color="#FF0000">**Still under development !!!**</font>  I strongly recommend<font color="FF0000"> **not to use before release in the master (or main) branch**.</font>  Current dev branch is loaded for the purpose of backup of current developments. There is also a dev_stable branch, the content of which is tested and should not cause problems, but the intended functionality in it is still not completed. The TODO list is moved to the comment in the script. |
