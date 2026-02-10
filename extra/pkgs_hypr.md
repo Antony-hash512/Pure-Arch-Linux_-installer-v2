@@ -105,6 +105,9 @@ bat
 gvfs
 gvfs-mtp
 
+gamemode
+paperkey
+
 paru:
   wlogout
   hyprshot
