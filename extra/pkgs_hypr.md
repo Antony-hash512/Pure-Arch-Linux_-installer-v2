@@ -107,6 +107,7 @@ gvfs-mtp
 
 gamemode
 paperkey
+secure-delete
 
 paru:
   wlogout
