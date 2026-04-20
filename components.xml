@@ -65,7 +65,7 @@
 			<bundle>brightnessctl waybar swaylock hyprlock swayidle hypridle tumbler ffmpegthumbnailer xdg-user-dirs expac noto-fonts noto-fonts-emoji noto-fonts-cjk noto-fonts-extra</bundle>
 			<bundle>xreader xarchiver gmrun lshw feh hyprpicker</bundle>
 			<bundle>yad zenity grim slurp jq</bundle>
-			<bundle>firefox chromium thunar thunar-archive-plugin mpv haruna celluloid torbrowser-launcher gvfs gvfs-mtp thunar-volman</bundle>
+			<bundle>firefox chromium thunar thunar-archive-plugin file-roller mpv haruna celluloid torbrowser-launcher gvfs gvfs-mtp thunar-volman</bundle>
 			<bundle>polkit-gnome polkit-qt5 polkit-qt6 nwg-look gnome-themes-extra gnome-keyring</bundle>
 			<bundle>alsa-utils pipewire pipewire-pulse pipewire-alsa sof-firmware pavucontrol</bundle>
 			<bundle>bluez bluez-utils blueman</bundle>
